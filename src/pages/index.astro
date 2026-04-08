@@ -1,10 +1,48 @@
 ---
 import BasicLayout from '../layouts/basic.astro';
 
-import TableComponent from '../components/CustomTable.svelte';
-const CustomTable = TableComponent as any
+interface Image {
+    id : number;
+    url : string
+}
+
+interface Projet {
+    name: string;
+    description: string;
+    images : Image[];
+    status: number;
+}
+
+const API_URL = import.meta.env.API_URL || "https://central-api-developpement.up.railway.app";
+
+const finalUrl = `${API_URL}/api/projects`;
+
+console.log("🚀 URL appelée par Astro :", finalUrl);
+
+const response = await fetch(finalUrl);
+
+if (!response.ok) {
+    throw new Error(`Aïe ! Erreur API : ${response.status}`);
+}
+
+const projets = await response.json();
 ---
 
 <BasicLayout>
-	<CustomTable />
+    {projets.map((project : Projet) => (
+	<div class="card bg-base-100 w-96 shadow-sm">
+        <figure>
+            <img
+            src={ project.images[0].url }
+            alt="Shoes" />
+        </figure>
+        <div class="card-body">
+            <h2 class="card-title">{ project.name }</h2>
+            <p>{ project.description }</p>
+            <div class="card-actions justify-end">
+            <button class="btn btn-primary">Modify</button>
+            </div>
+        </div>
+    </div>
+    ))}
 </BasicLayout>
