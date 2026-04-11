@@ -1,0 +1,56 @@
+---
+import BasicLayout from '../../layouts/basic.astro';
+import type { Image } from '../../type';
+import ImageContainer from '../../components/SveltesComponents/ImageContainer.svelte'
+import DataModifier from '../../components/SveltesComponents/DataModifier.svelte'
+export const prerender = false
+
+const { id } = Astro.params;
+
+const API_URL = import.meta.env.API_URL;
+const finalUrl = `https://${API_URL}/api/vehicules/single/${id}`;
+
+const response = await fetch(finalUrl);
+
+if (!response.ok) {
+    return Astro.redirect('/'); 
+}
+
+const current = await response.json();
+---
+
+<BasicLayout>
+    <div class="max-w-4xl mx-auto p-8">
+        
+        <a href="/" class="btn btn-ghost mb-8">← Retour à la liste</a>
+
+        <div class="flex flex-col">
+            
+            <div>
+                {current.Images && current.Images.length > 0 && (
+                    <img 
+                        src={current.Images[0].URL} 
+                        alt={current.model} 
+                        class="w-full rounded-2xl shadow-lg object-cover aspect-video"
+                    />
+                )}
+            </div>
+
+            <div>
+                <DataModifier name={current.model}/>
+                <p class="text-slate-600 leading-relaxed mb-8">{current.description}</p>
+                <p class="text-2xl font-light text-slate-700 mb-6">{current.price.toLocaleString()} €</p>
+                <div class="grid grid-cols-2 gap-4 mt-8">
+                {current.images && current.images.map((image: Image) => (
+                    <ImageContainer
+                        src={image.url} 
+                        alt={current.model} 
+                        class="w-[400px] h-[250px]"
+                    />
+                    ))}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</BasicLayout>

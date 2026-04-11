@@ -1,0 +1,14 @@
+export interface Image {
+    id: number;
+    url: string;
+}
+
+export interface Item {
+    id?: number; 
+    name: string;
+    description: string;
+    images: Image[];
+    status: number;
+    price ?: number;
+    sold ?: boolean;
+}

@@ -1,9 +1,11 @@
-
+<script lang="ts">
+  import type { Item } from '../../type'
+  let { vehicules } : { vehicules : Item[]} = $props()
+</script>
 
 
 <div class="overflow-x-auto">
   <table class="table">
-    <!-- head -->
     <thead>
       <tr>
         <th>
@@ -12,44 +14,45 @@
           </label>
         </th>
         <th>Name</th>
-        <th>Job</th>
-        <th>Favorite Color</th>
+        <th>Decription</th>
+        <th>Price</th>
+        <th>Sold</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      <!-- row 1 -->
-      <tr>
-        <th>
-          <label>
-            <input type="checkbox" class="checkbox" />
-          </label>
-        </th>
-        <td>
-          <div class="flex items-center gap-3">
-            <div class="avatar">
-              <div class="mask mask-squircle h-12 w-12">
-                <img
-                  src="https://img.daisyui.com/images/profile/demo/2@94.webp"
-                  alt="Avatar Tailwind CSS Component" />
+       {#each vehicules as vehicule}
+        <tr>
+          <th>
+            <label>
+              <input type="checkbox" class="checkbox" />
+            </label>
+          </th>
+          <td>
+            <div class="flex items-center gap-3">
+              <div class="avatar">
+                <div class="mask mask-squircle h-12 w-12">
+                  <img
+                    src={vehicule.images[0]?.url}
+                    alt="Avatar Tailwind CSS Component" />
+                </div>
+              </div>
+              <div>
+                <div class="font-bold">{vehicule.name}</div>
               </div>
             </div>
-            <div>
-              <div class="font-bold">Hart Hagerty</div>
-              <div class="text-sm opacity-50">United States</div>
-            </div>
-          </div>
-        </td>
-        <td>
-          Zemlak, Daniel and Leannon
-          <br />
-          <span class="badge badge-ghost badge-sm">Desktop Support Technician</span>
-        </td>
-        <td>Purple</td>
-        <th>
-          <button class="btn btn-ghost btn-xs">details</button>
-        </th>
-      </tr>
+          </td>
+          <td>
+            {vehicule.description}
+            <br />
+          </td>
+          <td>{vehicule?.price}</td>
+          <td>{vehicule?.sold}</td>
+          <th>
+            <a class="btn btn-primary btn-xs" href={`/vehicules/${vehicule.id}`}>Details</a>
+          </th>
+        </tr>
+      {/each}
     </tbody>
   </table>
 </div>
