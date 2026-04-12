@@ -3,8 +3,8 @@ import CustomTable from '../components/SveltesComponents/CustomTable.svelte';
 import BasicLayout from '../layouts/basic.astro';
 import type { Item } from '../type'
 
-const API_URL = import.meta.env.API_URL || "https://central-api-developpement.up.railway.app";
-const finalUrl = `https://${API_URL}/api/projects`;
+const API_URL = import.meta.env.API_URL;
+const finalUrl = `${API_URL}/api/projects`;
 
 console.log("🚀 URL appelée par Astro :", finalUrl);
 
@@ -16,7 +16,7 @@ if (!response_projets.ok) {
 
 const projets = await response_projets.json();
 
-const vehicules_url = `https://${API_URL}/api/vehicules`
+const vehicules_url = `${API_URL}/api/vehicules`
 const response_vehicules = await fetch(vehicules_url);
 if (!response_vehicules.ok) {
     throw new Error(`Aïe ! Erreur API : ${response_vehicules.status}`);

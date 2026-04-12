@@ -12,3 +12,13 @@ export interface Item {
     price ?: number;
     sold ?: boolean;
 }
+
+export interface Vehicule {
+    id?: number; 
+    model: string;
+    description: string;
+    images: Image[];
+    status: number;
+    price ?: number;
+    sold ?: boolean;
+}
