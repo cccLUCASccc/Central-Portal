@@ -84,7 +84,7 @@ const vehicules = await response_vehicules.json();
     </div>
 
     <main class="p-8">
-        <CustomTable vehicules={vehicules}/>
+        <CustomTable client:load vehicules={vehicules}/>
     </main>
 
 </BasicLayout>

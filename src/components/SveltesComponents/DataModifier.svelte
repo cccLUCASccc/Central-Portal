@@ -1,11 +1,12 @@
 <script lang="ts">
     interface Props {
-        data: string;
+        data_string?: string;
+        data_number?: number;
         type: number;
         type_name?: string;
     }
 
-    let { data, type, type_name }: Props = $props();
+    let { data_string = $bindable(), data_number = $bindable(), type, type_name }: Props = $props();
 </script>
 
 {#if type === 1}
@@ -13,7 +14,8 @@
     <legend class="fieldset-legend">{type_name}</legend>
     <input 
         type="text" 
-        placeholder={data} 
+        placeholder={data_string}
+        bind:value={data_string}
         class="rounded-md px-4 py-4 w-full input"
     />
 </fieldset>
@@ -22,7 +24,7 @@
 
 <fieldset class="fieldset">
   <legend class="fieldset-legend">Description</legend>
-  <textarea class="textarea h-24 w-full" placeholder={data}></textarea>
+  <textarea class="textarea h-24 w-full" placeholder={data_string} bind:value={data_string}></textarea>
 </fieldset>
 
 {:else if type === 3}
@@ -30,7 +32,8 @@
     <legend class="fieldset-legend">{type_name}</legend>
     <input 
         type="number" 
-        placeholder={data} 
+        placeholder={data_number + ''}
+        bind:value={data_number}
         class="rounded-md px-4 py-4 w-full input"
     />
 </fieldset>

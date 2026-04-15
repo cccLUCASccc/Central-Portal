@@ -14,11 +14,12 @@ export interface Item {
 }
 
 export interface Vehicule {
-    id?: number; 
+    id: number; 
     model: string;
     description: string;
     images: Image[];
     status: number;
-    price ?: number;
+    price : number;
     sold ?: boolean;
+    year : number;
 }

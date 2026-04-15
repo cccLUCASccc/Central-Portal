@@ -1,9 +1,9 @@
 ---
 import BasicLayout from '../../layouts/basic.astro';
-import type { Image } from '../../type';
-import ImageComponent from '../../components/SveltesComponents/ImageComponent.svelte'
 import DataModifier from '../../components/SveltesComponents/DataModifier.svelte'
 import ImagesContainer from '../../components/SveltesComponents/ImagesContainer.svelte'
+import VehiculeModifier from '../../components/SveltesComponents/vehiculeModifier.svelte';
+
 export const prerender = false
 
 const { id } = Astro.params;
@@ -27,14 +27,8 @@ const current = await response.json();
 
         <div class="flex flex-col">
             <div>
-                <DataModifier data={current.model}, type={1}, type_name='Modele'/>
-                <DataModifier data={current.description}, type={2}/>
-                <DataModifier data={current.year.toString()}, type={3}, type_name='Année'/>
-                <div class="grid grid-cols-2 gap-4 mt-8">
-                    <ImagesContainer item={current} images={current.images} />
-                </div>
+                <VehiculeModifier client:load vehicule={current}/>
             </div>
         </div>
-
     </div>
 </BasicLayout>
