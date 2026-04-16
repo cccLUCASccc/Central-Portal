@@ -84,6 +84,10 @@ const vehicules = await response_vehicules.json();
     </div>
 
     <main class="p-8">
+        <div class="flex w-full gap-4 m-4">
+        <a href="/vehicules/add" class="btn btn-primary">Ajouter un véhicule</a>            
+        <button class="btn btn-secondary">Ajouter/Modifer par lot</button>
+        </div>
         <CustomTable client:load vehicules={vehicules}/>
     </main>
 

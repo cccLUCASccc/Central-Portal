@@ -18,7 +18,6 @@ export interface Vehicule {
     model: string;
     description: string;
     images: Image[];
-    status: number;
     price : number;
     sold ?: boolean;
     year : number;

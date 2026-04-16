@@ -1,7 +1,10 @@
 <script lang="ts">
+    import { _ZodString } from 'astro:schema';
   import type { Vehicule } from '../../type'
   
   let { vehicules }: { vehicules: Vehicule[] } = $props()
+
+  let current_vehicules = $state(vehicules)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', { 
@@ -17,9 +20,9 @@
       await fetch(`${PUBLIC_API_URL}/api/vehicules/${id}`, {
             method: "DELETE",
             body: "" 
-        });
-      
-      window.location.reload;
+      });
+
+      current_vehicules = current_vehicules.filter(vehicule=> vehicule.id !== id)
   }
 </script>
 
@@ -42,8 +45,8 @@
     </thead>
     
     <tbody>
-       {#each vehicules as vehicule (vehicule.id)}
-        <tr class="hover:bg-pink-100 cursor-pointer" onclick={() => window.location.href =`/vehicules/${vehicule.id}`}>
+       {#each current_vehicules as vehicule (vehicule.id)}
+        <tr class="hover:bg-base-300 cursor-pointer" onclick={() => window.location.href =`/vehicules/${vehicule.id}`}>
           <th onclick={(e) => e.stopPropagation()}>
             <label>
               <input type="checkbox" class="checkbox checkbox-sm" />

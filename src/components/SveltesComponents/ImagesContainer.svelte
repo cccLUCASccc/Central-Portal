@@ -2,9 +2,9 @@
     import ImageComponent from './ImageComponent.svelte';
     import type { Vehicule, Image } from '../../type';
     interface Props {
-        item: Vehicule
-        images: Image[];
-        new_Files: File[];
+        item?: Vehicule
+        images?: Image[];
+        new_Files?: File[];
     }
 
     let { item, images = $bindable(), new_Files = $bindable() }: Props = $props();
@@ -54,7 +54,7 @@
             nouveauxFichiers.push(file);
         });
 
-        new_Files = [...new_Files, ...nouveauxFichiers];
+        new_Files = [...new_Files as File[], ...nouveauxFichiers];
         gallery = [...gallery, ...nouvellesImages];
         images = gallery;
         
@@ -73,7 +73,7 @@
 >
     <ImageComponent
             src={image.url} 
-            alt={item.model} 
+            alt={item?.model as string} 
             class="w-[400px] h-[250px]"
             ondelete={() => {console.log(`Click sur l image ${index}`); deleteImage(index)}}
         />
