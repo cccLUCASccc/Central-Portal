@@ -24,6 +24,8 @@
 
       current_vehicules = current_vehicules.filter(vehicule=> vehicule.id !== id)
   }
+
+  const status = ["Actif", "Inactif", "Vendu"]
 </script>
 
 <div class="overflow-x-auto bg-base-100 rounded-xl shadow-sm">
@@ -84,11 +86,7 @@
           </td>
           
           <td>
-            {#if vehicule.sold}
-              <span class="badge badge-error badge-sm font-semibold">Vendu</span>
-            {:else}
-              <span class="badge badge-success badge-sm font-semibold">Disponible</span>
-            {/if}
+              <span class="badge badge-error badge-sm font-semibold">{status[vehicule.status]}</span>
           </td>
           <td onclick={(e) => e.stopPropagation()} class="align-middle text-center">
             <button type="button" onclick={(e) => {handleDelete(vehicule.id)}} class="btn btn-primary rounded-xl btn-sm">X</button>

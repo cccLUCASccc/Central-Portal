@@ -21,4 +21,5 @@ export interface Vehicule {
     price : number;
     sold ?: boolean;
     year : number;
+    status : number
 }

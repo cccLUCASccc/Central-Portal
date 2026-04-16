@@ -7,6 +7,7 @@
     let description = $state("");
     let year = $state<number | undefined>();
     let price = $state<number | undefined>();
+    let status = $state<number | undefined>();
     
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
@@ -22,9 +23,10 @@
         
         if (price !== undefined) formData.append("price", price.toString());
         if (year !== undefined) formData.append("year", year.toString());
+        if (status !== undefined) formData.append("status", status.toString());
 
         newFiles.forEach(file => {
-            formData.append("new_images", file);  
+            formData.append("image", file);  
         });
 
         const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/add`, {
@@ -46,10 +48,11 @@
     <DataModifier bind:data_string={description} type={2}/>
     <DataModifier bind:data_number={year} type={3} type_name='Année'/>
     <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
+    <DataModifier bind:data_number={status} type={4} type_name='Status'/>
     
     <div class="grid grid-cols-2 gap-4 mt-8">
         <ImagesContainer 
-            item={{ id: 0, model: model, description: description, price: price || 0, year: year || 0, sold: false, images: [] }} 
+            item={{ id: 0, model: model, description: description, price: price || 0, year: year || 0, sold: false, images: [], status: 1 }} 
             bind:images={images} 
             bind:new_Files={newFiles} 
         />

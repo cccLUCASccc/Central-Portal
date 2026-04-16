@@ -16,8 +16,12 @@
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^6.1.2",
     "daisyui": "^5.5.19",
+    "papaparse": "^5.5.3",
     "svelte": "^5.55.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2"
   }
 }

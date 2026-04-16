@@ -1,4 +1,5 @@
 ---
+import BulkImporter from '../components/SveltesComponents/BulkImporter.svelte';
 import CustomTable from '../components/SveltesComponents/CustomTable.svelte';
 import BasicLayout from '../layouts/basic.astro';
 import type { Item } from '../type'
@@ -88,6 +89,7 @@ const vehicules = await response_vehicules.json();
         <a href="/vehicules/add" class="btn btn-primary">Ajouter un véhicule</a>            
         <button class="btn btn-secondary">Ajouter/Modifer par lot</button>
         </div>
+        <BulkImporter client:load/>
         <CustomTable client:load vehicules={vehicules}/>
     </main>
 

@@ -38,4 +38,15 @@
     />
 </fieldset>
 
+{:else if type === 4}
+<fieldset class="fieldset">
+    <legend class="fieldset-legend">{type_name}</legend>
+    <select bind:value={data_number} class="select">
+        <option disabled>Status</option>
+        <option value={0}>Actif</option>
+        <option value={1}>Inactif</option>
+        <option value={2}>Vendu</option>
+    </select>
+</fieldset>
+
 {/if}

@@ -14,6 +14,7 @@
     let year = $state(vehicule.year);
     let price = $state(vehicule.price);
     let images = $state(vehicule.images);
+    let status = $state(vehicule.status)
     
     let newFiles = $state<File[]>([]); 
 
@@ -28,6 +29,7 @@
         formData.append("description", description);
         formData.append("price", price.toString());
         formData.append("year", year.toString());
+        formData.append("status", status.toString());
 
         const existingIds = images
             .filter(img => !img.url.startsWith('blob:'))
@@ -47,6 +49,7 @@
 
         if (response.ok) {
             alert("Véhicule mis à jour avec succès ! ✨");
+            window.location.href = '/'
         }
 
         return response;
@@ -59,6 +62,7 @@
     <DataModifier bind:data_string={description} type={2}/>
     <DataModifier bind:data_number={year} type={3} type_name='Année'/>
     <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
+    <DataModifier bind:data_number={status} type={4} type_name="Status"/>
     
     <div class="grid grid-cols-2 gap-4 mt-8">
         <ImagesContainer 
