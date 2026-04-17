@@ -1,7 +1,7 @@
 ---
-import BulkImporter from '../components/SveltesComponents/BulkImporter.svelte';
-import CustomTable from '../components/SveltesComponents/CustomTable.svelte';
+import TableEditor from '../components/SveltesComponents/TableEditor.svelte'
 import BasicLayout from '../layouts/basic.astro';
+import { Show, SignIn } from '@clerk/astro/components';
 import type { Item } from '../type'
 
 const API_URL = import.meta.env.API_URL;
@@ -27,70 +27,47 @@ const vehicules = await response_vehicules.json();
 ---
 
 <BasicLayout>
-    <div class="navbar bg-base-100 shadow-sm relative z-50">
-        <div class="flex-1">
-            <a class="btn btn-ghost text-xl">Central Portal</a>
-        </div>
-        
-        <div class="flex-none gap-2">
+    <Show when="signed-in">
+        <div class="navbar bg-base-100 shadow-sm relative z-50">
+            <div class="flex-1">
+                <a class="btn btn-ghost text-xl">Central Portal</a>
+            </div>
             
-            <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost">
-                    Mes Projets
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                </div>
-                <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-64 p-2 shadow">
-                    
-                    {projets.map((project: Item) => (
-                        <li>
-                            <a>
-                                {project.images && project.images.length > 0 && (
-                                    <div class="avatar">
-                                        <div class="w-6 rounded">
-                                            <img src={project.images[0].url} alt={project.name} />
-                                        </div>
-                                    </div>
-                                )}
-                                <span>{project.name}</span>
-                            </a>
-                        </li>
-                    ))}
-                    
-                    <!-- S'il n'y a aucun projet, on affiche un message vide -->
-                    {projets.length === 0 && (
-                        <li><span class="text-gray-400 italic">Aucun projet trouvé</span></li>
-                    )}
-                </ul>
-            </div>
-
-            <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-                    <div class="w-10 rounded-full">
-                        <img alt="Tailwind CSS Navbar component" src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+            <div class="flex-none gap-2">
+                
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost">
+                        Mes Projets
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-64 p-2 shadow">
+                        
+                        {projets.map((project: Item) => (
+                            <li>
+                                <a>
+                                    {project.images && project.images.length > 0 && (
+                                        <div class="avatar">
+                                            <div class="w-6 rounded">
+                                                <img src={project.images[0].url} alt={project.name} />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <span>{project.name}</span>
+                                </a>
+                            </li>
+                        ))}
+                        
+                        <!-- S'il n'y a aucun projet, on affiche un message vide -->
+                        {projets.length === 0 && (
+                            <li><span class="text-gray-400 italic">Aucun projet trouvé</span></li>
+                        )}
+                    </ul>
                 </div>
-                <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                    <li>
-                        <a class="justify-between">
-                            Profile
-                            <span class="badge">New</span>
-                        </a>
-                    </li>
-                    <li><a>Settings</a></li>
-                    <li><a>Logout</a></li>
-                </ul>
             </div>
-
         </div>
-    </div>
 
-    <main class="p-8">
-        <div class="flex w-full gap-4 m-4">
-        <a href="/vehicules/add" class="btn btn-primary">Ajouter un véhicule</a>            
-        <button class="btn btn-secondary">Ajouter/Modifer par lot</button>
-        </div>
-        <BulkImporter client:load/>
-        <CustomTable client:load vehicules={vehicules}/>
-    </main>
-
+        <main class="p-8">
+            <TableEditor client:load vehicules={vehicules} />
+        </main>
+    </Show>
 </BasicLayout>

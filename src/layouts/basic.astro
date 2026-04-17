@@ -1,18 +1,37 @@
 ---
 import "../styles/global.css";
+import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/astro/components';
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
+    <title>Central Portal</title>
   </head>
-  <body>
-    <slot />
+  <body class="min-h-screen bg-base-100">
+    <header class="w-full flex items-center justify-between p-4 bg-base-200 shadow-sm">
+      <div class="font-bold text-xl">
+        Central Portal
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <Show when="signed-out">
+          <SignInButton class="btn btn-primary btn-sm" mode="modal" />
+        </Show>
+        
+        <Show when="signed-in">
+          <UserButton />
+        </Show>
+      </div>
+    </header>
+
+    <main class="p-4 md:p-8">
+      <slot />
+    </main>
   </body>
 </html>
