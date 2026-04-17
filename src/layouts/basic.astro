@@ -16,17 +16,17 @@ import { Show, UserButton, SignInButton } from '@clerk/astro/components';
   
   <body class="min-h-screen bg-base-100 flex flex-col">
     
-    <header class="w-full flex items-center justify-between p-4 bg-base-200 shadow-sm z-50">
-      <div class="font-bold text-xl">
-        Central Portal
-      </div>
-      
-      <div class="flex items-center gap-4">
-        <Show when="signed-in">
+    <Show when="signed-in">
+      <header class="w-full flex items-center justify-between p-4 bg-base-200 shadow-sm z-50">
+        <div class="font-bold text-xl">
+          Central Portal
+        </div>
+        
+        <div class="flex items-center gap-4">
           <UserButton />
-        </Show>
-      </div>
-    </header>
+        </div>
+      </header>
+    </Show>
 
     <main class="flex-grow p-4 md:p-8 flex flex-col">
       
@@ -37,11 +37,7 @@ import { Show, UserButton, SignInButton } from '@clerk/astro/components';
               <h2 class="card-title text-2xl">Accès Restreint 🔒</h2>
               <p class="text-sm opacity-70">Veuillez vous identifier pour gérer le portail.</p>
               
-              <SignInButton mode="modal">
-                <button class="btn btn-primary w-full mt-2">
-                  Se connecter
-                </button>
-              </SignInButton>
+              <SignInButton class="btn btn-prymary" mode="modal">
             </div>
           </div>
         </div>
