@@ -1,6 +1,6 @@
 <script lang="ts">
-    import ImageComponent from './ImageComponent.svelte';
-    import type { Vehicule, Image } from '../../type';
+    import ImageComponent from '../atoms/ImageComponent.svelte';
+    import type { Vehicule, Image } from '../../../type';
     interface Props {
         item?: Vehicule
         images?: Image[];

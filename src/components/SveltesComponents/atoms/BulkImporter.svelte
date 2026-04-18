@@ -1,16 +1,16 @@
 <script lang="ts">
     import Papa from 'papaparse';
-    import type { Vehicule } from '../../type';
+    import type { Vehicule } from '../../../type';
 
 
     let bulkVehicules = $state<Vehicule[]>([]);
     let isUploading = $state(false);
     const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
 
+    // 1. TÉLÉCHARGER LE MODÈLE VIDE
     function downloadTemplate() {
-        const csvContent = "id,model,description,price,year,status\n";
-        const exemple = ",Ford Mustang,V8 Classique,35000,1969,0\n";
-        const fullContent = csvContent + exemple;
+        const csvContent = "id,model,description,price,year,status,images_urls\n";
+        const fullContent = csvContent;
 
         const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
         triggerDownload(blob, "modele_import_vehicules.csv");
@@ -25,7 +25,7 @@
             const vehicules = Array.isArray(rawData) ? rawData : [];
 
             if (vehicules.length === 0) {
-                alert("Aucun véhicule à exporter pour le moment !");
+                alert("Aucun véhicule à exporter !");
                 return;
             }
 
@@ -35,7 +35,10 @@
                 description: v.description,
                 price: v.price,
                 year: v.year,
-                status: v.status !== undefined ? v.status : 0 
+                status: v.status !== undefined ? v.status : 0,
+                images_urls: v.images && v.images.length > 0 
+                    ? v.images.map((img: any) => img.url).join(';') 
+                    : "" 
             }));
 
             const csvContent = Papa.unparse(exportData);
@@ -144,7 +147,7 @@
                         <th>Prix</th>
                         <th>Année</th>
                         <th>Statut</th>
-                        <th></th>
+                        <th>Images (URLs)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -170,6 +173,9 @@
                             </td>
                             <td class="text-right">
                                 <button onclick={() => removeRow(i)} class="btn btn-ghost btn-xs text-error">X</button>
+                            </td>
+                            <td>
+                                <input type="text" bind:value={vehicule.images_urls} placeholder="url1.jpg;url2.jpg" class="input input-bordered input-xs w-full min-w-[150px]" />
                             </td>
                         </tr>
                     {/each}

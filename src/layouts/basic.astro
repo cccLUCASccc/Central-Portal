@@ -1,6 +1,19 @@
 ---
 import "../styles/global.css";
 import { Show, UserButton, SignInButton } from '@clerk/astro/components';
+import ThemeController from "../components/SveltesComponents/atoms/ThemeController.svelte";
+import type { Item } from '../type'
+
+const API_URL = import.meta.env.API_URL;
+const finalUrl = `${API_URL}/api/projects`;
+
+const response_projets = await fetch(finalUrl);
+
+if (!response_projets.ok) {
+    throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+}
+
+const projets = await response_projets.json();
 ---
 
 <!DOCTYPE html>
@@ -12,41 +25,142 @@ import { Show, UserButton, SignInButton } from '@clerk/astro/components';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <title>Central Portal</title>
+    <script is:inline>
+      // Initialisation du thème pour éviter le flash blanc/noir
+      const theme = (() => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          return 'dracula';
+        }
+        return 'corporate';
+      })();
+      document.documentElement.setAttribute('data-theme', theme);
+    </script>
   </head>
   
-  <body class="min-h-screen bg-base-100 flex flex-col">
+  <body class="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300">
     
-    <Show when="signed-in">
-      <header class="w-full flex items-center justify-between p-4 bg-base-200 shadow-sm z-50">
-        <div class="font-bold text-xl">
-          Central Portal
-        </div>
+    <div class="drawer">
+      <input id="my-drawer" type="checkbox" class="drawer-toggle" />
+      <div class="drawer-content flex flex-col">
         
-        <div class="flex items-center gap-4">
-          <UserButton />
-        </div>
-      </header>
-    </Show>
-
-    <main class="flex-grow p-4 md:p-8 flex flex-col">
-      
-      <Show when="signed-out">
-        <div class="flex-grow flex items-center justify-center">
-          <div class="card w-96 bg-base-200 shadow-xl border border-base-300">
-            <div class="card-body items-center text-center gap-4">
-              <h2 class="card-title text-2xl">Accès Restreint 🔒</h2>
-              <p class="text-sm opacity-70">Veuillez vous identifier pour gérer le portail.</p>
-              
-              <SignInButton class="btn btn-prymary" mode="modal">
+        <Show when="signed-in">
+          <!-- Navbar -->
+          <header class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-200 px-4">
+            <div class="flex-none lg:hidden">
+              <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              </label>
             </div>
-          </div>
-        </div>
-      </Show>
+            
+            <div class="flex-1 px-2 mx-2 font-bold text-xl tracking-tight">
+              <a href="/" class="hover:text-primary transition-colors">Central Portal</a>
+            </div>
 
-      <Show when="signed-in">
-        <slot />
-      </Show>
-      
-    </main>
+            <div class="flex-none hidden lg:block">
+              <ul class="menu menu-horizontal px-1 gap-2">
+                <li><a href="/" class="rounded-lg">Inventaire</a></li>
+                <li><a href="/Livraison" class="rounded-lg">Livraisons</a></li>
+                <li>
+                  <div class="dropdown dropdown-end p-0">
+                    <div tabindex="0" role="button" class="btn btn-ghost rounded-lg px-4">
+                      Mes Projets
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-64 p-2 shadow-xl border border-base-200">
+                      {projets.map((project: Item) => (
+                        <li>
+                          <a class="flex items-center gap-3 p-2">
+                            {project.images && project.images.length > 0 ? (
+                              <div class="avatar">
+                                <div class="w-8 h-8 rounded-lg">
+                                  <img src={project.images[0].url} alt={project.name} />
+                                </div>
+                              </div>
+                            ) : (
+                              <div class="w-8 h-8 rounded-lg bg-base-300 flex items-center justify-center text-xs font-bold uppercase">
+                                {project.name.charAt(0)}
+                              </div>
+                            )}
+                            <span class="font-medium">{project.name}</span>
+                          </a>
+                        </li>
+                      ))}
+                      {projets.length === 0 && (
+                        <li><span class="text-gray-400 italic p-4 text-center">Aucun projet trouvé</span></li>
+                      )}
+                    </ul>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="flex-none gap-4 ml-2">
+              <ThemeController client:load />
+              <div class="divider divider-horizontal mx-0 h-8 self-center"></div>
+              <UserButton />
+            </div>
+          </header>
+        </Show>
+
+        <!-- Main Content -->
+        <main class="flex-grow flex flex-col relative">
+          <Show when="signed-out">
+            <div class="flex-grow flex items-center justify-center p-4 bg-[radial-gradient(circle_at_center,_var(--color-primary)_0%,_transparent_100%)] bg-opacity-5">
+              <div class="card w-full max-w-md bg-base-100 shadow-2xl border border-base-200 overflow-hidden">
+                <div class="h-2 bg-primary"></div>
+                <div class="card-body items-center text-center gap-6 py-10">
+                  <div class="bg-primary/10 p-4 rounded-full">
+                    <span class="text-4xl">🔒</span>
+                  </div>
+                  <div>
+                    <h2 class="card-title text-3xl font-bold justify-center">Accès Restreint</h2>
+                    <p class="mt-2 opacity-70">Identifiez-vous pour accéder au tableau de bord.</p>
+                  </div>
+                  <div class="card-actions w-full justify-center mt-4">
+                    <SignInButton class="btn btn-primary btn-wide rounded-full font-bold shadow-lg hover:shadow-primary/20 transition-all" mode="modal" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Show>
+
+          <Show when="signed-in">
+            <div class="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <slot />
+            </div>
+          </Show>
+        </main>
+        
+        <footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300">
+          <aside>
+            <p>Copyright © 2026 - Tous droits réservés par Central Portal</p>
+          </aside>
+        </footer>
+      </div> 
+
+      <!-- Drawer Side (Mobile Navigation) -->
+      <div class="drawer-side z-[100]">
+        <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
+          <li class="mb-4">
+            <div class="text-xl font-bold px-2 py-4">Menu</div>
+          </li>
+          <li><a href="/" class="flex items-center gap-3">🏠 Accueil</a></li>
+          <li><a href="/Inventaire" class="flex items-center gap-3">📋 Inventaire</a></li>
+          <li><a href="/Livraison" class="flex items-center gap-3">🚚 Livraisons</a></li>
+          <div class="divider">Projets</div>
+          {projets.map((project: Item) => (
+            <li>
+              <a>
+                <span class="truncate">{project.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   </body>
 </html>

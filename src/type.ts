@@ -22,4 +22,5 @@ export interface Vehicule {
     sold ?: boolean;
     year : number;
     status : number
+    images_urls ?: string;
 }

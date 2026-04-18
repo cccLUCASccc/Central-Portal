@@ -1,7 +1,7 @@
 <script lang="ts">
-    import DataModifier from "./DataModifier.svelte";
+    import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
-    import type { Vehicule } from "../../type";
+    import type { Vehicule } from "../../../type";
 
     interface Props {
         vehicule: Vehicule
@@ -57,14 +57,24 @@
     
 </script>
 
-<div class="flex flex-col w-full align-center justify-center">
-    <DataModifier bind:data_string={model} type={1} type_name='Modele'/>
-    <DataModifier bind:data_string={description} type={2}/>
-    <DataModifier bind:data_number={year} type={3} type_name='Année'/>
-    <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
-    <DataModifier bind:data_number={status} type={4} type_name="Status"/>
-    
-    <div class="grid grid-cols-2 gap-4 mt-8">
+<div class="space-y-6 max-w-4xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <DataModifier bind:data_string={model} type={1} type_name='Modèle'/>
+            <DataModifier bind:data_string={description} type={2} type_name='Description'/>
+        </div>
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <DataModifier bind:data_number={year} type={3} type_name='Année'/>
+                <DataModifier bind:data_number={status} type={4} type_name="Statut"/>
+            </div>
+            <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
+        </div>
+    </div>
+
+    <div class="divider">Médias et Images</div>
+
+    <div class="bg-base-200/30 p-4 rounded-2xl border border-base-200">
         <ImagesContainer 
             item={vehicule} 
             bind:images={images} 
@@ -72,5 +82,11 @@
         />
     </div>
 
-    <button onclick={() => {modifyVehicule(vehicule.id)}} class="btn btn-primary mt-16 w-full">Save</button>
+    <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
+        <button onclick={() => window.location.href = '/'} class="btn btn-ghost">Annuler</button>
+        <button onclick={() => {modifyVehicule(vehicule.id)}} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+            Enregistrer les modifications
+        </button>
+    </div>
 </div>
