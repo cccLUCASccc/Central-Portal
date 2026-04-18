@@ -83,13 +83,24 @@
         
         isUploading = true;
 
+        const dataToSend = bulkVehicules.map(v => {
+            let cleanVehicule = { ...v };
+            
+            cleanVehicule.id = Number(cleanVehicule.id) || 0;
+            cleanVehicule.status = Number(cleanVehicule.status) || 0;
+            cleanVehicule.price = Number(cleanVehicule.price) || 0;
+            cleanVehicule.year = Number(cleanVehicule.year) || new Date().getFullYear();
+            
+            return cleanVehicule;
+        });
+
         try {
             const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/bulk`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(bulkVehicules)
+                body: JSON.stringify(dataToSend) 
             });
-            console.log('api', `${PUBLIC_API_URL}/api/vehicules/bulk` )
+            
             if (response.ok) {
                 alert("Flotte synchronisée avec succès ! ✨");
                 bulkVehicules = [];
@@ -148,7 +159,7 @@
                         <th>Année</th>
                         <th>Statut</th>
                         <th>Images (URLs)</th>
-                    </tr>
+                        <th></th> </tr>
                 </thead>
                 <tbody>
                     {#each bulkVehicules as vehicule, i}
@@ -171,11 +182,11 @@
                             <td>
                                 <input type="number" bind:value={vehicule.status} class="input input-bordered input-xs w-16" />
                             </td>
-                            <td class="text-right">
-                                <button onclick={() => removeRow(i)} class="btn btn-ghost btn-xs text-error">X</button>
-                            </td>
                             <td>
                                 <input type="text" bind:value={vehicule.images_urls} placeholder="url1.jpg;url2.jpg" class="input input-bordered input-xs w-full min-w-[150px]" />
+                            </td>
+                            <td class="text-right">
+                                <button onclick={() => removeRow(i)} class="btn btn-ghost btn-xs text-error">X</button>
                             </td>
                         </tr>
                     {/each}
