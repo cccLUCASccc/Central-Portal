@@ -5,9 +5,9 @@
 
     let model = $state("");
     let description = $state("");
-    let year = $state<number | undefined>();
-    let price = $state<number | undefined>();
-    let status = $state<number | undefined>();
+    let year = $state<number>(new Date().getFullYear());
+    let price = $state<number>(0);
+    let status = $state<number>(0);
     
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
@@ -16,14 +16,11 @@
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
         const formData = new FormData();
         
-        console.log("Création du véhicule :", { model, description, price, year, newFiles });
-        
         formData.append("model", model);
         formData.append("description", description);
-        
-        if (price !== undefined) formData.append("price", price.toString());
-        if (year !== undefined) formData.append("year", year.toString());
-        if (status !== undefined) formData.append("status", status.toString());
+        formData.append("price", price.toString());
+        formData.append("year", year.toString());
+        formData.append("status", status.toString());
 
         newFiles.forEach(file => {
             formData.append("image", file);  
@@ -43,20 +40,36 @@
     }
 </script>
 
-<div class="flex flex-col w-full align-center justify-center">
-    <DataModifier bind:data_string={model} type={1} type_name='Modele'/>
-    <DataModifier bind:data_string={description} type={2}/>
-    <DataModifier bind:data_number={year} type={3} type_name='Année'/>
-    <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
-    <DataModifier bind:data_number={status} type={4} type_name='Status'/>
+<div class="space-y-6 max-w-4xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <DataModifier bind:data_string={model} type={1} type_name='Modèle'/>
+            <DataModifier bind:data_string={description} type={2} type_name='Description'/>
+        </div>
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <DataModifier bind:data_number={year} type={3} type_name='Année'/>
+                <DataModifier bind:data_number={status} type={4} type_name="Statut"/>
+            </div>
+            <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
+        </div>
+    </div>
+
+    <div class="divider">Médias et Images</div>
     
-    <div class="grid grid-cols-2 gap-4 mt-8">
+    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200">
         <ImagesContainer 
-            item={{ id: 0, model: model, description: description, price: price || 0, year: year || 0, sold: false, images: [], status: 1 }} 
+            item={{ id: 0, model, description, price, year, sold: false, images: [], status }} 
             bind:images={images} 
             bind:new_Files={newFiles} 
         />
     </div>
 
-    <button onclick={createVehicule} class="btn btn-primary mt-16 w-full">Créer</button>
+    <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
+        <button onclick={() => window.location.href = '/'} class="btn btn-ghost">Annuler</button>
+        <button onclick={createVehicule} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Créer le véhicule
+        </button>
+    </div>
 </div>

@@ -73,8 +73,8 @@
     </div>
 
     <div class="divider">Médias et Images</div>
-
-    <div class="bg-base-200/30 p-4 rounded-2xl border border-base-200">
+    
+    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200">
         <ImagesContainer 
             item={vehicule} 
             bind:images={images} 
