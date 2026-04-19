@@ -3,6 +3,7 @@
         src: string;
         alt: string;
         class?: string;
+        background?: string;
         ondelete?: () => void
     }
 
@@ -10,15 +11,16 @@
         src, 
         alt, 
         class: className = "",
+        background = "bg-white",
         ondelete
     }: Props = $props();
 </script>
 
-<div class="group relative aspect-video w-full overflow-hidden rounded-2xl border border-base-300 bg-base-200 shadow-sm hover:shadow-md transition-all duration-300">
+<div class="group relative aspect-square w-full overflow-hidden rounded-2xl border border-base-300 {background} shadow-sm hover:shadow-md transition-all duration-300">
     <img 
         src={src} 
         alt={alt} 
-        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        class="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
     />
     
     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">

@@ -71,7 +71,7 @@
     }
 </script>
 
-<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2 w-full">
     {#each gallery as image, index (image.id)}
         <div 
             draggable="true"
@@ -90,7 +90,7 @@
     {/each}
 
     <!-- Zone d'upload stylisée -->
-    <label class="group relative flex flex-col items-center justify-center aspect-video w-full rounded-2xl border-2 border-dashed border-base-300 bg-base-100 hover:bg-base-200 hover:border-primary/50 transition-all cursor-pointer overflow-hidden">
+    <label class="group relative flex flex-col items-center justify-center aspect-square w-full rounded-2xl border-2 border-dashed border-base-300 bg-base-100 hover:bg-base-200 hover:border-primary/50 transition-all cursor-pointer overflow-hidden">
         <input 
             multiple 
             onchange={handleFileChange} 
@@ -99,7 +99,7 @@
             class="hidden" 
         />
         
-        <div class="flex flex-col items-center gap-2 p-4 text-center">
+        <div class="flex flex-col items-center gap-4 p-4 text-center">
             <div class="p-3 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             </div>
