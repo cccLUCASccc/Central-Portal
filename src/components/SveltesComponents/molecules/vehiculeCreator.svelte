@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Image } from "../../../type";
-    import DataModifier from "./DataModifier.svelte";
-    import ImagesContainer from "../molecules/ImagesContainer.svelte";
+    import DataModifier from "../atoms/DataModifier.svelte";
+    import ImagesContainer from "./ImagesContainer.svelte";
 
     let model = $state("");
     let description = $state("");
