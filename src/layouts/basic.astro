@@ -2,7 +2,8 @@
 import "../styles/global.css";
 import { Show, UserButton, SignInButton } from '@clerk/astro/components';
 import ThemeController from "../components/SveltesComponents/atoms/ThemeController.svelte";
-import type { Item } from '../type'
+import type { Project } from '../type'
+import ProjetDropDown from "../components/SveltesComponents/atoms/ProjetDropDown.svelte";
 
 const API_URL = import.meta.env.API_URL;
 const finalUrl = `${API_URL}/api/projects`;
@@ -69,29 +70,7 @@ const projets = await response_projets.json();
                       Mes Projets
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
-                    <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-64 p-2 shadow-xl border border-base-200">
-                      {projets.map((project: Item) => (
-                        <li>
-                          <a class="flex items-center gap-3 p-2">
-                            {project.images && project.images.length > 0 ? (
-                              <div class="avatar">
-                                <div class="w-8 h-8 rounded-lg">
-                                  <img src={project.images[0].url} alt={project.name} />
-                                </div>
-                              </div>
-                            ) : (
-                              <div class="w-8 h-8 rounded-lg bg-base-300 flex items-center justify-center text-xs font-bold uppercase">
-                                {project.name.charAt(0)}
-                              </div>
-                            )}
-                            <span class="font-medium">{project.name}</span>
-                          </a>
-                        </li>
-                      ))}
-                      {projets.length === 0 && (
-                        <li><span class="text-gray-400 italic p-4 text-center">Aucun projet trouvé</span></li>
-                      )}
-                    </ul>
+                    <ProjetDropDown client:load projets={projets} />
                   </div>
                 </li>
               </ul>
@@ -152,7 +131,7 @@ const projets = await response_projets.json();
           <li><a href="/Inventaire" class="flex items-center gap-3">📋 Inventaire</a></li>
           <li><a href="/Livraison" class="flex items-center gap-3">🚚 Livraisons</a></li>
           <div class="divider">Projets</div>
-          {projets.map((project: Item) => (
+          {projets.map((project: Project) => (
             <li>
               <a>
                 <span class="truncate">{project.name}</span>

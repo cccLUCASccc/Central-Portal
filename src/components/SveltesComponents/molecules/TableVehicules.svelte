@@ -1,5 +1,5 @@
 <script lang="ts">
-    import BulkImporter from "../atoms/BulkImporter.svelte";
+    import BulkVehiculesImporter from "../atoms/BulkVehiculesImporter.svelte";
     import CustomTable from "../atoms/CustomTable.svelte";
     import type { Vehicule } from "../../../type";
 
@@ -7,7 +7,7 @@
         vehicules : Vehicule[]
     }
 
-    let { vehicules }:Props = $props()
+    let {vehicules }:Props = $props()
 
     let is_visible : boolean = $state(false)
 
@@ -37,11 +37,11 @@
 
     {#if is_visible}
         <div class="animate-in fade-in zoom-in duration-300">
-            <BulkImporter />
+            <BulkVehiculesImporter />
         </div>
     {/if}
 
     <div class="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
-        <CustomTable vehicules={vehicules}/>
+        <CustomTable vehicules={vehicules} mode={"vehicules"}/>
     </div>
 </div>

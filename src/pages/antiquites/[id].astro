@@ -1,0 +1,50 @@
+---
+import BasicLayout from '../../layouts/basic.astro';
+import AntiquitesModifier from '../../components/SveltesComponents/molecules/antiquitesModifier.svelte';
+
+export const prerender = false
+
+const { id } = Astro.params;
+
+const API_URL = import.meta.env.API_URL;
+const finalUrl = `${API_URL}/api/antiquites/single/${id}`;
+
+const response = await fetch(finalUrl);
+
+if (!response.ok) {
+    return Astro.redirect('/'); 
+}
+
+const current = await response.json();
+---
+
+<BasicLayout>
+    <div class="max-w-5xl mx-auto">
+        <div class="mb-8 flex items-center justify-between">
+            <a href="/" class="btn btn-ghost btn-sm gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+                Retour à l'inventaire
+            </a>
+            <div class="text-sm breadcrumbs opacity-50">
+                <ul>
+                    <li><a href="/">Accueil</a></li>
+                    <li><a href="/">Antiquités</a></li>
+                    <li>Modifier</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl border border-base-200 overflow-hidden">
+            <div class="bg-primary/5 p-6 border-b border-base-200 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold">Modifier l'objet</h1>
+                    <p class="text-sm opacity-60">ID: {id} • Mise à jour des informations et des médias.</p>
+                </div>
+                <div class="badge badge-primary badge-outline font-mono">{current.name}</div>
+            </div>
+            <div class="p-6 md:p-10">
+                <AntiquitesModifier client:load antiquite={current}/>
+            </div>
+        </div>
+    </div>
+</BasicLayout>

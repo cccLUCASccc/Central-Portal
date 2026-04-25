@@ -1,5 +1,5 @@
 ---
-import TableEditor from '../components/SveltesComponents/molecules/TableEditor.svelte';
+import TableSwitcher from '../components/SveltesComponents/molecules/TableSwitcher.svelte';
 import BasicLayout from '../layouts/basic.astro';
 import { Show } from '@clerk/astro/components';
 
@@ -23,10 +23,19 @@ if (!response_vehicules.ok) {
 }
 
 const vehicules = await response_vehicules.json();
+
+
+const antiquites_url = `${API_URL}/api/antiquites`
+const response_antiquites = await fetch(antiquites_url);
+if (!response_antiquites.ok) {
+    throw new Error(`Aïe ! Erreur API : ${response_antiquites.status}`);
+}
+
+const antiquites = await response_antiquites.json();
 ---
 
 <BasicLayout>
     <Show when="signed-in">
-        <TableEditor client:load vehicules={vehicules} />
+        <TableSwitcher client:load vehicules={vehicules} antiquites={antiquites} />
     </Show>
 </BasicLayout>
