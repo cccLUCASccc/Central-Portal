@@ -3,12 +3,13 @@
     interface Props {
         data_string?: string;
         data_number?: number;
+        data_bool?: boolean;
         type: number;
         type_name?: string;
         mode?: string;
     }
 
-    let { data_string = $bindable(), data_number = $bindable(), type, type_name, mode }: Props = $props();
+    let { data_string = $bindable(), data_number = $bindable(), data_bool = $bindable(), type, type_name, mode }: Props = $props();
 </script>
 
 {#if type === 1}
@@ -88,10 +89,43 @@
         }}
     >
         <option value={""}>Toutes les catégories</option>
-        <option value={"Nouveauté"}>Nouveauté</option>
         <option value={"Mobilier"}>Mobilier</option>
         <option value={"Objets d'art & Décoration"}>Objets d'art & Décoration</option>
         <option value={"Art de la table"}>Art de la table</option>
+        <option value={"Curiosités & Divers"}>Curiosités & Divers</option>
+    </select>
+</fieldset>
+
+{:else if type === 6}
+<fieldset class="fieldset flex flex-row items-center justify-between p-4 bg-base-200/50 rounded-xl border border-base-200">
+    <legend class="fieldset-legend font-medium">{type_name}</legend>
+    <div class="flex items-center gap-3">
+        <span class="text-sm opacity-60">{data_bool ? 'Oui' : 'Non'}</span>
+        <input 
+            type="checkbox" 
+            class="toggle toggle-primary" 
+            bind:checked={data_bool} 
+        />
+    </div>
+</fieldset>
+
+{:else if type === 7}
+<fieldset class="fieldset">
+    <legend class="fieldset-legend">{type_name}</legend>
+    <select 
+        class="select w-full"
+        onchange={(e) => {
+            const target = e.currentTarget as HTMLSelectElement;
+            const val = target.value === "true" ? true : target.value === "false" ? false : null;
+            if (mode === 'filter') {
+                filterStore.setNouveaute_filter(val);
+            }
+            data_bool = val as any;
+        }}
+    >
+        <option value="">Tout</option>
+        <option value="true">Nouveautés</option>
+        <option value="false">Anciens</option>
     </select>
 </fieldset>
 {/if}

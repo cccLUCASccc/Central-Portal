@@ -9,7 +9,7 @@
 
     // 1. TÉLÉCHARGER LE MODÈLE VIDE
     function downloadTemplate() {
-        const csvContent = "id,name,description,price,year,status,images_urls\n";
+        const csvContent = "id,name,description,price,category,tags,year,status,images_urls\n";
         const fullContent = csvContent;
 
         const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
@@ -34,6 +34,8 @@
                 name: v.name,
                 description: v.description,
                 price: v.price,
+                category: v.category,
+                tags: v.tags || "",
                 year: v.year,
                 status: v.status !== undefined ? v.status : 0,
                 images_urls: v.images && v.images.length > 0 
@@ -71,7 +73,22 @@
             skipEmptyLines: true,
             dynamicTyping: true, 
             complete: (results) => {
-                bulkAntiquites = results.data as Antiquite[];
+                bulkAntiquites = (results.data as any[]).map(row => {
+                    const normalized: any = {};
+                    for (const key in row) {
+                        const lowKey = key.toLowerCase().trim().replace(/ /g, '_').replace(/é/g, 'e');
+                        
+                        // Mapping intelligent pour les colonnes courantes
+                        if (lowKey === 'images' || lowKey === 'image_urls' || lowKey === 'url_images') {
+                            normalized['images_urls'] = row[key];
+                        } else if (lowKey === 'nom' || lowKey === 'name') {
+                            normalized['name'] = row[key];
+                        } else {
+                            normalized[lowKey] = row[key];
+                        }
+                    }
+                    return normalized as Antiquite;
+                });
                 input.value = '';
             },
             error: (err) => alert("Erreur CSV : " + err.message)
@@ -156,6 +173,8 @@
                         <th>Name</th>
                         <th>Description</th>
                         <th>Prix</th>
+                        <th>Catégorie</th>
+                        <th>Tags</th>
                         <th>Année</th>
                         <th>Statut</th>
                         <th>Images (URLs)</th>
@@ -175,6 +194,12 @@
                             </td>
                             <td>
                                 <input type="number" bind:value={antiquite.price} class="input input-bordered input-xs w-20" />
+                            </td>
+                            <td>
+                                <input type="text" bind:value={antiquite.category} class="input input-bordered input-xs w-16" />
+                            </td>
+                            <td>
+                                <input type="text" bind:value={antiquite.tags} class="input input-bordered input-xs w-full min-w-[100px]" />
                             </td>
                             <td>
                                 <input type="number" bind:value={antiquite.year} class="input input-bordered input-xs w-16" />

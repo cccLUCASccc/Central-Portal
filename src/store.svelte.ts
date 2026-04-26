@@ -52,6 +52,17 @@ class FilterStore {
         this.sync('status_filter', status);
     }
 
+    nouveaute_filter = $state<boolean | null>(
+        typeof window !== 'undefined' && localStorage.getItem('nouveaute_filter') 
+            ? JSON.parse(localStorage.getItem('nouveaute_filter')!) 
+            : null
+    );
+
+    setNouveaute_filter(nouveaute: boolean | null) {
+        this.nouveaute_filter = nouveaute;
+        this.sync('nouveaute_filter', nouveaute);
+    }
+
     category_filter = $state<string | null>(
         typeof window !== 'undefined' && localStorage.getItem('category_filter') 
             ? JSON.parse(localStorage.getItem('category_filter')!) 
@@ -77,9 +88,10 @@ class FilterStore {
         this.price_filter = null;
         this.year_filter = null;
         this.status_filter = null;
+        this.nouveaute_filter = null;
         this.category_filter = null;
         if (typeof window !== 'undefined') {
-            ['price_filter', 'year_filter', 'status_filter', 'category_filter'].forEach(k => localStorage.removeItem(k));
+            ['price_filter', 'year_filter', 'status_filter', 'nouveaute_filter', 'category_filter'].forEach(k => localStorage.removeItem(k));
         }
     }
 }
