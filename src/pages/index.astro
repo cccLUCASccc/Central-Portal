@@ -7,62 +7,51 @@ const auth = Astro.locals.auth()
 const token  = await auth.getToken()
 const userId = auth.userId
 
-let vehicules
-let projets
-let antiquites
+let vehicules = []
+let projets = []
+let antiquites = []
 
 if (userId){
     try{
         const API_URL = import.meta.env.API_URL;
-        const finalUrl = `${API_URL}/api/projects`;
-
-        console.log("🚀 URL appelée par Astro :", finalUrl);
-
-        const response_projets = await fetch(finalUrl, {
+        const fetchOptions = {
             headers : {
                 'Authorization' : `Bearer ${token}`
             }
-        });
+        };
 
+        // Fetch Projets
+        const response_projets = await fetch(`${API_URL}/api/projects`, fetchOptions);
         if (!response_projets.ok) {
-            throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+            console.error(`❌ Erreur Projets: ${response_projets.status}`);
+        } else {
+            projets = await response_projets.json();
         }
-        projets = await response_projets.json();
 
-        const vehicules_url = `${API_URL}/api/vehicules`
-
-        const response_vehicules = await fetch(vehicules_url, {
-            headers : {
-                'Authorization' : `Bearer ${token}`
-            }
-        });
+        // Fetch Véhicules
+        const response_vehicules = await fetch(`${API_URL}/api/vehicules`, fetchOptions);
         if (!response_vehicules.ok) {
-            throw new Error(`Aïe ! Erreur API : ${response_vehicules.status}`);
+            console.error(`❌ Erreur Véhicules: ${response_vehicules.status}`);
+        } else {
+            vehicules = await response_vehicules.json();
         }
 
-        vehicules = await response_vehicules.json();
-
-
-        const antiquites_url = `${API_URL}/api/antiquites`
-        const response_antiquites = await fetch(antiquites_url, {
-            headers : {
-                'Authorization' : `Bearer ${token}`
-            }
-        });
+        // Fetch Antiquités
+        const response_antiquites = await fetch(`${API_URL}/api/antiquites`, fetchOptions);
         if (!response_antiquites.ok) {
-            throw new Error(`Aïe ! Erreur API : ${response_antiquites.status}`);
+            console.error(`❌ Erreur Antiquités: ${response_antiquites.status}`);
+        } else {
+            antiquites = await response_antiquites.json();
         }
-
-        antiquites = await response_antiquites.json();
     }
     catch(error : any){
-        console.error(error.message)
+        console.error("🔥 Erreur lors du fetch SSR:", error.message)
     }
 }
 ---
 
 <BasicLayout>
     <Show when="signed-in">
-        <TableSwitcher client:load vehicules={vehicules} antiquites={antiquites} />
+        <TableSwitcher client:load vehicules={vehicules} antiquites={antiquites} projets={projets} />
     </Show>
 </BasicLayout>
