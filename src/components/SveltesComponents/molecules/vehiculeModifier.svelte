@@ -2,6 +2,7 @@
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
     import type { Vehicule } from "../../../type";
+    import { apiFetch } from "../../../lib/api";
 
     interface Props {
         vehicule: Vehicule
@@ -42,7 +43,7 @@
             formData.append("new_images", file);  
         });
 
-        const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/${id}`, {
+        const response = await apiFetch(`${PUBLIC_API_URL}/api/vehicules/${id}`, {
             method: "PATCH",
             body: formData 
         });

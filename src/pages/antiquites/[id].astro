@@ -3,19 +3,30 @@ import BasicLayout from '../../layouts/basic.astro';
 import AntiquitesModifier from '../../components/SveltesComponents/molecules/antiquitesModifier.svelte';
 
 export const prerender = false
+const auth = Astro.locals.auth()
+const token  = await auth.getToken()
+const userId = auth.userId
 
 const { id } = Astro.params;
-
 const API_URL = import.meta.env.API_URL;
 const finalUrl = `${API_URL}/api/antiquites/single/${id}`;
 
-const response = await fetch(finalUrl);
+let current
 
-if (!response.ok) {
-    return Astro.redirect('/'); 
+if(userId){
+    try{
+        const response = await fetch(finalUrl);
+
+        if (!response.ok) {
+            return Astro.redirect('/'); 
+        }
+
+        current = await response.json();
+    }
+    catch(error : any){
+        console.error(error.message)
+    }
 }
-
-const current = await response.json();
 ---
 
 <BasicLayout>

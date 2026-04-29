@@ -3,19 +3,36 @@ import BasicLayout from '../../layouts/basic.astro';
 import VehiculeModifier from '../../components/SveltesComponents/molecules/vehiculeModifier.svelte';
 
 export const prerender = false
-
 const { id } = Astro.params;
-
 const API_URL = import.meta.env.API_URL;
 const finalUrl = `${API_URL}/api/vehicules/single/${id}`;
 
-const response = await fetch(finalUrl);
+const auth = Astro.locals.auth()
+const token  = await auth.getToken()
+const userId = auth.userId
 
-if (!response.ok) {
-    return Astro.redirect('/'); 
+let current
+
+if(userId){
+    try{
+        const response = await fetch(finalUrl);
+
+        if (!response.ok) {
+            return Astro.redirect('/'); 
+        }
+
+        current = await response.json();
+    }
+    catch(error : any){
+        console.error(error.message)
+    }
 }
 
-const current = await response.json();
+
+
+
+
+
 ---
 
 <BasicLayout>

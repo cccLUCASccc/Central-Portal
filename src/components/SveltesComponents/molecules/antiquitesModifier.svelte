@@ -2,6 +2,7 @@
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
     import type { Antiquite } from "../../../type";
+    import { apiFetch } from "../../../lib/api";
 
     interface Props {
         antiquite: Antiquite
@@ -44,7 +45,7 @@
             formData.append("new_images", file);  
         });
 
-        const response = await fetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, {
+        const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, {
             method: "PATCH",
             body: formData 
         });

@@ -1,6 +1,7 @@
 <script lang="ts">
     import Papa from 'papaparse';
     import type { Antiquite } from '../../../type';
+    import { apiFetch } from '../../../lib/api';
 
 
     let bulkAntiquites = $state<Antiquite[]>([]);
@@ -18,7 +19,7 @@
 
     async function exportExistingAntiquites() {
         try {
-            const response = await fetch(`${PUBLIC_API_URL}/api/antiquites/`);
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/`);
             if (!response.ok) throw new Error("Erreur de récupération");
             
             const rawData = await response.json();

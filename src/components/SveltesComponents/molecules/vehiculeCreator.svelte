@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { apiFetch } from "../../../lib/api";
     import type { Image } from "../../../type";
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
@@ -26,7 +27,7 @@
             formData.append("image", file);  
         });
 
-        const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/add`, {
+        const response = await apiFetch(`${PUBLIC_API_URL}/api/vehicules/add`, {
             method: "POST",
             body: formData 
         });

@@ -1,6 +1,7 @@
 <script lang="ts">
     import Papa from 'papaparse';
     import type { Vehicule } from '../../../type';
+    import { apiFetch } from '../../../lib/api';
 
 
     let bulkVehicules = $state<Vehicule[]>([]);
@@ -18,7 +19,7 @@
 
     async function exportExistingVehicules() {
         try {
-            const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/`);
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/vehicules/`);
             if (!response.ok) throw new Error("Erreur de récupération");
             
             const rawData = await response.json();
@@ -95,7 +96,7 @@
         });
 
         try {
-            const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/bulk`, {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/vehicules/bulk`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(dataToSend) 
