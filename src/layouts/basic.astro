@@ -5,16 +5,33 @@ import ThemeController from "../components/SveltesComponents/atoms/ThemeControll
 import type { Project } from '../type'
 import ProjetDropDown from "../components/SveltesComponents/atoms/ProjetDropDown.svelte";
 
+const auth = Astro.locals.auth()
+const token  = await auth.getToken()
+const userId = auth.userId
 const API_URL = import.meta.env.API_URL;
 const finalUrl = `${API_URL}/api/projects`;
 
-const response_projets = await fetch(finalUrl);
+let projets
 
-if (!response_projets.ok) {
-    throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+if (userId){
+  try{
+
+      const response_projets = await fetch(finalUrl, {
+        headers : {
+          'Authoziration' : `Bearer ${token}`
+        }
+      });
+
+      if (!response_projets.ok) {
+          throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+      }
+
+      projets = await response_projets.json();
+    }
+  catch(error: any){
+    console.error(error.message)
+  }
 }
-
-const projets = await response_projets.json();
 ---
 
 <!DOCTYPE html>

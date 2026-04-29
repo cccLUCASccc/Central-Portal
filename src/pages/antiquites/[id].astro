@@ -15,7 +15,11 @@ let current
 
 if(userId){
     try{
-        const response = await fetch(finalUrl);
+        const response = await fetch(finalUrl, {
+            headers : {
+                'Authorization' : `Bearer ${token}`
+            }
+        });
 
         if (!response.ok) {
             return Astro.redirect('/'); 
