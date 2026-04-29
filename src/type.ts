@@ -10,7 +10,6 @@ export interface Vehicule {
     description: string;
     images: Image[];
     price : number;
-    sold ?: boolean;
     year : number;
     status : number
     images_urls ?: string;
@@ -22,9 +21,10 @@ export interface Antiquite {
     description: string;
     images: Image[];
     price : number;
-    sold ?: boolean;
+    nouveaute ?: boolean;
     year : number;
     category: string;
+    tags ?: string;
     status : number
     images_urls ?: string;
 }

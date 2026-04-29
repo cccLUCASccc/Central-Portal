@@ -10,6 +10,7 @@
     let price = $state<number>(0);
     let status = $state<number>(0);
     let category = $state("");
+    let nouveaute = $state(false);
     
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
@@ -24,6 +25,7 @@
         formData.append("year", year.toString());
         formData.append("status", status.toString());
         formData.append("category", category);
+        formData.append("nouveaute", nouveaute.toString());
 
         newFiles.forEach(file => {
             formData.append("image", file);  
@@ -56,6 +58,8 @@
             </div>
             <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
             <DataModifier bind:data_string={category} type={1} type_name='Catégorie'/>
+            
+            <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
         </div>
     </div>
 
