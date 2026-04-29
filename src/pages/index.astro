@@ -3,35 +3,62 @@ import TableSwitcher from '../components/SveltesComponents/molecules/TableSwitch
 import BasicLayout from '../layouts/basic.astro';
 import { Show } from '@clerk/astro/components';
 
-const API_URL = import.meta.env.API_URL;
-const finalUrl = `${API_URL}/api/projects`;
+const auth = Astro.locals.auth()
+const token  = await auth.getToken()
+const userId = auth.userId
 
-console.log("🚀 URL appelée par Astro :", finalUrl);
+let vehicules
+let projets
+let antiquites
 
-const response_projets = await fetch(finalUrl);
+if (userId){
+    try{
+        const API_URL = import.meta.env.API_URL;
+        const finalUrl = `${API_URL}/api/projects`;
 
-if (!response_projets.ok) {
-    throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+        console.log("🚀 URL appelée par Astro :", finalUrl);
+
+        const response_projets = await fetch(finalUrl, {
+            headers : {
+                'Authorization' : `Bearer ${token}`
+            }
+        });
+
+        if (!response_projets.ok) {
+            throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+        }
+        projets = await response_projets.json();
+
+        const vehicules_url = `${API_URL}/api/vehicules`
+
+        const response_vehicules = await fetch(vehicules_url, {
+            headers : {
+                'Authorization' : `Bearer ${token}`
+            }
+        });
+        if (!response_vehicules.ok) {
+            throw new Error(`Aïe ! Erreur API : ${response_vehicules.status}`);
+        }
+
+        vehicules = await response_vehicules.json();
+
+
+        const antiquites_url = `${API_URL}/api/antiquites`
+        const response_antiquites = await fetch(antiquites_url, {
+            headers : {
+                'Authorization' : `Bearer ${token}`
+            }
+        });
+        if (!response_antiquites.ok) {
+            throw new Error(`Aïe ! Erreur API : ${response_antiquites.status}`);
+        }
+
+        antiquites = await response_antiquites.json();
+    }
+    catch(error : any){
+        console.error(error.message)
+    }
 }
-
-const projets = await response_projets.json();
-
-const vehicules_url = `${API_URL}/api/vehicules`
-const response_vehicules = await fetch(vehicules_url);
-if (!response_vehicules.ok) {
-    throw new Error(`Aïe ! Erreur API : ${response_vehicules.status}`);
-}
-
-const vehicules = await response_vehicules.json();
-
-
-const antiquites_url = `${API_URL}/api/antiquites`
-const response_antiquites = await fetch(antiquites_url);
-if (!response_antiquites.ok) {
-    throw new Error(`Aïe ! Erreur API : ${response_antiquites.status}`);
-}
-
-const antiquites = await response_antiquites.json();
 ---
 
 <BasicLayout>
