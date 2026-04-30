@@ -27,6 +27,13 @@ if (userId && token){
         
         console.log("🚀 [Index] Appels API vers:", API_URL);
 
+        const fetchOptions = {
+            headers : {
+                'Authorization' : `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        };
+
         // Fetch Projets
         const response_projets = await fetch(`${API_URL}/api/projects`, fetchOptions);
         if (!response_projets.ok) {
