@@ -9,27 +9,39 @@ const auth = Astro.locals.auth()
 const token  = await auth.getToken()
 const userId = auth.userId
 const API_URL = import.meta.env.API_URL;
+
+console.log("🛠️ [Layout] Debug Auth - UserId:", userId);
+console.log("🛠️ [Layout] Debug Auth - Token present:", !!token);
+
+if (userId && !token) {
+    console.warn("⚠️ [Layout] L'utilisateur est connecté mais aucun token n'a pu être récupéré.");
+}
+
 const finalUrl = `${API_URL}/api/projects`;
 
-let projets
+let projets = []
 
-if (userId){
+if (userId && token){
   try{
-
+      if (!API_URL) {
+          throw new Error("API_URL is not defined in environment variables");
+      }
+      
+      console.log("🚀 [Layout] Fetching projects from:", finalUrl);
       const response_projets = await fetch(finalUrl, {
         headers : {
-          'Authoziration' : `Bearer ${token}`
+          'Authorization' : `Bearer ${token}`
         }
       });
 
       if (!response_projets.ok) {
-          throw new Error(`Aïe ! Erreur API : ${response_projets.status}`);
+          console.error(`❌ Erreur Projets Layout: ${response_projets.status}`);
+      } else {
+          projets = await response_projets.json();
       }
-
-      projets = await response_projets.json();
     }
   catch(error: any){
-    console.error(error.message)
+    console.error("🔥 Erreur Fetch Projets Layout:", error.message)
   }
 }
 ---
@@ -148,13 +160,15 @@ if (userId){
           <li><a href="/Inventaire" class="flex items-center gap-3">📋 Inventaire</a></li>
           <li><a href="/Livraison" class="flex items-center gap-3">🚚 Livraisons</a></li>
           <div class="divider">Projets</div>
-          {projets.map((project: Project) => (
-            <li>
+          {projets && projets.length > 0 ? projets.map((project: Project) => (
+            <li key={project.id}>
               <a>
                 <span class="truncate">{project.name}</span>
               </a>
             </li>
-          ))}
+          )) : (
+            <li class="disabled"><a>Aucun projet</a></li>
+          )}
         </ul>
       </div>
     </div>

@@ -1,16 +1,17 @@
 <script lang="ts">
     import TableVehicules from './TableVehicules.svelte';
     import TableAntiquites from './TableAntiquites.svelte';
-    import type { Vehicule, Antiquite } from "../../../type";
+    import type { Vehicule, Antiquite, Project } from "../../../type";
     import { projectStore } from "../../../store.svelte";
 
 
     interface Props {
         vehicules ?: Vehicule[],
-        antiquites ?: Antiquite[]
+        antiquites ?: Antiquite[],
+        projets ?: Project[]
     }
 
-    let { vehicules, antiquites }:Props = $props()
+    let { vehicules, antiquites, projets }:Props = $props()
 </script>
 
 {#if projectStore.selectedProject?.name === "Junction Retro" && vehicules}

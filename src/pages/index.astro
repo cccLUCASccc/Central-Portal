@@ -7,18 +7,25 @@ const auth = Astro.locals.auth()
 const token  = await auth.getToken()
 const userId = auth.userId
 
+console.log("🛠️ [Index] Debug Auth - UserId:", userId);
+console.log("🛠️ [Index] Debug Auth - Token present:", !!token);
+
+if (userId && !token) {
+    console.warn("⚠️ [Index] L'utilisateur est connecté mais aucun token n'a pu être récupéré. Vérifiez CLERK_SECRET_KEY.");
+}
+
 let vehicules = []
 let projets = []
 let antiquites = []
 
-if (userId){
+if (userId && token){
     try{
         const API_URL = import.meta.env.API_URL;
-        const fetchOptions = {
-            headers : {
-                'Authorization' : `Bearer ${token}`
-            }
-        };
+        if (!API_URL) {
+            throw new Error("API_URL is not defined in environment variables");
+        }
+        
+        console.log("🚀 [Index] Appels API vers:", API_URL);
 
         // Fetch Projets
         const response_projets = await fetch(`${API_URL}/api/projects`, fetchOptions);
