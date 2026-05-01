@@ -115,26 +115,6 @@ if (userId && token){
 
         <!-- Main Content -->
         <main class="flex-grow flex flex-col relative">
-          <Show when="signed-out">
-            <div class="flex-grow flex items-center justify-center p-4 bg-[radial-gradient(circle_at_center,_var(--color-primary)_0%,_transparent_100%)] bg-opacity-5">
-              <div class="card w-full max-w-md bg-base-100 shadow-2xl border border-base-200 overflow-hidden">
-                <div class="h-2 bg-primary"></div>
-                <div class="card-body items-center text-center gap-6 py-10">
-                  <div class="bg-primary/10 p-4 rounded-full">
-                    <span class="text-4xl">🔒</span>
-                  </div>
-                  <div>
-                    <h2 class="card-title text-3xl font-bold justify-center">Accès Restreint</h2>
-                    <p class="mt-2 opacity-70">Identifiez-vous pour accéder au tableau de bord.</p>
-                  </div>
-                  <div class="card-actions w-full justify-center mt-4">
-                    <SignInButton class="btn btn-primary btn-wide rounded-full font-bold shadow-lg hover:shadow-primary/20 transition-all" mode="modal" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Show>
-
           <Show when="signed-in">
             <div class="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <slot />
