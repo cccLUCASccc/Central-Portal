@@ -312,7 +312,7 @@
               </td>
 
               <td class="text-center">
-                  <span class="badge badge-info badge-sm font-bold uppercase tracking-tighter">
+                  <span class="badge badge-info h-auto py-1 px-3 font-bold uppercase text-[10px] leading-tight text-center">
                     {antiquite.category || "Inconnu"}
                   </span>
               </td>
