@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Vehicule, Antiquite } from '../../../type'
+  import { apiFetch } from '../../../lib/api';
 
   interface Props {
       vehicules?: Vehicule[];
@@ -65,7 +66,7 @@
     
     try {
       const promises = selectedIds.map(id => 
-        fetch(`${PUBLIC_API_URL}/api/${endpoint}/${id}`, { method: "DELETE" })
+        apiFetch(`${PUBLIC_API_URL}/api/${endpoint}/${id}`, { method: "DELETE" })
       );
       
       await Promise.all(promises);
@@ -87,7 +88,7 @@
   async function DeleteVehicule(id: number){
       const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
       try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/vehicules/${id}`, { method: "DELETE" });
+        const response = await apiFetch(`${PUBLIC_API_URL}/api/vehicules/${id}`, { method: "DELETE" });
         if (response.ok) {
           current_vehicules = current_vehicules.filter(vehicule => vehicule.id !== id);
         }
@@ -99,7 +100,7 @@
   async function DeleteAntiquite(id: number){
       const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
       try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, { method: "DELETE" });
+        const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, { method: "DELETE" });
         if (response.ok) {
           current_antiquites = current_antiquites.filter(antiquite => antiquite.id !== id);
         }

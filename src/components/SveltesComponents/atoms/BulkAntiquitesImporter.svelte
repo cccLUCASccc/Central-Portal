@@ -113,7 +113,7 @@
         });
 
         try {
-            const response = await fetch(`${PUBLIC_API_URL}/api/antiquites/bulk`, {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/bulk`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(dataToSend) 
