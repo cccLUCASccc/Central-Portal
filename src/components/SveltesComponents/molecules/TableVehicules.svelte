@@ -1,15 +1,23 @@
 <script lang="ts">
     import BulkVehiculesImporter from "../atoms/BulkVehiculesImporter.svelte";
     import CustomTable from "../atoms/CustomTable.svelte";
-    import type { Vehicule } from "../../../type";
+    import PaginationComponent from "../atoms/Pagination.svelte";
+    import type { Vehicule, Pagination } from "../../../type";
 
     interface Props {
-        vehicules : Vehicule[]
+        vehicules : Vehicule[];
+        pagination ?: Pagination;
     }
 
-    let {vehicules }:Props = $props()
+    let { vehicules, pagination }:Props = $props()
 
     let is_visible : boolean = $state(false)
+
+    function handlePageChange(page: number) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page.toString());
+        window.location.href = url.toString();
+    }
 
 </script>
 
@@ -43,5 +51,9 @@
 
     <div class="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
         <CustomTable vehicules={vehicules} mode={"vehicules"}/>
+
+        {#if pagination && pagination.total_pages > 1}
+            <PaginationComponent {pagination} onPageChange={handlePageChange} />
+        {/if}
     </div>
 </div>

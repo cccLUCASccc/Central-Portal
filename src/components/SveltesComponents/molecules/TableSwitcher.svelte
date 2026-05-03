@@ -1,23 +1,26 @@
 <script lang="ts">
     import TableVehicules from './TableVehicules.svelte';
     import TableAntiquites from './TableAntiquites.svelte';
-    import type { Vehicule, Antiquite, Project } from "../../../type";
+    import type { Vehicule, Antiquite, Project, Pagination } from "../../../type";
     import { projectStore } from "../../../store.svelte";
 
 
     interface Props {
         vehicules ?: Vehicule[],
+        vehiculesPagination ?: Pagination,
         antiquites ?: Antiquite[],
-        projets ?: Project[]
+        antiquitesPagination ?: Pagination,
+        projets ?: Project[],
+        projetsPagination ?: Pagination
     }
 
-    let { vehicules, antiquites, projets }:Props = $props()
+    let { vehicules, vehiculesPagination, antiquites, antiquitesPagination, projets, projetsPagination }:Props = $props()
 </script>
 
 {#if projectStore.selectedProject?.name === "Junction Retro" && vehicules}
-    <TableVehicules vehicules={vehicules} />
+    <TableVehicules vehicules={vehicules} pagination={vehiculesPagination} />
 {:else if projectStore.selectedProject?.name === "Daisy Brocante" && antiquites}
-    <TableAntiquites antiquites={antiquites} />
+    <TableAntiquites antiquites={antiquites} pagination={antiquitesPagination} />
 {:else if !projectStore.selectedProject}
     <div class="alert shadow-lg">
         <div>

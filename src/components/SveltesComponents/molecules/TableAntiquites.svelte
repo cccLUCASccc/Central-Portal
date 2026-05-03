@@ -2,14 +2,16 @@
     import BulkAntiquitesImporter from "../atoms/BulkAntiquitesImporter.svelte";
     import CustomTable from "../atoms/CustomTable.svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
+    import PaginationComponent from "../atoms/Pagination.svelte";
     import { filterStore } from "../../../store.svelte";
-    import type { Antiquite } from "../../../type";
+    import type { Antiquite, Pagination } from "../../../type";
 
     interface Props {
-        antiquites : Antiquite[]
+        antiquites : Antiquite[];
+        pagination ?: Pagination;
     }
 
-    let { antiquites }:Props = $props()
+    let { antiquites, pagination }:Props = $props()
 
     let is_visible : boolean = $state(false)
 
@@ -19,12 +21,16 @@
             if (filterStore.year_filter && item.year !== filterStore.year_filter) return false;
             if (filterStore.status_filter !== null && item.status !== filterStore.status_filter) return false;
             if (filterStore.nouveaute_filter !== null && item.nouveaute !== filterStore.nouveaute_filter) return false;
-            if (filterStore.category_filter && item.category !== filterStore.category_filter) {
-                if (!item.category.toLowerCase().includes(filterStore.category_filter.toLowerCase())) return false;
-            }
+            if (filterStore.category_filter && item.category && !item.category.toLowerCase().includes(filterStore.category_filter.toLowerCase())) return false;
             return true;
         })
     );
+
+    function handlePageChange(page: number) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page.toString());
+        window.location.href = url.toString();
+    }
 
 </script>
 
@@ -69,5 +75,9 @@
 
     <div class="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
         <CustomTable antiquites={filteredAntiquites} mode={"antiquites"}/>
+        
+        {#if pagination && pagination.total_pages > 1}
+            <PaginationComponent {pagination} onPageChange={handlePageChange} />
+        {/if}
     </div>
 </div>

@@ -4,6 +4,18 @@ export interface Image {
     position?: number;
 }
 
+export interface Pagination {
+    total_items: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+}
+
+export interface PaginatedResponse<T> {
+    data: T[];
+    pagination: Pagination;
+}
+
 export interface Vehicule {
     id: number; 
     model: string;
