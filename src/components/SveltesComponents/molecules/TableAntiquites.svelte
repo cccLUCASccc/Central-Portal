@@ -21,7 +21,11 @@
             if (filterStore.year_filter && item.year !== filterStore.year_filter) return false;
             if (filterStore.status_filter !== null && item.status !== filterStore.status_filter) return false;
             if (filterStore.nouveaute_filter !== null && item.nouveaute !== filterStore.nouveaute_filter) return false;
-            if (filterStore.category_filter && item.category && !item.category.toLowerCase().includes(filterStore.category_filter.toLowerCase())) return false;
+            
+            if (filterStore.category_filter) {
+                if (!item.category) return false;
+                if (!item.category.toLowerCase().includes(filterStore.category_filter.toLowerCase())) return false;
+            }
             return true;
         })
     );
@@ -58,9 +62,9 @@
 
     <!-- Barre de Filtres -->
     <div class="bg-base-100 p-4 rounded-2xl shadow-sm border border-base-200 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-        <DataModifier type={5} type_name="Catégorie" mode="filter" data_string={filterStore.category_filter || ""} />
-        <DataModifier type={3} type_name="Prix Max" mode="filter" data_number={filterStore.price_filter || undefined} />
-        <DataModifier type={4} type_name="Statut" mode="filter" data_number={filterStore.status_filter ?? undefined} />
+        <DataModifier type={5} type_name="Catégorie" mode="filter" bind:data_string={filterStore.category_filter} />
+        <DataModifier type={3} type_name="Prix Max" mode="filter" bind:data_number={filterStore.price_filter} />
+        <DataModifier type={4} type_name="Statut" mode="filter" bind:data_number={filterStore.status_filter} />
         <DataModifier type={7} type_name="Nouveauté" mode="filter" bind:data_bool={filterStore.nouveaute_filter} />
         <div class="flex gap-2">
             <button class="btn btn-ghost flex-1" onclick={() => filterStore.reset()}>Réinitialiser</button>
