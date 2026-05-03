@@ -5,50 +5,66 @@
     import PaginationComponent from "../atoms/Pagination.svelte";
     import { filterStore } from "../../../store.svelte";
     import type { Antiquite, Pagination } from "../../../type";
+    import { apiFetch } from "../../../lib/api";
 
     interface Props {
+        apiUrl: string;
         antiquites : Antiquite[];
         pagination ?: Pagination;
     }
 
-    let { antiquites, pagination }:Props = $props()
+    let { apiUrl, antiquites: initialAntiquites, pagination: initialPagination }:Props = $props()
 
+    // État local réactif pour permettre la mise à jour sans reload
+    let currentAntiquites = $state(initialAntiquites);
+    let currentPagination = $state(initialPagination);
+    let isLoading = $state(false);
     let is_visible : boolean = $state(false)
 
+    async function fetchData(page = 1) {
+        if (typeof window === 'undefined') return;
+        
+        isLoading = true;
+        const params = new URLSearchParams({ page: page.toString() });
+        
+        if (filterStore.category_filter) params.set('category', filterStore.category_filter);
+        if (filterStore.status_filter !== null) params.set('status', filterStore.status_filter.toString());
+        if (filterStore.price_filter) params.set('priceMax', filterStore.price_filter.toString());
+        if (filterStore.nouveaute_filter !== null) params.set('nouveaute', filterStore.nouveaute_filter.toString());
+
+        try {
+            // Utilisation de apiFetch pour gérer le token Clerk automatiquement
+            const response = await apiFetch(`${apiUrl}/api/antiquites?${params.toString()}`);
+            if (response.ok) {
+                const result = await response.json();
+                currentAntiquites = result.data;
+                currentPagination = result.pagination;
+                
+                // Mise à jour silencieuse de l'URL pour que le bouton "Retour" fonctionne
+                const url = new URL(window.location.href);
+                // On nettoie les anciens paramètres et on met les nouveaux
+                url.searchParams.forEach((_, key) => { if (key !== 'project') url.searchParams.delete(key) }); // On garde juste le projet si présent
+                params.forEach((value, key) => url.searchParams.set(key, value));
+                window.history.pushState({}, '', url.toString());
+            }
+        } catch (e) {
+            console.error("❌ Erreur lors de la récupération des données :", e);
+        } finally {
+            isLoading = false;
+        }
+    }
+
     function handlePageChange(page: number) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', page.toString());
-        window.location.href = url.toString();
+        fetchData(page);
     }
 
     function handleFilterChange() {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', '1'); // Reset to page 1 on filter change
-        
-        if (filterStore.category_filter) url.searchParams.set('category', filterStore.category_filter);
-        else url.searchParams.delete('category');
-        
-        if (filterStore.status_filter !== null) url.searchParams.set('status', filterStore.status_filter.toString());
-        else url.searchParams.delete('status');
-        
-        if (filterStore.price_filter) url.searchParams.set('priceMax', filterStore.price_filter.toString());
-        else url.searchParams.delete('priceMax');
-        
-        if (filterStore.nouveaute_filter !== null) url.searchParams.set('nouveaute', filterStore.nouveaute_filter.toString());
-        else url.searchParams.delete('nouveaute');
-
-        window.location.href = url.toString();
+        fetchData(1); // Retour à la page 1 lors d'un changement de filtre
     }
 
     function resetFilters() {
         filterStore.reset();
-        const url = new URL(window.location.href);
-        url.searchParams.delete('category');
-        url.searchParams.delete('status');
-        url.searchParams.delete('priceMax');
-        url.searchParams.delete('nouveaute');
-        url.searchParams.set('page', '1');
-        window.location.href = url.toString();
+        fetchData(1);
     }
 
 </script>
@@ -100,11 +116,17 @@
         </div>
     {/if}
 
-    <div class="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
-        <CustomTable antiquites={antiquites} mode={"antiquites"}/>
+    <div class="relative animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
+        {#if isLoading}
+            <div class="absolute inset-0 bg-base-100/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-2xl">
+                <span class="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        {/if}
+
+        <CustomTable antiquites={currentAntiquites} mode={"antiquites"}/>
         
-        {#if pagination && pagination.total_pages > 1}
-            <PaginationComponent {pagination} onPageChange={handlePageChange} />
+        {#if currentPagination && currentPagination.total_pages > 1}
+            <PaginationComponent pagination={currentPagination} onPageChange={handlePageChange} />
         {/if}
     </div>
 </div>

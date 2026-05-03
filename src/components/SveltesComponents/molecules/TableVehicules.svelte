@@ -3,20 +3,51 @@
     import CustomTable from "../atoms/CustomTable.svelte";
     import PaginationComponent from "../atoms/Pagination.svelte";
     import type { Vehicule, Pagination } from "../../../type";
+    import { apiFetch } from "../../../lib/api";
 
     interface Props {
+        apiUrl: string;
         vehicules : Vehicule[];
         pagination ?: Pagination;
     }
 
-    let { vehicules, pagination }:Props = $props()
+    let { apiUrl, vehicules: initialVehicules, pagination: initialPagination }:Props = $props()
 
+    let currentVehicules = $state(initialVehicules);
+    let currentPagination = $state(initialPagination);
+    let isLoading = $state(false);
     let is_visible : boolean = $state(false)
 
+    async function fetchData(page = 1) {
+        if (typeof window === 'undefined') return;
+        
+        isLoading = true;
+        const params = new URLSearchParams({ page: page.toString() });
+        
+        // Note: Les véhicules n'ont pas de catégorie dans ce projet
+        // mais on peut filtrer par statut ou prix si besoin
+
+        try {
+            const response = await apiFetch(`${apiUrl}/api/vehicules?${params.toString()}`);
+            if (response.ok) {
+                const result = await response.json();
+                currentVehicules = result.data;
+                currentPagination = result.pagination;
+                
+                const url = new URL(window.location.href);
+                url.searchParams.forEach((_, key) => { if (key !== 'project') url.searchParams.delete(key) });
+                params.forEach((value, key) => url.searchParams.set(key, value));
+                window.history.pushState({}, '', url.toString());
+            }
+        } catch (e) {
+            console.error("❌ Erreur lors de la récupération des véhicules :", e);
+        } finally {
+            isLoading = false;
+        }
+    }
+
     function handlePageChange(page: number) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', page.toString());
-        window.location.href = url.toString();
+        fetchData(page);
     }
 
 </script>
@@ -49,11 +80,17 @@
         </div>
     {/if}
 
-    <div class="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
-        <CustomTable vehicules={vehicules} mode={"vehicules"}/>
+    <div class="relative animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
+        {#if isLoading}
+            <div class="absolute inset-0 bg-base-100/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-2xl">
+                <span class="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        {/if}
 
-        {#if pagination && pagination.total_pages > 1}
-            <PaginationComponent {pagination} onPageChange={handlePageChange} />
+        <CustomTable vehicules={currentVehicules} mode={"vehicules"}/>
+
+        {#if currentPagination && currentPagination.total_pages > 1}
+            <PaginationComponent pagination={currentPagination} onPageChange={handlePageChange} />
         {/if}
     </div>
 </div>

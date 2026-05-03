@@ -6,6 +6,7 @@
 
 
     interface Props {
+        apiUrl: string;
         vehicules ?: Vehicule[],
         vehiculesPagination ?: Pagination,
         antiquites ?: Antiquite[],
@@ -14,13 +15,13 @@
         projetsPagination ?: Pagination
     }
 
-    let { vehicules, vehiculesPagination, antiquites, antiquitesPagination, projets, projetsPagination }:Props = $props()
+    let { apiUrl, vehicules, vehiculesPagination, antiquites, antiquitesPagination, projets, projetsPagination }:Props = $props()
 </script>
 
 {#if projectStore.selectedProject?.name === "Junction Retro" && vehicules}
-    <TableVehicules vehicules={vehicules} pagination={vehiculesPagination} />
+    <TableVehicules apiUrl={apiUrl} vehicules={vehicules} pagination={vehiculesPagination} />
 {:else if projectStore.selectedProject?.name === "Daisy Brocante" && antiquites}
-    <TableAntiquites antiquites={antiquites} pagination={antiquitesPagination} />
+    <TableAntiquites apiUrl={apiUrl} antiquites={antiquites} pagination={antiquitesPagination} />
 {:else if !projectStore.selectedProject}
     <div class="alert shadow-lg">
         <div>

@@ -88,6 +88,7 @@ if (userId && token){
     <Show when="signed-in">
         <TableSwitcher 
             client:load 
+            apiUrl={import.meta.env.API_URL}
             vehicules={vehicules} 
             vehiculesPagination={vehiculesPagination}
             antiquites={antiquites} 
