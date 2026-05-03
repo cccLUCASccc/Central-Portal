@@ -15,24 +15,39 @@
 
     let is_visible : boolean = $state(false)
 
-    let filteredAntiquites = $derived(
-        antiquites.filter(item => {
-            if (filterStore.price_filter && item.price > filterStore.price_filter) return false;
-            if (filterStore.year_filter && item.year !== filterStore.year_filter) return false;
-            if (filterStore.status_filter !== null && item.status !== filterStore.status_filter) return false;
-            if (filterStore.nouveaute_filter !== null && item.nouveaute !== filterStore.nouveaute_filter) return false;
-            
-            if (filterStore.category_filter) {
-                if (!item.category) return false;
-                if (!item.category.toLowerCase().includes(filterStore.category_filter.toLowerCase())) return false;
-            }
-            return true;
-        })
-    );
-
     function handlePageChange(page: number) {
         const url = new URL(window.location.href);
         url.searchParams.set('page', page.toString());
+        window.location.href = url.toString();
+    }
+
+    function handleFilterChange() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', '1'); // Reset to page 1 on filter change
+        
+        if (filterStore.category_filter) url.searchParams.set('category', filterStore.category_filter);
+        else url.searchParams.delete('category');
+        
+        if (filterStore.status_filter !== null) url.searchParams.set('status', filterStore.status_filter.toString());
+        else url.searchParams.delete('status');
+        
+        if (filterStore.price_filter) url.searchParams.set('priceMax', filterStore.price_filter.toString());
+        else url.searchParams.delete('priceMax');
+        
+        if (filterStore.nouveaute_filter !== null) url.searchParams.set('nouveaute', filterStore.nouveaute_filter.toString());
+        else url.searchParams.delete('nouveaute');
+
+        window.location.href = url.toString();
+    }
+
+    function resetFilters() {
+        filterStore.reset();
+        const url = new URL(window.location.href);
+        url.searchParams.delete('category');
+        url.searchParams.delete('status');
+        url.searchParams.delete('priceMax');
+        url.searchParams.delete('nouveaute');
+        url.searchParams.set('page', '1');
         window.location.href = url.toString();
     }
 
@@ -62,12 +77,20 @@
 
     <!-- Barre de Filtres -->
     <div class="bg-base-100 p-4 rounded-2xl shadow-sm border border-base-200 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-        <DataModifier type={5} type_name="Catégorie" mode="filter" bind:data_string={filterStore.category_filter} />
-        <DataModifier type={3} type_name="Prix Max" mode="filter" bind:data_number={filterStore.price_filter} />
-        <DataModifier type={4} type_name="Statut" mode="filter" bind:data_number={filterStore.status_filter} />
-        <DataModifier type={7} type_name="Nouveauté" mode="filter" bind:data_bool={filterStore.nouveaute_filter} />
+        <div onchange={handleFilterChange}>
+            <DataModifier type={5} type_name="Catégorie" mode="filter" bind:data_string={filterStore.category_filter} />
+        </div>
+        <div onfocusout={handleFilterChange}>
+            <DataModifier type={3} type_name="Prix Max" mode="filter" bind:data_number={filterStore.price_filter} />
+        </div>
+        <div onchange={handleFilterChange}>
+            <DataModifier type={4} type_name="Statut" mode="filter" bind:data_number={filterStore.status_filter} />
+        </div>
+        <div onchange={handleFilterChange}>
+            <DataModifier type={7} type_name="Nouveauté" mode="filter" bind:data_bool={filterStore.nouveaute_filter} />
+        </div>
         <div class="flex gap-2">
-            <button class="btn btn-ghost flex-1" onclick={() => filterStore.reset()}>Réinitialiser</button>
+            <button class="btn btn-ghost flex-1" onclick={resetFilters}>Réinitialiser</button>
         </div>
     </div>
 
@@ -78,7 +101,7 @@
     {/if}
 
     <div class="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
-        <CustomTable antiquites={filteredAntiquites} mode={"antiquites"}/>
+        <CustomTable antiquites={antiquites} mode={"antiquites"}/>
         
         {#if pagination && pagination.total_pages > 1}
             <PaginationComponent {pagination} onPageChange={handlePageChange} />

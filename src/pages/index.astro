@@ -7,6 +7,10 @@ const auth = Astro.locals.auth()
 const token  = await auth.getToken()
 const userId = auth.userId
 const page = Astro.url.searchParams.get('page') || '1'
+const category = Astro.url.searchParams.get('category') || ''
+const status = Astro.url.searchParams.get('status') || ''
+const priceMax = Astro.url.searchParams.get('priceMax') || ''
+const nouveaute = Astro.url.searchParams.get('nouveaute') || ''
 
 console.log("🛠️ [Index] Debug Auth - UserId:", userId);
 console.log("🛠️ [Index] Debug Auth - Token present:", !!token);
@@ -38,8 +42,14 @@ if (userId && token){
             }
         };
 
+        const queryParams = new URLSearchParams({ page });
+        if (category) queryParams.set('category', category);
+        if (status) queryParams.set('status', status);
+        if (priceMax) queryParams.set('priceMax', priceMax);
+        if (nouveaute) queryParams.set('nouveaute', nouveaute);
+
         // Fetch Projets
-        const response_projets = await fetch(`${API_URL}/api/projects?page=${page}`, fetchOptions);
+        const response_projets = await fetch(`${API_URL}/api/projects?${queryParams.toString()}`, fetchOptions);
         if (!response_projets.ok) {
             console.error(`❌ Erreur Projets: ${response_projets.status}`);
         } else {
@@ -49,7 +59,7 @@ if (userId && token){
         }
 
         // Fetch Véhicules
-        const response_vehicules = await fetch(`${API_URL}/api/vehicules?page=${page}`, fetchOptions);
+        const response_vehicules = await fetch(`${API_URL}/api/vehicules?${queryParams.toString()}`, fetchOptions);
         if (!response_vehicules.ok) {
             console.error(`❌ Erreur Véhicules: ${response_vehicules.status}`);
         } else {
@@ -59,7 +69,7 @@ if (userId && token){
         }
 
         // Fetch Antiquités
-        const response_antiquites = await fetch(`${API_URL}/api/antiquites?page=${page}`, fetchOptions);
+        const response_antiquites = await fetch(`${API_URL}/api/antiquites?${queryParams.toString()}`, fetchOptions);
         if (!response_antiquites.ok) {
             console.error(`❌ Erreur Antiquités: ${response_antiquites.status}`);
         } else {
