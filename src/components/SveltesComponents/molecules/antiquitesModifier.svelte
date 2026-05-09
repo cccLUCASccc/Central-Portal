@@ -20,7 +20,41 @@
     let status = $state(antiquite.status)
     let nouveaute = $state(antiquite.nouveaute ?? false);
     
+    let isEnhancing = $state(false);
     let newFiles = $state<File[]>([]); 
+
+    async function enhanceDescription() {
+        if (!name || !category) {
+            alert("Veuillez renseigner le nom et la catégorie pour aider l'IA.");
+            return;
+        }
+
+        isEnhancing = true;
+        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+        
+        try {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/ai/enhance`, {
+                method: "POST",
+                body: JSON.stringify({
+                    name,
+                    category,
+                    description
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                description = result.enhanced_description;
+            } else {
+                alert("Erreur lors de l'amélioration de la description.");
+            }
+        } catch (error) {
+            console.error("Error enhancing description:", error);
+            alert("Une erreur est survenue avec l'IA.");
+        } finally {
+            isEnhancing = false;
+        }
+    }
 
     async function modifyAntiquity(id: number) {
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
@@ -68,7 +102,21 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-4">
             <DataModifier bind:data_string={name} type={1} type_name='Nom'/>
-            <DataModifier bind:data_string={description} type={2} type_name='Description'/>
+            <div class="relative">
+                <DataModifier bind:data_string={description} type={2} type_name='Description'/>
+                <button 
+                    onclick={enhanceDescription} 
+                    disabled={isEnhancing}
+                    class="btn btn-xs btn-outline btn-secondary absolute top-0 right-0 gap-1 border-none hover:bg-secondary/10"
+                >
+                    {#if isEnhancing}
+                        <span class="loading loading-spinner loading-xs"></span>
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>
+                    {/if}
+                    Améliorer
+                </button>
+            </div>
         </div>
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
