@@ -56,4 +56,5 @@ export interface Livraison {
     pricesmall: number | null;
     pricemedium: number | null;
     pricelarge: number | null;
+    pricextralarge: number | null;
 }

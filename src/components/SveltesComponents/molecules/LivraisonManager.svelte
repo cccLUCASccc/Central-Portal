@@ -12,15 +12,18 @@
     let priceSmall = $state<number | null>(null);
     let priceMedium = $state<number | null>(null);
     let priceLarge = $state<number | null>(null);
+    let priceExtraLarge = $state<number | null>(null);
 
     const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
 
     async function fetchLivraisons() {
         isLoading = true;
         try {
-            const response = await apiFetch(`${PUBLIC_API_URL}/api/livraisons/`);
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/livraisons`);
             if (response.ok) {
                 livraisons = await response.json();
+            } else {
+                console.error("Erreur API Livraisons:", response.status);
             }
         } catch (error) {
             console.error("Error fetching livraisons:", error);
@@ -34,7 +37,8 @@
             providername: providerName,
             pricesmall: priceSmall,
             pricemedium: priceMedium,
-            pricelarge: priceLarge
+            pricelarge: priceLarge,
+            pricextralarge: priceExtraLarge
         };
 
         try {
@@ -80,6 +84,7 @@
         priceSmall = l.pricesmall;
         priceMedium = l.pricemedium;
         priceLarge = l.pricelarge;
+        priceExtraLarge = l.pricextralarge;
     }
 
     function resetForm() {
@@ -88,6 +93,7 @@
         priceSmall = null;
         priceMedium = null;
         priceLarge = null;
+        priceExtraLarge = null;
     }
 
     onMount(() => {
@@ -102,22 +108,26 @@
             <h2 class="text-xl font-bold">{isEditing ? 'Modifier le transporteur' : 'Ajouter un transporteur'}</h2>
         </div>
         <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                 <div class="form-control">
                     <label class="label"><span class="label-text font-bold">Nom du transporteur</span></label>
                     <input type="text" bind:value={providerName} placeholder="ex: DHL, UPS..." class="input input-bordered w-full" />
                 </div>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Prix Petit (S)</span></label>
+                    <label class="label"><span class="label-text">Prix S</span></label>
                     <input type="number" bind:value={priceSmall} placeholder="0.00" class="input input-bordered w-full" />
                 </div>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Prix Moyen (M)</span></label>
+                    <label class="label"><span class="label-text">Prix M</span></label>
                     <input type="number" bind:value={priceMedium} placeholder="0.00" class="input input-bordered w-full" />
                 </div>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Prix Grand (L/XL)</span></label>
+                    <label class="label"><span class="label-text">Prix L</span></label>
                     <input type="number" bind:value={priceLarge} placeholder="0.00" class="input input-bordered w-full" />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Prix XL</span></label>
+                    <input type="number" bind:value={priceExtraLarge} placeholder="0.00" class="input input-bordered w-full" />
                 </div>
             </div>
             <div class="mt-6 flex justify-end gap-2">
@@ -146,7 +156,8 @@
                         <th>Transporteur</th>
                         <th class="text-center">Prix S</th>
                         <th class="text-center">Prix M</th>
-                        <th class="text-center">Prix L/XL</th>
+                        <th class="text-center">Prix L</th>
+                        <th class="text-center">Prix XL</th>
                         <th class="text-right">Actions</th>
                     </tr>
                 </thead>
@@ -157,6 +168,7 @@
                             <td class="text-center">{l.pricesmall ? l.pricesmall + ' €' : '-'}</td>
                             <td class="text-center">{l.pricemedium ? l.pricemedium + ' €' : '-'}</td>
                             <td class="text-center">{l.pricelarge ? l.pricelarge + ' €' : '-'}</td>
+                            <td class="text-center">{l.pricextralarge ? l.pricextralarge + ' €' : '-'}</td>
                             <td class="text-right flex justify-end gap-2">
                                 <button onclick={() => editLivraison(l)} class="btn btn-ghost btn-xs btn-square">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
