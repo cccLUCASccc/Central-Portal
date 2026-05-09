@@ -37,7 +37,8 @@ if (userId && token){
       if (!response_projets.ok) {
           console.error(`❌ Erreur Projets Layout: ${response_projets.status}`);
       } else {
-          projets = await response_projets.json();
+          const result = await response_projets.json();
+          projets = result.data || result;
       }
     }
   catch(error: any){

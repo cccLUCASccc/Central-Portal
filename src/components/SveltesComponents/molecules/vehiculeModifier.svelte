@@ -50,7 +50,7 @@
 
         if (response.ok) {
             alert("Véhicule mis à jour avec succès ! ✨");
-            window.location.href = '/'
+            window.history.back();
         }
 
         return response;
@@ -85,7 +85,7 @@
     </div>
 
     <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
-        <button onclick={() => window.location.href = '/'} class="btn btn-ghost">Annuler</button>
+        <button onclick={() => window.history.back()} class="btn btn-ghost">Annuler</button>
         <button onclick={() => {modifyVehicule(vehicule.id)}} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
             Enregistrer les modifications
