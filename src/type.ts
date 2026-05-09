@@ -37,7 +37,8 @@ export interface Antiquite {
     year : number;
     category: string;
     tags ?: string;
-    status : number
+    status : number;
+    size: string;
     images_urls ?: string;
 }
 

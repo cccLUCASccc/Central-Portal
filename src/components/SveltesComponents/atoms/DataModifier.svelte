@@ -128,4 +128,17 @@
         <option value="false">Anciens</option>
     </select>
 </fieldset>
+{:else if type === 8}
+<fieldset class="fieldset">
+    <legend class="fieldset-legend">{type_name}</legend>
+    <select 
+        bind:value={data_string} 
+        class="select w-full"
+    >
+        <option value={"S"}>Petit (S)</option>
+        <option value={"M"}>Moyen (M)</option>
+        <option value={"L"}>Grand (L)</option>
+        <option value={"XL"}>Très Grand (XL)</option>
+    </select>
+</fieldset>
 {/if}

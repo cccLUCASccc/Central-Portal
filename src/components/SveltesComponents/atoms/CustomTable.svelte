@@ -257,6 +257,7 @@
             <th>Antiquité</th>
             <th>Description</th>
             <th class="text-right">Prix</th>
+            <th class="text-center">Taille</th>
             <th class="text-center">Categorie</th>
             <th class="text-center">Statut</th>
             <th class="text-right">Actions</th>
@@ -310,6 +311,10 @@
               
               <td class="text-right font-bold text-primary font-mono whitespace-nowrap">
                 {formatPrice(antiquite.price)}
+              </td>
+
+              <td class="text-center font-bold">
+                {antiquite.size || "S"}
               </td>
 
               <td class="text-center">

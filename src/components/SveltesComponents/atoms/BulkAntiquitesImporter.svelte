@@ -10,7 +10,7 @@
 
     // 1. TÉLÉCHARGER LE MODÈLE VIDE
     function downloadTemplate() {
-        const csvContent = "id,name,description,price,category,tags,year,status,images_urls\n";
+        const csvContent = "id,name,description,price,category,size,tags,year,status,images_urls\n";
         const fullContent = csvContent;
 
         const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
@@ -36,6 +36,7 @@
                 description: v.description,
                 price: v.price,
                 category: v.category,
+                size: v.size,
                 tags: v.tags || "",
                 year: v.year,
                 status: v.status !== undefined ? v.status : 0,
@@ -108,6 +109,7 @@
             cleanAntiquite.status = Number(cleanAntiquite.status) || 0;
             cleanAntiquite.price = Number(cleanAntiquite.price) || 0;
             cleanAntiquite.year = Number(cleanAntiquite.year) || new Date().getFullYear();
+            cleanAntiquite.size = cleanAntiquite.size || "S";
             
             return cleanAntiquite;
         });
@@ -175,6 +177,7 @@
                         <th>Description</th>
                         <th>Prix</th>
                         <th>Catégorie</th>
+                        <th>Taille</th>
                         <th>Tags</th>
                         <th>Année</th>
                         <th>Statut</th>
@@ -198,6 +201,9 @@
                             </td>
                             <td>
                                 <input type="text" bind:value={antiquite.category} class="input input-bordered input-xs w-16" />
+                            </td>
+                            <td>
+                                <input type="text" bind:value={antiquite.size} class="input input-bordered input-xs w-12" />
                             </td>
                             <td>
                                 <input type="text" bind:value={antiquite.tags} class="input input-bordered input-xs w-full min-w-[100px]" />

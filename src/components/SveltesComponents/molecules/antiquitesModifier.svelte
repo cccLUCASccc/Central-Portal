@@ -15,6 +15,7 @@
     let year = $state(antiquite.year);
     let price = $state(antiquite.price);
     let category = $state(antiquite.category);
+    let size = $state(antiquite.size);
     let images = $state(antiquite.images);
     let status = $state(antiquite.status)
     let nouveaute = $state(antiquite.nouveaute ?? false);
@@ -26,11 +27,12 @@
         
         const formData = new FormData();
         
-        console.log("Valeurs envoyées :", { name, description, category, price, year, nouveaute, newFiles });
+        console.log("Valeurs envoyées :", { name, description, category, size, price, year, nouveaute, newFiles });
         
         formData.append("name", name);
         formData.append("description", description);
         formData.append("category", category);
+        formData.append("size", size);
         formData.append("price", price.toString());
         formData.append("year", year.toString());
         formData.append("status", status.toString());
@@ -75,6 +77,7 @@
             </div>
             <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
             <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
+            <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
             
             <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
         </div>
