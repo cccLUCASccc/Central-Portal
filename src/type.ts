@@ -49,3 +49,11 @@ export interface Project {
     images: Image[];
     status: number;
 }
+
+export interface Livraison {
+    id?: number;
+    providername: string;
+    pricesmall: number | null;
+    pricemedium: number | null;
+    pricelarge: number | null;
+}
