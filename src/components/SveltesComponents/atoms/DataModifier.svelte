@@ -80,7 +80,7 @@
     <legend class="fieldset-legend">{type_name}</legend>
     <select 
         bind:value={data_string} 
-        class="select"
+        class="select w-full"
         onchange={(e) => {
             if (mode === 'filter') {
                 const target = e.currentTarget as HTMLSelectElement;
@@ -88,7 +88,9 @@
             }
         }}
     >
-        <option value={""}>Toutes les catégories</option>
+        {#if mode === 'filter'}
+            <option value={""}>Toutes les catégories</option>
+        {/if}
         <option value={"Mobilier"}>Mobilier</option>
         <option value={"Objets d'art & Décoration"}>Objets d'art & Décoration</option>
         <option value={"Art de la table"}>Art de la table</option>

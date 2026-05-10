@@ -9,7 +9,7 @@
     let year = $state<number>(new Date().getFullYear());
     let price = $state<number>(0);
     let status = $state<number>(0);
-    let category = $state("");
+    let category = $state("Mobilier");
     let size = $state("S");
     let nouveaute = $state(false);
     
@@ -107,7 +107,7 @@
                 <DataModifier bind:data_number={status} type={4} type_name="Statut"/>
             </div>
             <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
-            <DataModifier bind:data_string={category} type={1} type_name='Catégorie'/>
+            <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
             <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
             
             <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
