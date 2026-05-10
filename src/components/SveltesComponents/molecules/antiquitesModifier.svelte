@@ -24,6 +24,7 @@
     let newFiles = $state<File[]>([]); 
 
     async function enhanceDescription() {
+        console.log("🪄 [AI] Bouton Améliorer cliqué !");
         if (!name || !category) {
             alert("Veuillez renseigner le nom et la catégorie pour aider l'IA.");
             return;

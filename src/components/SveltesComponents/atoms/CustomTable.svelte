@@ -179,10 +179,12 @@
                 <div class="flex items-center gap-4">
                   <div class="avatar">
                     <div class="mask mask-squircle w-16 h-16 bg-base-200 shadow-inner group-hover:scale-105 transition-transform">
-                      {#if vehicule.images && vehicule.images.length > 0}
+                      {#if import.meta.env.PUBLIC_DISABLE_IMAGES !== "true" && (vehicule.images && vehicule.images.length > 0)}
                         <img src={vehicule.images[0].url} alt={vehicule.model} />
                       {:else}
-                        <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">N/A</div>
+                        <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">
+                          {vehicule.images?.length > 0 ? 'OFF' : 'N/A'}
+                        </div>
                       {/if}
                     </div>
                   </div>
@@ -281,10 +283,12 @@
                 <div class="flex items-center gap-4">
                   <div class="avatar">
                     <div class="mask mask-squircle w-16 h-16 bg-base-200 shadow-inner group-hover:scale-105 transition-transform">
-                      {#if antiquite.images && antiquite.images.length > 0}
+                      {#if import.meta.env.PUBLIC_DISABLE_IMAGES !== "true" && (antiquite.images && antiquite.images.length > 0)}
                         <img src={antiquite.images[0].url} alt={antiquite.name} />
                       {:else}
-                        <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">N/A</div>
+                        <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">
+                          {antiquite.images?.length > 0 ? 'OFF' : 'N/A'}
+                        </div>
                       {/if}
                     </div>
                   </div>

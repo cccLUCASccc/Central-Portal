@@ -17,11 +17,17 @@
 </script>
 
 <div class="group relative aspect-square w-full overflow-hidden rounded-2xl border border-base-300 {background} shadow-sm hover:shadow-md transition-all duration-300">
-    <img 
-        src={src} 
-        alt={alt} 
-        class="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-    />
+    {#if import.meta.env.PUBLIC_DISABLE_IMAGES !== "true"}
+        <img 
+            src={src} 
+            alt={alt} 
+            class="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+        />
+    {:else}
+        <div class="h-full w-full flex items-center justify-center bg-base-200 text-xs font-bold opacity-30">
+            IMAGE OFF
+        </div>
+    {/if}
     
     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
         <button 

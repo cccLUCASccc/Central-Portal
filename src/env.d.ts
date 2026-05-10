@@ -3,6 +3,7 @@
 
 interface ImportMetaEnv {
   readonly API_URL: string;
+  readonly PUBLIC_DISABLE_IMAGES: string;
 }
 
 interface ImportMeta {
