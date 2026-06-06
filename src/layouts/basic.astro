@@ -1,49 +1,17 @@
 ---
 import "../styles/global.css";
-import { Show, UserButton, SignInButton } from '@clerk/astro/components';
+import { Show, UserButton } from '@clerk/astro/components';
 import ThemeController from "../components/SveltesComponents/atoms/ThemeController.svelte";
-import type { Project } from '../type'
-import ProjetDropDown from "../components/SveltesComponents/atoms/ProjetDropDown.svelte";
 
 const auth = Astro.locals.auth()
 const token  = await auth.getToken()
 const userId = auth.userId
-const API_URL = import.meta.env.API_URL;
 
 console.log("🛠️ [Layout] Debug Auth - UserId:", userId);
 console.log("🛠️ [Layout] Debug Auth - Token present:", !!token);
 
 if (userId && !token) {
     console.warn("⚠️ [Layout] L'utilisateur est connecté mais aucun token n'a pu être récupéré.");
-}
-
-const finalUrl = `${API_URL}/api/projects`;
-
-let projets = []
-
-if (userId && token){
-  try{
-      if (!API_URL) {
-          throw new Error("API_URL is not defined in environment variables");
-      }
-      
-      console.log("🚀 [Layout] Fetching projects from:", finalUrl);
-      const response_projets = await fetch(finalUrl, {
-        headers : {
-          'Authorization' : `Bearer ${token}`
-        }
-      });
-
-      if (!response_projets.ok) {
-          console.error(`❌ Erreur Projets Layout: ${response_projets.status}`);
-      } else {
-          const result = await response_projets.json();
-          projets = result.data || result;
-      }
-    }
-  catch(error: any){
-    console.error("🔥 Erreur Fetch Projets Layout:", error.message)
-  }
 }
 ---
 
@@ -94,15 +62,6 @@ if (userId && token){
               <ul class="menu menu-horizontal px-1 gap-2">
                 <li><a href="/" class="rounded-lg">Inventaire</a></li>
                 <li><a href="/Livraison" class="rounded-lg">Livraisons</a></li>
-                <li>
-                  <div class="dropdown dropdown-end p-0">
-                    <div tabindex="0" role="button" class="btn btn-ghost rounded-lg px-4">
-                      Mes Projets
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>
-                    <ProjetDropDown client:load projets={projets} />
-                  </div>
-                </li>
               </ul>
             </div>
 
@@ -138,24 +97,7 @@ if (userId && token){
             <div class="text-xl font-bold px-2 py-4">Menu</div>
           </li>
           <li><a href="/" class="flex items-center gap-3">🏠 Accueil</a></li>
-          <li><a href="/Inventaire" class="flex items-center gap-3">📋 Inventaire</a></li>
           <li><a href="/Livraison" class="flex items-center gap-3">🚚 Livraisons</a></li>
-          <div class="divider">Projets</div>
-          {projets && projets.length > 0 ? projets.map((project: Project) => (
-            <li key={project.id}>
-              <a>
-                <span class="truncate">{project.name}</span>
-              </a>
-            </li>
-          )) : (
-            <li class="disabled"><a>Aucun projet</a></li>
-          )}
-          <div class="divider opacity-50"></div>
-          <li>
-            <a href="/projets/add" class="text-primary font-bold">
-              <span>+ Ajouter un projet</span>
-            </a>
-          </li>
         </ul>
       </div>
     </div>

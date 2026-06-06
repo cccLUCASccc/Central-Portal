@@ -1,5 +1,5 @@
 ---
-import TableSwitcher from '../components/SveltesComponents/molecules/TableSwitcher.svelte';
+import TableAntiquites from '../components/SveltesComponents/molecules/TableAntiquites.svelte';
 import BasicLayout from '../layouts/basic.astro';
 import { Show } from '@clerk/astro/components';
 
@@ -19,10 +19,6 @@ if (userId && !token) {
     console.warn("⚠️ [Index] L'utilisateur est connecté mais aucun token n'a pu être récupéré. Vérifiez CLERK_SECRET_KEY.");
 }
 
-let vehicules = []
-let vehiculesPagination = null
-let projets = []
-let projetsPagination = null
 let antiquites = []
 let antiquitesPagination = null
 
@@ -48,26 +44,6 @@ if (userId && token){
         if (priceMax) queryParams.set('priceMax', priceMax);
         if (nouveaute) queryParams.set('nouveaute', nouveaute);
 
-        // Fetch Projets
-        const response_projets = await fetch(`${API_URL}/api/projects?${queryParams.toString()}`, fetchOptions);
-        if (!response_projets.ok) {
-            console.error(`❌ Erreur Projets: ${response_projets.status}`);
-        } else {
-            const result = await response_projets.json();
-            projets = result.data || result;
-            projetsPagination = result.pagination;
-        }
-
-        // Fetch Véhicules
-        const response_vehicules = await fetch(`${API_URL}/api/vehicules?${queryParams.toString()}`, fetchOptions);
-        if (!response_vehicules.ok) {
-            console.error(`❌ Erreur Véhicules: ${response_vehicules.status}`);
-        } else {
-            const result = await response_vehicules.json();
-            vehicules = result.data || result;
-            vehiculesPagination = result.pagination;
-        }
-
         // Fetch Antiquités
         const response_antiquites = await fetch(`${API_URL}/api/antiquites?${queryParams.toString()}`, fetchOptions);
         if (!response_antiquites.ok) {
@@ -86,15 +62,11 @@ if (userId && token){
 
 <BasicLayout>
     <Show when="signed-in">
-        <TableSwitcher 
+        <TableAntiquites 
             client:load 
             apiUrl={import.meta.env.API_URL}
-            vehicules={vehicules} 
-            vehiculesPagination={vehiculesPagination}
             antiquites={antiquites} 
-            antiquitesPagination={antiquitesPagination}
-            projets={projets} 
-            projetsPagination={projetsPagination}
+            pagination={antiquitesPagination}
         />
     </Show>
 </BasicLayout>

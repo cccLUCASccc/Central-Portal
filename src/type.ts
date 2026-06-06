@@ -16,17 +16,6 @@ export interface PaginatedResponse<T> {
     pagination: Pagination;
 }
 
-export interface Vehicule {
-    id: number; 
-    model: string;
-    description: string;
-    images: Image[];
-    price : number;
-    year : number;
-    status : number
-    images_urls ?: string;
-}
-
 export interface Antiquite {
     id: number; 
     name: string;
@@ -40,14 +29,6 @@ export interface Antiquite {
     status : number;
     size: string;
     images_urls ?: string;
-}
-
-export interface Project {
-    id?: number; 
-    name: string;
-    description: string;
-    images: Image[];
-    status: number;
 }
 
 export interface Livraison {
