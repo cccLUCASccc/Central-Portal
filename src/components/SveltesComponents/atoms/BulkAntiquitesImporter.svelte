@@ -93,7 +93,7 @@
                     ? v.images.slice(1).map((img: any) => img.url).join(",") 
                     : "";
 
-                const link = `https://daisybrocante.com/boutique/${encodeURIComponent(v.name || "")}`;
+                const link = `https://www.daisybrocante.com/achat-rapide?produit=${v.id}`;
 
                 return [
                     v.id.toString(),                      // id
