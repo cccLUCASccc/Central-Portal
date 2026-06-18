@@ -19,11 +19,11 @@
 
     async function exportExistingAntiquites() {
         try {
-            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/`);
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites?limit=100000`);
             if (!response.ok) throw new Error("Erreur de récupération");
             
             const rawData = await response.json();
-            const antiquites = Array.isArray(rawData) ? rawData : [];
+            const antiquites = Array.isArray(rawData) ? rawData : (rawData.data || []);
 
             if (antiquites.length === 0) {
                 alert("Aucun Objet à exporter !");
@@ -52,6 +52,103 @@
             triggerDownload(blob, `flotte_export_${dateStr}.csv`);
         } catch (error) {
             alert("Erreur lors de l'exportation : " + error);
+        }
+    }
+
+    async function exportGoogleMerchantCenter() {
+        try {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites?limit=100000`);
+            if (!response.ok) throw new Error("Erreur de récupération");
+            
+            const rawData = await response.json();
+            const antiquites = Array.isArray(rawData) ? rawData : (rawData.data || []);
+
+            if (antiquites.length === 0) {
+                alert("Aucun Objet à exporter !");
+                return;
+            }
+
+            const headers = [
+                "id", "title", "description", "availability", "availability_date", "expiration_date",
+                "link", "mobile_link", "image_link", "price", "sale_price", "sale_price_effective_date",
+                "identifier_exists", "gtin", "mpn", "brand", "product_highlight", "product_detail",
+                "additional_image_link", "condition", "adult", "color", "size", "size_type",
+                "size_system", "gender", "material", "pattern", "age_group", "multipack",
+                "is bundle", "unit_pricing_measure", "unit_pricing_base_measure", "energy_efficiency_class",
+                "min_energy_efficiency_class", "max_energy_efficiency", "item_group_id", "video_link",
+                "virtual_model_link", "cost_of_goods_sold"
+            ];
+
+            const rows = antiquites.map((v: any) => {
+                const cleanTitle = (v.name || "").replace(/[\t\r\n]+/g, " ").trim().slice(0, 150);
+                const cleanDesc = (v.description || "").replace(/[\t\r\n]+/g, " ").trim().slice(0, 5000);
+                
+                let availability = "non_disponible";
+                if (v.status === 0) {
+                    availability = "en_stock";
+                }
+
+                const firstImage = v.images && v.images.length > 0 ? v.images[0].url : "";
+                const additionalImages = v.images && v.images.length > 1 
+                    ? v.images.slice(1).map((img: any) => img.url).join(",") 
+                    : "";
+
+                const link = `https://daisybrocante.com/boutique/${encodeURIComponent(v.name || "")}`;
+
+                return [
+                    v.id.toString(),                      // id
+                    cleanTitle,                           // title
+                    cleanDesc,                            // description
+                    availability,                         // availability
+                    "",                                   // availability_date
+                    "",                                   // expiration_date
+                    link,                                 // link
+                    "",                                   // mobile_link
+                    firstImage,                           // image_link
+                    v.price ? `${v.price} EUR` : "",       // price
+                    "",                                   // sale_price
+                    "",                                   // sale_price_effective_date
+                    "no",                                 // identifier_exists
+                    "",                                   // gtin
+                    "",                                   // mpn
+                    "Daisy Brocante",                     // brand
+                    "",                                   // product_highlight
+                    "",                                   // product_detail
+                    additionalImages,                     // additional_image_link
+                    "used",                               // condition
+                    "no",                                 // adult
+                    "",                                   // color
+                    v.size || "",                         // size
+                    "",                                   // size_type
+                    "",                                   // size_system
+                    "",                                   // gender
+                    "",                                   // material
+                    "",                                   // pattern
+                    "",                                   // age_group
+                    "",                                   // multipack
+                    "no",                                 // is bundle
+                    "",                                   // unit_pricing_measure
+                    "",                                   // unit_pricing_base_measure
+                    "",                                   // energy_efficiency_class
+                    "",                                   // min_energy_efficiency_class
+                    "",                                   // max_energy_efficiency
+                    "",                                   // item_group_id
+                    "",                                   // video_link
+                    "",                                   // virtual_model_link
+                    ""                                    // cost_of_goods_sold
+                ];
+            });
+
+            const csvContent = Papa.unparse({
+                fields: headers,
+                data: rows
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const dateStr = new Date().toISOString().split('T')[0];
+            triggerDownload(blob, `google_merchant_feed_${dateStr}.csv`);
+        } catch (error) {
+            alert("Erreur lors de l'exportation Google Merchant Center : " + error);
         }
     }
 
@@ -148,6 +245,10 @@
         </div>
         
         <div class="flex flex-wrap items-center gap-2">
+            <button onclick={exportGoogleMerchantCenter} class="btn btn-outline btn-info btn-sm">
+                🛍️ Google Merchant Feed
+            </button>
+
             <button onclick={exportExistingAntiquites} class="btn btn-outline btn-accent btn-sm">
                 📤 Exporter Base
             </button>
