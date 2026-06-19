@@ -1,0 +1,11 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import BlogManager from '../components/SveltesComponents/molecules/BlogManager.svelte';
+import { Show } from '@clerk/astro/components';
+---
+
+<BasicLayout>
+    <Show when="signed-in">
+        <BlogManager client:load apiUrl={import.meta.env.API_URL} />
+    </Show>
+</BasicLayout>
