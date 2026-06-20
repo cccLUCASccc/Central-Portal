@@ -1,0 +1,52 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import BlogManager from '../components/SveltesComponents/molecules/BlogManager.svelte';
+import { Show } from '@clerk/astro/components';
+
+const auth = Astro.locals.auth();
+const token = await auth.getToken();
+const userId = auth.userId;
+
+let initialPosts = [];
+let initialPagination = null;
+
+if (userId && token) {
+    try {
+        const API_URL = import.meta.env.API_URL;
+        if (!API_URL) {
+            throw new Error("API_URL is not defined in environment variables");
+        }
+
+        const fetchOptions = {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        };
+
+        const response = await fetch(`${API_URL}/api/blog?page=1&limit=10`, fetchOptions);
+        if (response.ok) {
+            const result = await response.json();
+            initialPosts = result.data || [];
+            initialPagination = result.pagination;
+        } else {
+            console.error(`❌ Erreur Blog API: ${response.status}`);
+        }
+    } catch (error: any) {
+        console.error("🔥 Erreur lors du fetch SSR (Blog):", error.message);
+    }
+}
+---
+
+<BasicLayout>
+    <Show when="signed-in">
+        <div class="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <BlogManager 
+                client:load 
+                apiUrl={import.meta.env.API_URL}
+                posts={initialPosts}
+                pagination={initialPagination}
+            />
+        </div>
+    </Show>
+</BasicLayout>
