@@ -31,6 +31,10 @@
     let activePreviewPost = $state<BlogPost | null>(null);
     let message = $state({ text: "", type: "" }); // Pour afficher des retours (succès/erreur)
 
+    // Paramètres de génération
+    let selectedTheme = $state("");
+    let customPrompt = $state("");
+
     function showMessage(text: string, type: "success" | "error" = "success") {
         message = { text, type };
         setTimeout(() => {
@@ -67,7 +71,11 @@
         
         try {
             const response = await apiFetch(`${apiUrl}/api/blog/generate`, {
-                method: 'POST'
+                method: 'POST',
+                body: JSON.stringify({
+                    theme: selectedTheme,
+                    custom_prompt: customPrompt
+                })
             });
             
             if (response.ok) {
@@ -155,27 +163,53 @@
         </div>
     {/if}
 
-    <!-- Header Section -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tight">Gestion du Blog</h1>
-            <p class="text-base-content/60 mt-1">Générez et gérez les articles du blog créés automatiquement par Gemini.</p>
+    <!-- Header Section & Paramètres de Génération -->
+    <div class="flex flex-col gap-4 bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">Gestion du Blog</h1>
+                <p class="text-base-content/60 mt-1">Générez et gérez les articles du blog créés automatiquement par Gemini.</p>
+            </div>
+            
+            <div>
+                <button 
+                    onclick={generateArticle}
+                    disabled={isGenerating || isLoading}
+                    class="btn btn-primary rounded-xl shadow-md hover:shadow-primary/30 transition-all px-6 gap-2"
+                >
+                    {#if isGenerating}
+                        <span class="loading loading-spinner loading-xs"></span>
+                        Génération en cours...
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l3.097-4.13c1.554-.267 2.879-1.25 3.593-2.613L16.2 13h1.8a.75.75 0 00.592-1.21l-3.6-4.8A.75.75 0 0013.2 7h-1.8l-1.07 1.606A6.978 6.978 0 009.813 15.904z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /></svg>
+                        Rédiger un article (Gemini)
+                    {/if}
+                </button>
+            </div>
         </div>
+
+        <div class="divider my-1"></div>
         
-        <div>
-            <button 
-                onclick={generateArticle}
-                disabled={isGenerating || isLoading}
-                class="btn btn-primary rounded-xl shadow-md hover:shadow-primary/30 transition-all px-6 gap-2"
-            >
-                {#if isGenerating}
-                    <span class="loading loading-spinner loading-xs"></span>
-                    Génération en cours...
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l3.097-4.13c1.554-.267 2.879-1.25 3.593-2.613L16.2 13h1.8a.75.75 0 00.592-1.21l-3.6-4.8A.75.75 0 0013.2 7h-1.8l-1.07 1.606A6.978 6.978 0 009.813 15.904z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /></svg>
-                    Rédiger un article (Gemini)
-                {/if}
-            </button>
+        <div class="flex flex-col md:flex-row gap-4 items-end">
+            <div class="form-control w-full md:w-1/3">
+                <label class="label">
+                    <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Thème (Optionnel)</span>
+                </label>
+                <select class="select select-bordered w-full" bind:value={selectedTheme} disabled={isGenerating || isLoading}>
+                    <option value="">Aléatoire (Gemini choisit)</option>
+                    <option value="Restauration & Rénovation">Restauration & Rénovation</option>
+                    <option value="Bien acheter & vendre">Bien acheter & vendre</option>
+                    <option value="Comment bien estimer">Comment bien estimer</option>
+                    <option value="Histoire de l'art & de l'objet">Histoire de l'art & de l'objet</option>
+                </select>
+            </div>
+            
+            <div class="form-control w-full md:w-2/3">
+                <label class="label">
+                    <span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/70">Consignes supplémentaires (Optionnel)</span>
+                </label>
+                <input type="text" placeholder="Ex: Parle de l'Art Déco, met un ton amusant..." class="input input-bordered w-full" bind:value={customPrompt} disabled={isGenerating || isLoading} />
+            </div>
         </div>
     </div>
 
