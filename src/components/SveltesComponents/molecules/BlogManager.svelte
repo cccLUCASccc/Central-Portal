@@ -9,6 +9,7 @@
         title: string;
         theme: string;
         summary: string;
+        content: string;
         cover_image: string;
         status: string;
         created_at: string;
@@ -27,6 +28,7 @@
     let currentPagination = $state(initialPagination);
     let isLoading = $state(false);
     let isGenerating = $state(false);
+    let activePreviewPost = $state<BlogPost | null>(null);
     let message = $state({ text: "", type: "" }); // Pour afficher des retours (succès/erreur)
 
     function showMessage(text: string, type: "success" | "error" = "success") {
@@ -102,6 +104,29 @@
             }
         } catch (e) {
             console.error("❌ Erreur suppression :", e);
+            showMessage("Erreur de connexion", "error");
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    // Publier un article
+    async function publishArticle(id: number) {
+        isLoading = true;
+        try {
+            const response = await apiFetch(`${apiUrl}/api/blog/${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: "published" })
+            });
+            
+            if (response.ok) {
+                showMessage("Article publié avec succès sur le site !", "success");
+                await fetchPosts(currentPagination?.current_page || 1);
+            } else {
+                showMessage("Impossible de publier l'article", "error");
+            }
+        } catch (e) {
+            console.error("❌ Erreur publication :", e);
             showMessage("Erreur de connexion", "error");
         } finally {
             isLoading = false;
@@ -229,6 +254,28 @@
                                 </td>
                                 <td class="text-right">
                                     <div class="flex justify-end gap-2">
+                                        <!-- Lire/Aperçu -->
+                                        <button 
+                                            onclick={() => activePreviewPost = post}
+                                            disabled={isLoading || isGenerating}
+                                            class="btn btn-ghost btn-square btn-sm text-info rounded-lg hover:bg-info/10"
+                                            title="Lire l'article"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        </button>
+
+                                        <!-- Publier (si draft) -->
+                                        {#if post.status === 'draft'}
+                                            <button 
+                                                onclick={() => publishArticle(post.id)}
+                                                disabled={isLoading || isGenerating}
+                                                class="btn btn-ghost btn-square btn-sm text-success rounded-lg hover:bg-success/10"
+                                                title="Publier sur le site"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            </button>
+                                        {/if}
+
                                         <!-- Supprimer -->
                                         <button 
                                             onclick={() => deleteArticle(post.id)}
@@ -253,3 +300,58 @@
         <PaginationComponent pagination={currentPagination} onPageChange={handlePageChange} />
     {/if}
 </div>
+
+<!-- Modal de Prévisualisation de l'article -->
+{#if activePreviewPost}
+    <div class="modal modal-open z-50">
+        <div class="modal-box max-w-4xl rounded-2xl bg-base-100 border border-base-300 shadow-2xl p-6 relative">
+            <button 
+                onclick={() => activePreviewPost = null}
+                class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
+            >✕</button>
+
+            {#if activePreviewPost.cover_image}
+                <div class="w-full h-56 rounded-xl overflow-hidden mb-6 bg-base-200 border border-base-200">
+                    <img src={activePreviewPost.cover_image} alt={activePreviewPost.title} class="w-full h-full object-cover" />
+                </div>
+            {/if}
+
+            <div class="flex items-center gap-3 mb-3">
+                <span class="badge badge-outline border-base-300 text-xs font-semibold px-3 py-2 rounded-lg">{activePreviewPost.theme}</span>
+                <span class="text-xs text-base-content/50">{new Date(activePreviewPost.created_at).toLocaleDateString('fr-FR')}</span>
+                {#if activePreviewPost.status === 'published'}
+                    <span class="badge badge-success badge-sm font-bold text-[9px]">PUBLIÉ</span>
+                {:else}
+                    <span class="badge badge-warning badge-sm font-bold text-[9px]">BROUILLON</span>
+                {/if}
+            </div>
+
+            <h2 class="text-3xl font-serif font-black tracking-tight mb-4 text-base-content leading-tight">{activePreviewPost.title}</h2>
+            <p class="text-base-content/75 italic border-l-4 border-primary/40 pl-4 mb-6 text-sm">{activePreviewPost.summary}</p>
+
+            <div class="divider"></div>
+
+            <!-- Contenu HTML généré -->
+            <div class="prose prose-sm max-w-none text-base-content/90 leading-relaxed font-sans mt-4">
+                {@html activePreviewPost.content}
+            </div>
+
+            <div class="modal-action mt-8 pt-4 border-t border-base-200 flex gap-2">
+                {#if activePreviewPost.status === 'draft'}
+                    <button 
+                        onclick={async () => {
+                            const id = activePreviewPost.id;
+                            activePreviewPost = null;
+                            await publishArticle(id);
+                        }}
+                        class="btn btn-success rounded-xl px-6"
+                    >
+                        Publier cet article
+                    </button>
+                {/if}
+                <button onclick={() => activePreviewPost = null} class="btn btn-outline rounded-xl">Fermer</button>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-black/60 backdrop-blur-xs" onclick={() => activePreviewPost = null}></div>
+    </div>
+{/if}
