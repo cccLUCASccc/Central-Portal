@@ -96,7 +96,34 @@
 
         return response;
     }
-    
+    let isPublishingFB = $state(false);
+
+    async function publishToFacebook(id: number) {
+        if (!confirm("Voulez-vous publier cet objet sur la Page Facebook et l'ajouter au Catalogue ?")) return;
+        
+        isPublishingFB = true;
+        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+        // The API endpoint requires the object to be saved first, but we can just trigger it.
+        try {
+            // Note: Make sure the object is saved before publishing!
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}/publish-facebook`, {
+                method: "POST",
+            });
+
+            if (response.ok) {
+                alert("✅ Objet publié avec succès sur Facebook et ajouté au catalogue !");
+            } else {
+                const res = await response.json();
+                alert(`❌ Erreur lors de la publication : ${res.error || 'Erreur inconnue'}`);
+            }
+        } catch (error) {
+            console.error("Error publishing to FB:", error);
+            alert("Une erreur de connexion est survenue.");
+        } finally {
+            isPublishingFB = false;
+        }
+    }
+
 </script>
 
 <div class="space-y-6 max-w-4xl mx-auto">
@@ -143,11 +170,30 @@
         />
     </div>
 
-    <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
-        <button onclick={() => window.history.back()} class="btn btn-ghost">Annuler</button>
-        <button onclick={() => {modifyAntiquity(antiquite.id)}} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-            Enregistrer les modifications
-        </button>
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12 pt-6 border-t border-base-200">
+        <div>
+            {#if antiquite.id}
+            <button 
+                onclick={() => publishToFacebook(antiquite.id)} 
+                disabled={isPublishingFB}
+                class="btn bg-[#1877F2] hover:bg-[#0C5DC7] text-white border-none shadow-md"
+            >
+                {#if isPublishingFB}
+                    <span class="loading loading-spinner loading-sm"></span>
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                {/if}
+                Publier sur Facebook
+            </button>
+            {/if}
+        </div>
+        
+        <div class="flex gap-4">
+            <button onclick={() => window.history.back()} class="btn btn-ghost">Annuler</button>
+            <button onclick={() => {modifyAntiquity(antiquite.id)}} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                Enregistrer les modifications
+            </button>
+        </div>
     </div>
 </div>
