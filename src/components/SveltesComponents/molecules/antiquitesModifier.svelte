@@ -63,12 +63,9 @@
         }
     }
 
-    async function modifyAntiquity(id: number) {
+    async function saveAntiquity(id: number): Promise<boolean> {
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
-        
         const formData = new FormData();
-        
-        console.log("Valeurs envoyées :", { name, description, category, size, price, year, nouveaute, newFiles });
         
         formData.append("name", name);
         formData.append("description", description);
@@ -94,28 +91,41 @@
             formData.append("new_images", file);  
         });
 
-        const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, {
-            method: "PATCH",
-            body: formData 
-        });
+        try {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, {
+                method: "PATCH",
+                body: formData 
+            });
+            return response.ok;
+        } catch (error) {
+            console.error("Error saving antiquity:", error);
+            return false;
+        }
+    }
 
-        if (response.ok) {
+    async function modifyAntiquity(id: number) {
+        const ok = await saveAntiquity(id);
+        if (ok) {
             alert("Objet mis à jour avec succès ! ✨");
             window.history.back();
+        } else {
+            alert("Une erreur est survenue lors de la mise à jour de l'objet.");
         }
-
-        return response;
     }
     let isPublishingFB = $state(false);
 
     async function publishToFacebook(id: number) {
-        if (!confirm("Voulez-vous publier cet objet sur la Page Facebook et l'ajouter au Catalogue ?")) return;
+        if (!confirm("Voulez-vous enregistrer les modifications et publier cet objet sur la Page Facebook et l'ajouter au Catalogue ?")) return;
         
         isPublishingFB = true;
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
-        // The API endpoint requires the object to be saved first, but we can just trigger it.
         try {
-            // Note: Make sure the object is saved before publishing!
+            const saved = await saveAntiquity(id);
+            if (!saved) {
+                alert("❌ Impossible d'enregistrer les modifications de l'objet. Publication annulée.");
+                return;
+            }
+
             const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}/publish-facebook`, {
                 method: "POST",
             });
@@ -135,21 +145,27 @@
     }
 
     async function publishToEbay(id: number) {
-        if (!confirm("Voulez-vous publier cet objet sur eBay ?")) return;
+        if (!confirm("Voulez-vous enregistrer les modifications et publier/mettre à jour cet objet sur eBay ?")) return;
         
         isPublishingEbay = true;
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
         
         try {
+            const saved = await saveAntiquity(id);
+            if (!saved) {
+                alert("❌ Impossible d'enregistrer les modifications de l'objet. Publication/Mise à jour annulée.");
+                return;
+            }
+
             const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}/publish-ebay`, {
                 method: "POST",
             });
 
             const res = await response.json();
             if (response.ok) {
-                alert(`✅ Objet publié avec succès sur eBay ! \nListing ID: ${res.listingId}`);
+                alert(`✅ ${res.message || "Objet synchronisé sur eBay avec succès !"} \nListing ID: ${res.listingId}`);
             } else {
-                alert(`❌ Erreur lors de la publication : ${res.error || 'Erreur inconnue'}`);
+                alert(`❌ Erreur lors de la publication/mise à jour : ${res.error || 'Erreur inconnue'}`);
             }
         } catch (error) {
             console.error("Error publishing to eBay:", error);
@@ -275,7 +291,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                 {/if}
-                Publier sur eBay
+                Publier / Mettre à jour sur eBay
             </button>
             {/if}
         </div>
