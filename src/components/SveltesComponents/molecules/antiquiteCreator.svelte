@@ -13,6 +13,11 @@
     let size = $state("S");
     let nouveaute = $state(false);
     
+    let ebayTitle = $state("");
+    let ebayDescription = $state("");
+    let ebayPrice = $state<number>(0);
+    let ebayCategoryID = $state("");
+    
     let isEnhancing = $state(false);
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
@@ -62,6 +67,10 @@
         formData.append("category", category);
         formData.append("size", size);
         formData.append("nouveaute", nouveaute.toString());
+        formData.append("ebay_title", ebayTitle);
+        formData.append("ebay_description", ebayDescription);
+        formData.append("ebay_price", ebayPrice !== null ? ebayPrice.toString() : "0");
+        formData.append("ebay_category_id", ebayCategoryID);
 
         newFiles.forEach(file => {
             formData.append("image", file);  
@@ -122,6 +131,49 @@
             bind:images={images} 
             bind:new_Files={newFiles} 
         />
+    </div>
+
+    <div class="divider">eBay (Optionnel)</div>
+    
+    <div class="collapse collapse-arrow bg-base-200/30 border border-base-200 rounded-2xl">
+        <input type="checkbox" class="peer" /> 
+        <div class="collapse-title text-base font-bold flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Personnaliser les informations eBay
+        </div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div class="space-y-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Titre de l'objet sur eBay</legend>
+                        <input type="text" placeholder="Par défaut : {name || 'Nom de l\'objet'}" bind:value={ebayTitle} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Si vide, le nom principal sera envoyé à eBay.</span>
+                    </fieldset>
+                    
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Description sur eBay</legend>
+                        <textarea placeholder="Par défaut : {description || 'Description de l\'objet'}" bind:value={ebayDescription} class="textarea textarea-bordered h-28 w-full rounded-md"></textarea>
+                        <span class="text-xs opacity-50">Si vide, la description principale sera envoyée à eBay.</span>
+                    </fieldset>
+                </div>
+                
+                <div class="space-y-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Prix sur eBay (EUR)</legend>
+                        <input type="number" step="0.01" placeholder="Par défaut : {price || '0'}" bind:value={ebayPrice} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Si à 0 ou vide, le prix standard sera envoyé.</span>
+                    </fieldset>
+                    
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">ID Catégorie eBay</legend>
+                        <input type="text" placeholder="Par défaut : 119168" bind:value={ebayCategoryID} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Saisissez l'ID de catégorie eBay (ex: 119168 pour Architecture/Matériaux).</span>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">

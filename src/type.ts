@@ -29,6 +29,10 @@ export interface Antiquite {
     status : number;
     size: string;
     images_urls ?: string;
+    ebay_title?: string;
+    ebay_description?: string;
+    ebay_price?: number;
+    ebay_category_id?: string;
 }
 
 export interface Livraison {

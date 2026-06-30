@@ -20,6 +20,12 @@
     let status = $state(antiquite.status)
     let nouveaute = $state(antiquite.nouveaute ?? false);
     
+    let ebayTitle = $state(antiquite.ebay_title ?? "");
+    let ebayDescription = $state(antiquite.ebay_description ?? "");
+    let ebayPrice = $state(antiquite.ebay_price ?? 0);
+    let ebayCategoryID = $state(antiquite.ebay_category_id ?? "");
+    let isPublishingEbay = $state(false);
+    
     let isEnhancing = $state(false);
     let newFiles = $state<File[]>([]); 
 
@@ -72,6 +78,10 @@
         formData.append("year", year.toString());
         formData.append("status", status.toString());
         formData.append("nouveaute", nouveaute.toString());
+        formData.append("ebay_title", ebayTitle);
+        formData.append("ebay_description", ebayDescription);
+        formData.append("ebay_price", ebayPrice !== null ? ebayPrice.toString() : "0");
+        formData.append("ebay_category_id", ebayCategoryID);
 
         const existingIds = images
             .filter(img => !img.url.startsWith('blob:'))
@@ -124,6 +134,31 @@
         }
     }
 
+    async function publishToEbay(id: number) {
+        if (!confirm("Voulez-vous publier cet objet sur eBay ?")) return;
+        
+        isPublishingEbay = true;
+        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+        
+        try {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}/publish-ebay`, {
+                method: "POST",
+            });
+
+            const res = await response.json();
+            if (response.ok) {
+                alert(`✅ Objet publié avec succès sur eBay ! \nListing ID: ${res.listingId}`);
+            } else {
+                alert(`❌ Erreur lors de la publication : ${res.error || 'Erreur inconnue'}`);
+            }
+        } catch (error) {
+            console.error("Error publishing to eBay:", error);
+            alert("Une erreur de connexion est survenue.");
+        } finally {
+            isPublishingEbay = false;
+        }
+    }
+
 </script>
 
 <div class="space-y-6 max-w-4xl mx-auto">
@@ -170,8 +205,51 @@
         />
     </div>
 
+    <div class="divider">eBay (Optionnel)</div>
+    
+    <div class="collapse collapse-arrow bg-base-200/30 border border-base-200 rounded-2xl">
+        <input type="checkbox" class="peer" /> 
+        <div class="collapse-title text-base font-bold flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Personnaliser les informations eBay
+        </div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div class="space-y-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Titre de l'objet sur eBay</legend>
+                        <input type="text" placeholder="Par défaut : {name}" bind:value={ebayTitle} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Si vide, le nom principal sera envoyé à eBay.</span>
+                    </fieldset>
+                    
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Description sur eBay</legend>
+                        <textarea placeholder="Par défaut : {description}" bind:value={ebayDescription} class="textarea textarea-bordered h-28 w-full rounded-md"></textarea>
+                        <span class="text-xs opacity-50">Si vide, la description principale sera envoyée à eBay.</span>
+                    </fieldset>
+                </div>
+                
+                <div class="space-y-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Prix sur eBay (EUR)</legend>
+                        <input type="number" step="0.01" placeholder="Par défaut : {price}" bind:value={ebayPrice} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Si à 0 ou vide, le prix standard sera envoyé.</span>
+                    </fieldset>
+                    
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">ID Catégorie eBay</legend>
+                        <input type="text" placeholder="Par défaut : 119168" bind:value={ebayCategoryID} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Saisissez l'ID de catégorie eBay (ex: 119168 pour Architecture/Matériaux).</span>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12 pt-6 border-t border-base-200">
-        <div>
+        <div class="flex gap-2">
             {#if antiquite.id}
             <button 
                 onclick={() => publishToFacebook(antiquite.id)} 
@@ -184,6 +262,20 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 {/if}
                 Publier sur Facebook
+            </button>
+            <button 
+                onclick={() => publishToEbay(antiquite.id)} 
+                disabled={isPublishingEbay}
+                class="btn bg-[#0064D2] hover:bg-[#0050a8] text-white border-none shadow-md"
+            >
+                {#if isPublishingEbay}
+                    <span class="loading loading-spinner loading-sm"></span>
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-5 h-5 mr-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                {/if}
+                Publier sur eBay
             </button>
             {/if}
         </div>
