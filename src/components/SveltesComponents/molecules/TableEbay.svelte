@@ -110,125 +110,97 @@
             </div>
         {/if}
 
-        <div class="card bg-base-100 shadow-xl border border-base-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="table table-zebra w-full">
-                    <thead class="bg-base-200/50">
-                        <tr>
-                            <th>Objet</th>
-                            <th>Titre sur eBay</th>
-                            <th class="text-right">Prix eBay</th>
-                            <th class="text-center">Catégorie eBay</th>
-                            <th class="text-center">Statut eBay</th>
-                            <th class="text-right">Actions</th>
-                        </tr>
-                    </thead>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {#each currentAntiquites as antiquite (antiquite.id)}
+                <div class="card bg-base-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-base-200 overflow-hidden relative flex flex-col h-full group cursor-pointer"
+                     onclick={() => window.location.href = `/ebay/${antiquite.id}`}>
                     
-                    <tbody>
-                        {#each currentAntiquites as antiquite (antiquite.id)}
-                            <tr class="hover:bg-base-200/50 transition-colors group cursor-pointer"
-                                onclick={() => window.location.href = `/ebay/${antiquite.id}`}>
-                                
-                                <!-- Object Details -->
-                                <td>
-                                    <div class="flex items-center gap-4">
-                                        <div class="avatar">
-                                            <div class="mask mask-squircle w-14 h-14 bg-base-200 shadow-inner group-hover:scale-105 transition-transform">
-                                                {#if import.meta.env.PUBLIC_DISABLE_IMAGES !== "true" && (antiquite.images && antiquite.images.length > 0)}
-                                                    <img src={antiquite.images[0].url} alt={antiquite.name} />
-                                                {:else}
-                                                    <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">
-                                                        {antiquite.images?.length > 0 ? 'OFF' : 'N/A'}
-                                                    </div>
-                                                {/if}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="font-bold text-base">{antiquite.name}</div>
-                                            <div class="text-xs opacity-50 font-mono">SKU: ANTIQUITE-BE-{antiquite.id}</div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- eBay Custom Title -->
-                                <td>
-                                    {#if antiquite.ebay_title}
-                                        <span class="text-sm font-semibold">{antiquite.ebay_title}</span>
-                                    {:else}
-                                        <span class="text-sm opacity-50 italic">{antiquite.name} <span class="text-[10px] uppercase font-bold not-italic px-1 py-0.5 rounded bg-base-200 text-base-content/60">défaut</span></span>
-                                    {/if}
-                                </td>
-
-                                <!-- eBay Custom Price -->
-                                <td class="text-right font-mono font-bold whitespace-nowrap">
-                                    {#if antiquite.ebay_price && antiquite.ebay_price > 0}
-                                        <span class="text-info">{formatPrice(antiquite.ebay_price)}</span>
-                                    {:else}
-                                        <span class="opacity-50 font-normal">{formatPrice(antiquite.price)} <span class="text-[10px] uppercase font-bold px-1 py-0.5 rounded bg-base-200 text-base-content/60">défaut</span></span>
-                                    {/if}
-                                </td>
-
-                                <!-- eBay Category ID -->
-                                <td class="text-center font-mono text-xs font-semibold">
-                                    {antiquite.ebay_category_id || "119168"}
-                                    {#if !antiquite.ebay_category_id}
-                                        <span class="text-[9px] uppercase font-bold bg-base-200 text-base-content/50 px-1 py-0.5 rounded ml-1">défaut</span>
-                                    {/if}
-                                </td>
-
-                                <!-- eBay Listing Status -->
-                                <td class="text-center">
-                                    {#if antiquite.ebay_status === "PUBLISHED"}
-                                        <span class="badge badge-success gap-1.5 font-bold uppercase text-[10px] px-3 py-2">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                                            En Ligne
-                                        </span>
-                                    {:else if antiquite.ebay_status === "NOT_LISTED" || !antiquite.ebay_status}
-                                        <span class="badge badge-ghost font-bold uppercase text-[10px] opacity-60 px-3 py-2">
-                                            Non publié
-                                        </span>
-                                    {:else}
-                                        <span class="badge badge-warning font-bold uppercase text-[10px] px-3 py-2">
-                                            {antiquite.ebay_status}
-                                        </span>
-                                    {/if}
-                                </td>
-
-                                <!-- Action Buttons -->
-                                <td onclick={(e) => e.stopPropagation()} class="text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <a href={`/ebay/${antiquite.id}`} class="btn btn-outline btn-info btn-xs rounded-lg px-3">
-                                            Configurer
-                                        </a>
-                                        {#if antiquite.ebay_listing_id}
-                                            <a 
-                                                href={`https://www.ebay.be/itm/${antiquite.ebay_listing_id}`} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                class="btn btn-ghost btn-xs btn-square text-success"
-                                                title="Voir l'annonce sur eBay"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                                </svg>
-                                            </a>
-                                        {/if}
-                                    </div>
-                                </td>
-                            </tr>
+                    <!-- Cover Image -->
+                    <div class="relative aspect-[4/3] bg-base-200 overflow-hidden flex items-center justify-center">
+                        {#if import.meta.env.PUBLIC_DISABLE_IMAGES !== "true" && (antiquite.images && antiquite.images.length > 0)}
+                            <img src={antiquite.images[0].url} alt={antiquite.name} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         {:else}
-                            <tr>
-                                <td colspan="6" class="text-center py-20 bg-base-200/20">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <span class="text-5xl opacity-20">📦</span>
-                                        <p class="text-base-content/50 font-medium">Aucune antiquité trouvée pour eBay.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            </div>
+                            <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">
+                                {antiquite.images?.length > 0 ? 'OFF' : 'N/A'}
+                            </div>
+                        {/if}
+
+                        <!-- Dynamic Status Badge (Overlay top-right) -->
+                        <div class="absolute top-3 right-3 z-10">
+                            {#if antiquite.ebay_status === "PUBLISHED"}
+                                <span class="badge badge-success gap-1.5 font-bold uppercase text-[9px] px-2 py-1.5 shadow-md text-white border-none">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                    En ligne
+                                </span>
+                            {:else if antiquite.ebay_status === "NOT_LISTED" || !antiquite.ebay_status}
+                                <span class="badge badge-neutral bg-black/60 text-white font-bold uppercase text-[9px] px-2 py-1.5 shadow-md border-none backdrop-blur-xs">
+                                    Non publié
+                                </span>
+                            {:else}
+                                <span class="badge badge-warning font-bold uppercase text-[9px] px-2 py-1.5 shadow-md">
+                                    {antiquite.ebay_status}
+                                </span>
+                            {/if}
+                        </div>
+
+                        <!-- Price Tag Overlay (Overlay bottom-left) -->
+                        <div class="absolute bottom-3 left-3 bg-neutral-900/80 backdrop-blur-xs text-white text-xs font-mono font-bold px-2.5 py-1 rounded shadow-md border border-white/10">
+                            {#if antiquite.ebay_price && antiquite.ebay_price > 0}
+                                <span>{formatPrice(antiquite.ebay_price)}</span>
+                            {:else}
+                                <span class="opacity-80">{formatPrice(antiquite.price)} <span class="text-[8px] uppercase opacity-60 font-sans font-bold">défaut</span></span>
+                            {/if}
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="card-body p-4 flex flex-col justify-between flex-grow gap-3 bg-base-100">
+                        <div class="space-y-1">
+                            <!-- Title -->
+                            <div class="font-bold text-sm text-base-content line-clamp-1 group-hover:text-primary transition-colors">
+                                {#if antiquite.ebay_title}
+                                    {antiquite.ebay_title}
+                                {:else}
+                                    {antiquite.name}
+                                {/if}
+                            </div>
+                            
+                            <!-- SKU / Metadata -->
+                            <div class="flex items-center justify-between text-[10px] opacity-60 font-mono">
+                                <span>SKU: BE-{antiquite.id}</span>
+                                <span>Catégorie: {antiquite.ebay_category_id || "119168"}</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer / Actions -->
+                        <div class="flex items-center gap-2 mt-2 pt-3 border-t border-base-200" onclick={(e) => e.stopPropagation()}>
+                            <a href={`/ebay/${antiquite.id}`} class="btn btn-primary btn-sm flex-1 font-bold text-xs rounded-xl">
+                                Configurer
+                            </a>
+                            {#if antiquite.ebay_listing_id}
+                                <a 
+                                    href={`https://www.ebay.be/itm/${antiquite.ebay_listing_id}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    class="btn btn-outline btn-square btn-sm border-success text-success hover:bg-success hover:text-white rounded-xl"
+                                    title="Voir l'annonce sur eBay"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                    </svg>
+                                </a>
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+            {:else}
+                <div class="col-span-full text-center py-20 bg-base-100 border border-base-200 rounded-2xl">
+                    <div class="flex flex-col items-center gap-3">
+                        <span class="text-5xl opacity-20">📦</span>
+                        <p class="text-base-content/50 font-medium">Aucune antiquité trouvée pour eBay.</p>
+                    </div>
+                </div>
+            {/each}
         </div>
 
         {#if currentPagination && currentPagination.total_pages > 1}
