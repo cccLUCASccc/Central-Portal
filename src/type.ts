@@ -33,6 +33,8 @@ export interface Antiquite {
     ebay_description?: string;
     ebay_price?: number;
     ebay_category_id?: string;
+    ebay_listing_id?: string;
+    ebay_status?: string;
 }
 
 export interface Livraison {
