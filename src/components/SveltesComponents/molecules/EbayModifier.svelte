@@ -231,14 +231,14 @@
         </div>
     {/if}
 
-    <!-- Forms Comparison Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Configuration Form (Left) -->
-        <div class="space-y-6">
-            <h2 class="text-xl font-bold border-b pb-2 flex items-center gap-2">
-                ✏️ Personnaliser l'annonce
-            </h2>
+    <!-- Configuration Form (Full Width card) -->
+    <div class="bg-base-100 p-6 rounded-2xl border border-base-200 space-y-6">
+        <h2 class="text-xl font-bold border-b pb-2 flex items-center gap-2">
+            ✏️ Personnaliser l'annonce
+        </h2>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left Inputs Column -->
             <div class="space-y-5">
                 <!-- Title -->
                 <fieldset class="fieldset">
@@ -268,7 +268,10 @@
                         Si vide ou égal à 0, le prix par défaut ({formatPrice(antiquite.price)}) sera envoyé.
                     </span>
                 </fieldset>
+            </div>
 
+            <!-- Right Inputs Column -->
+            <div class="space-y-5">
                 <!-- Category -->
                 <fieldset class="fieldset">
                     <legend class="fieldset-legend font-semibold text-base-content/80">ID de catégorie eBay</legend>
@@ -297,9 +300,10 @@
                 </fieldset>
             </div>
         </div>
+    </div>
 
-        <!-- Live Preview (Right) -->
-        <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200 space-y-6">
+    <!-- Live Preview (Below Form, Full Width) -->
+    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200 space-y-6 w-full animate-in fade-in duration-500">
             <div class="flex justify-between items-center border-b pb-2">
                 <h2 class="text-xl font-bold flex items-center gap-2">
                     👁️ Aperçu de l'annonce eBay
@@ -581,7 +585,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Actions Footer -->
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12 pt-6 border-t border-base-200">
