@@ -67,6 +67,31 @@
         filterStore.reset();
         fetchData(1);
     }
+
+    let isRedirecting = $state(false);
+
+    async function loginToEbay() {
+        isRedirecting = true;
+        try {
+            const response = await apiFetch(`${apiUrl}/api/antiquites/ebay/auth-url`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.url) {
+                    window.location.href = result.url;
+                } else {
+                    alert("Erreur: URL d'authentification eBay non retournée.");
+                }
+            } else {
+                const error = await response.json();
+                alert("Erreur lors de la récupération de l'URL eBay: " + (error.error || response.statusText));
+            }
+        } catch (e) {
+            console.error("❌ Erreur de connexion eBay :", e);
+            alert("Erreur réseau lors de la connexion à eBay.");
+        } finally {
+            isRedirecting = false;
+        }
+    }
 </script>
 
 <div class="flex flex-col gap-6 w-full max-w-7xl mx-auto">
@@ -81,6 +106,22 @@
             </h1>
             <p class="text-base-content/60 mt-1">Gérez vos publications eBay, ajustez vos prix spécifiques et suivez l'état des annonces en temps réel.</p>
         </div>
+
+        <button 
+            type="button" 
+            onclick={loginToEbay} 
+            disabled={isRedirecting}
+            class="btn btn-info text-white font-bold rounded-xl shadow-md gap-2"
+        >
+            {#if isRedirecting}
+                <span class="loading loading-spinner loading-xs"></span>
+            {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                </svg>
+            {/if}
+            Se connecter à eBay
+        </button>
     </div>
 
     <!-- Barre de Filtres -->
