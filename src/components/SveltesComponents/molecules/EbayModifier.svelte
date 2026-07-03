@@ -37,6 +37,19 @@
         }).format(price);
     };
 
+    const getEstimatedDelivery = () => {
+        const today = new Date();
+        const start = new Date(today);
+        start.setDate(today.getDate() + 3);
+        const end = new Date(today);
+        end.setDate(today.getDate() + 7);
+
+        const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+        const startStr = start.toLocaleDateString('fr-FR', options);
+        const endStr = end.toLocaleDateString('fr-FR', options);
+        return `estimée entre le ${startStr} et le ${endStr}`;
+    };
+
     async function checkLiveStatus() {
         isCheckingStatus = true;
         feedbackMessage = "";
@@ -294,149 +307,276 @@
                 <span class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-info text-white font-bold animate-pulse shadow-sm">Temps Réel</span>
             </div>
 
-            <!-- eBay Product Page Mockup -->
-            <div class="bg-white text-neutral-800 shadow-xl border border-neutral-200 rounded-xl overflow-hidden font-sans text-sm">
-                <!-- Faux eBay Header Bar -->
-                <div class="bg-neutral-50 border-b border-neutral-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-4">
-                        <!-- eBay Logo -->
-                        <span class="font-bold text-2xl tracking-tighter select-none">
-                            <span class="text-[#e53238]">e</span><span class="text-[#0064d2]">b</span><span class="text-[#f5af02]">a</span><span class="text-[#86b817]">y</span>
-                        </span>
-                        <!-- Breadcrumbs -->
-                        <div class="hidden sm:flex text-[10px] text-neutral-500 gap-1 items-center">
-                            <span>Art, antiquités</span>
-                            <span>&gt;</span>
-                            <span class="font-semibold underline">{previewCategory}</span>
-                        </div>
+            <!-- eBay Product Page High Fidelity Mockup -->
+            <div class="bg-white text-neutral-800 shadow-xl border border-neutral-200 rounded-xl overflow-hidden font-sans text-xs">
+                <!-- 1. Top tiny utility bar -->
+                <div class="bg-white border-b border-neutral-200 px-4 py-1.5 flex justify-between items-center text-[10px] text-neutral-500">
+                    <div class="flex gap-3">
+                        <span>Bonjour <strong class="text-neutral-800 font-bold">Lucas</strong> !</span>
+                        <span class="hover:underline cursor-pointer">Deals eBay</span>
+                        <span class="hover:underline cursor-pointer">Vendre</span>
+                        <span class="hover:underline cursor-pointer">Aide & Assistance</span>
                     </div>
-                    <!-- Faux Search Bar -->
-                    <div class="flex flex-1 max-w-xs gap-0">
-                        <input type="text" placeholder="Rechercher..." class="input input-xs bg-white border border-neutral-300 rounded-l-md rounded-r-none w-full text-neutral-800 focus:outline-none" readonly />
-                        <button class="btn btn-xs btn-primary bg-[#0064d2] hover:bg-[#0053a0] border-none text-white font-bold rounded-r-md rounded-l-none px-3">Rechercher</button>
+                    <div class="flex gap-3 items-center">
+                        <span class="hover:underline cursor-pointer">Favoris 🤍</span>
+                        <span class="hover:underline cursor-pointer">Mon eBay ▾</span>
+                        <span class="hover:underline cursor-pointer text-sm">🔔</span>
+                        <span class="hover:underline cursor-pointer text-sm">🛒</span>
                     </div>
                 </div>
 
-                <!-- Main Layout Grid -->
-                <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <!-- Left: Gallery (5 cols) -->
-                    <div class="md:col-span-5 flex flex-col items-center">
-                        <div class="w-full aspect-square bg-neutral-50 border border-neutral-200 rounded-lg flex items-center justify-center overflow-hidden p-2 relative">
+                <!-- 2. Main Faux Search Bar -->
+                <div class="bg-white px-4 py-3 flex items-center gap-4 border-b border-neutral-200">
+                    <!-- eBay Logo -->
+                    <span class="font-extrabold text-2xl tracking-tighter select-none font-sans leading-none">
+                        <span class="text-[#e53238]">e</span><span class="text-[#0064d2]">b</span><span class="text-[#f5af02]">a</span><span class="text-[#86b817]">y</span>
+                    </span>
+
+                    <!-- Search Fields Group -->
+                    <div class="flex flex-1 items-center gap-0 border border-neutral-400 rounded focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden">
+                        <div class="flex items-center flex-1 px-3 bg-white">
+                            <span class="text-neutral-400 text-sm">🔍</span>
+                            <input type="text" placeholder="Rechercher un objet..." value={previewTitle} class="w-full bg-white border-none text-neutral-800 text-xs px-2 py-1.5 focus:outline-none focus:ring-0" readonly />
+                        </div>
+                        <div class="hidden sm:block border-l border-neutral-300 px-3 py-1 bg-white text-neutral-500 text-[10px]">
+                            Toutes les catégories ▾
+                        </div>
+                        <button class="bg-[#3665f3] hover:bg-[#2b51c5] text-white font-bold text-xs px-6 py-2 transition-colors border-l border-neutral-400">
+                            Rechercher
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Sub-header links -->
+                <div class="hidden sm:flex bg-neutral-50 px-4 py-2 border-b border-neutral-200 text-[10px] text-neutral-600 gap-4">
+                    <span class="font-bold text-neutral-900 cursor-pointer">Explorer par catégorie ▾</span>
+                    <span class="hover:underline cursor-pointer">Favoris</span>
+                    <span class="hover:underline cursor-pointer">Sous-bois & Matériaux</span>
+                    <span class="hover:underline cursor-pointer">Art antique</span>
+                    <span class="hover:underline cursor-pointer">Meubles anciens</span>
+                    <span class="hover:underline cursor-pointer">Brocante</span>
+                </div>
+
+                <!-- 4. Breadcrumbs & Share -->
+                <div class="px-5 py-2.5 flex justify-between items-center text-[10px] text-neutral-500">
+                    <div class="flex gap-1.5 items-center">
+                        <span class="hover:underline cursor-pointer">Retourner à la page d'accueil</span>
+                        <span>|</span>
+                        <span>Catégorie : Art, antiquités &gt; Architecture, matériaux &gt; <span class="underline font-semibold text-neutral-700">{previewCategory}</span></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="hover:underline cursor-pointer">🤍 Suivre cet objet</span>
+                        <span>|</span>
+                        <span class="hover:underline cursor-pointer">Partager</span>
+                    </div>
+                </div>
+
+                <!-- 5. 3-Column Listing Grid -->
+                <div class="px-5 pb-5 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- LEFT COLUMN: Gallery (lg:col-span-4) -->
+                    <div class="lg:col-span-4 flex flex-col items-center">
+                        <div class="w-full aspect-square bg-[#f7f7f7] border border-neutral-200 rounded flex items-center justify-center overflow-hidden p-2 relative">
                             {#if antiquite.images && antiquite.images.length > 0}
                                 <img src={antiquite.images[0].url} alt={previewTitle} class="w-full h-full object-contain" />
                             {:else}
                                 <span class="text-3xl opacity-20">🖼️</span>
                             {/if}
-                            <span class="absolute bottom-2 right-2 bg-neutral-900/60 text-white text-[9px] font-bold px-2 py-0.5 rounded-full select-none">Image 1 sur {antiquite.images?.length || 1}</span>
+                            <div class="absolute top-2 left-2 bg-neutral-900/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
+                                Neuf / Occasion
+                            </div>
                         </div>
-                        
+
                         <!-- Gallery Thumbnails -->
                         {#if antiquite.images && antiquite.images.length > 1}
-                            <div class="flex flex-wrap gap-1.5 mt-2 justify-center w-full">
-                                {#each antiquite.images.slice(0, 5) as img, idx}
-                                    <div class={`w-10 h-10 border rounded overflow-hidden p-0.5 bg-neutral-50 cursor-pointer transition-all hover:border-[#0064d2] ${idx === 0 ? 'border-[#0064d2] ring-1 ring-[#0064d2]' : 'border-neutral-200'}`}>
-                                        <img src={img.url} alt="Aperçu" class="w-full h-full object-cover rounded" />
+                            <div class="flex flex-wrap gap-1 mt-2 justify-center w-full">
+                                {#each antiquite.images.slice(0, 4) as img, idx}
+                                    <div class={`w-9 h-9 border rounded overflow-hidden p-0.5 bg-neutral-50 cursor-pointer ${idx === 0 ? 'border-blue-600 ring-1 ring-blue-600' : 'border-neutral-200'}`}>
+                                        <img src={img.url} alt="Miniature" class="w-full h-full object-cover rounded-sm" />
                                     </div>
+                                    
                                 {/each}
                             </div>
                         {/if}
                     </div>
 
-                    <!-- Right: Info & Buy Box (7 cols) -->
-                    <div class="md:col-span-7 space-y-4">
-                        <!-- Seller Header -->
-                        <div class="text-[11px] text-neutral-500 flex justify-between items-center border-b pb-2">
-                            <span>Vendeur : <span class="text-neutral-800 font-bold underline cursor-pointer">daisy_brocante</span> (100% d'évaluations positives)</span>
-                            <span class="text-[#0064d2] font-semibold cursor-pointer">Suivre ce vendeur</span>
-                        </div>
-
-                        <!-- Item Title -->
-                        <h1 class="text-xl font-bold text-neutral-900 leading-tight">
+                    <!-- MIDDLE COLUMN: Title, Buy Box, Details (lg:col-span-5) -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <!-- Product Title -->
+                        <h1 class="text-base font-bold text-neutral-900 leading-tight">
                             {previewTitle}
                         </h1>
 
-                        <!-- Condition -->
-                        <div class="flex items-center gap-2 py-1.5 border-y border-neutral-100 text-xs">
-                            <span class="text-neutral-500">Condition :</span>
-                            <span class="font-bold text-neutral-800">Occasion (Très bon état)</span>
+                        <div class="h-px bg-neutral-200"></div>
+
+                        <!-- Faux Condition info -->
+                        <div class="grid grid-cols-12 gap-1 text-xs">
+                            <span class="col-span-3 text-neutral-500">Condition :</span>
+                            <div class="col-span-9">
+                                <span class="font-bold text-neutral-800 text-sm">Occasion</span>
+                                <p class="text-neutral-500 text-[10px] mt-0.5 leading-snug">“Objet de brocante unique en très bon état de conservation. Vendu selon photos.”</p>
+                            </div>
                         </div>
 
-                        <!-- Pricing Block -->
-                        <div class="bg-neutral-50/70 p-4 rounded-lg border border-neutral-100 space-y-3">
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-xs text-neutral-500">Achat immédiat :</span>
-                                <span class="text-2xl font-bold text-neutral-900 font-mono">{formatPrice(previewPrice)}</span>
-                            </div>
-                            
-                            <div class="text-[11px] text-neutral-500 flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                <span>Annonce consultée régulièrement</span>
+                        <!-- Faux Buy box layout -->
+                        <div class="bg-neutral-50 p-4 border border-neutral-200 rounded space-y-3">
+                            <div class="grid grid-cols-12 gap-1 items-baseline">
+                                <span class="col-span-3 text-neutral-500 text-[11px]">Prix :</span>
+                                <div class="col-span-9 flex flex-col">
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="text-2xl font-bold text-neutral-900 font-sans">{formatPrice(previewPrice)}</span>
+                                    </div>
+                                    <span class="text-[9px] text-neutral-500 mt-0.5">Achat immédiat</span>
+                                </div>
                             </div>
 
-                            <!-- eBay CTA Buttons -->
-                            <div class="flex flex-col gap-2 pt-1">
-                                <div class="bg-[#3665f3] hover:bg-[#2b51c5] text-white text-center font-bold py-2 px-4 rounded-full text-xs cursor-pointer select-none shadow-sm transition-colors">
+                            <!-- Faux Stock Status -->
+                            <div class="grid grid-cols-12 gap-1 text-[11px]">
+                                <span class="col-span-3 text-neutral-500">Quantité :</span>
+                                <div class="col-span-9 flex items-center gap-3">
+                                    <span class="font-semibold text-neutral-800">1 disponible (Objet unique)</span>
+                                    <span class="text-red-600 font-bold animate-pulse text-[9px] bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">Dépêchez-vous !</span>
+                                </div>
+                            </div>
+
+                            <!-- CTA Buttons -->
+                            <div class="pt-2 flex flex-col gap-2">
+                                <div class="bg-[#3665f3] hover:bg-[#274ebd] text-white font-bold text-xs text-center py-2.5 rounded-full cursor-pointer transition-colors shadow-sm">
                                     Achat immédiat
                                 </div>
-                                <div class="bg-[#e2f0fd] hover:bg-[#cbe3fa] text-[#3665f3] text-center font-bold py-2 px-4 rounded-full text-xs cursor-pointer select-none transition-colors border border-transparent">
+                                <div class="bg-[#e2f0fd] hover:bg-[#cbdffa] text-[#3665f3] font-bold text-xs text-center py-2.5 rounded-full cursor-pointer transition-colors">
                                     Ajouter au panier
                                 </div>
-                                <div class="bg-white hover:bg-neutral-50 text-neutral-700 text-center font-bold py-2 px-4 rounded-full text-xs cursor-pointer select-none transition-colors border border-neutral-300">
+                                <div class="bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 font-bold text-xs text-center py-2.5 rounded-full cursor-pointer transition-colors">
                                     💙 Ajouter à la liste d'affaires à suivre
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Faux eBay Details Box -->
-                        <div class="space-y-2.5 text-xs text-neutral-600 pt-1">
+                        <!-- Shipping & Delivery Details -->
+                        <div class="space-y-2 text-[11px] text-neutral-600">
                             <!-- Shipping -->
-                            <div class="grid grid-cols-12 gap-1.5">
-                                <span class="col-span-3 font-semibold text-neutral-500">Livraison :</span>
-                                <span class="col-span-9 font-bold text-neutral-800">
-                                    {#if antiquite.size === "S"}
-                                        Livraison standard (6,90 €)
-                                    {:else if antiquite.size === "M"}
-                                        Livraison Colissimo (12,50 €)
-                                    {:else if antiquite.size === "L"}
-                                        Livraison Transporteur (45,00 €)
-                                    {:else}
-                                        Livraison gratuite / Retrait sur place
-                                    {/if}
-                                </span>
+                            <div class="grid grid-cols-12 gap-1">
+                                <span class="col-span-3 text-neutral-500">Livraison :</span>
+                                <div class="col-span-9">
+                                    <span class="font-bold text-neutral-800">
+                                        {#if antiquite.size === "S"}
+                                            6,90 EUR - Livraison Standard en Point Relais
+                                        {:else if antiquite.size === "M"}
+                                            12,50 EUR - Livraison Colissimo à Domicile
+                                        {:else if antiquite.size === "L"}
+                                            45,00 EUR - Livraison Transporteur spécialisé
+                                        {:else}
+                                            Gratuit - Retrait sur place ou livraison par transporteur
+                                        {/if}
+                                    </span>
+                                    <p class="text-neutral-500 text-[10px] mt-0.5">Livraison {getEstimatedDelivery()}</p>
+                                </div>
                             </div>
 
                             <!-- Returns -->
-                            <div class="grid grid-cols-12 gap-1.5">
-                                <span class="col-span-3 font-semibold text-neutral-500">Retours :</span>
-                                <span class="col-span-9 text-neutral-800">Retours acceptés sous 14 jours. L'acheteur prend en charge les frais de retour.</span>
+                            <div class="grid grid-cols-12 gap-1">
+                                <span class="col-span-3 text-neutral-500">Retours :</span>
+                                <span class="col-span-9 text-neutral-800 font-medium">Retours acceptés sous 14 jours. Frais de retour à la charge de l'acheteur.</span>
                             </div>
 
                             <!-- Payments -->
-                            <div class="grid grid-cols-12 gap-1.5 items-center">
-                                <span class="col-span-3 font-semibold text-neutral-500">Paiements :</span>
+                            <div class="grid grid-cols-12 gap-1 items-center">
+                                <span class="col-span-3 text-neutral-500">Paiements :</span>
                                 <div class="col-span-9 flex flex-wrap gap-1">
-                                    <span class="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold border border-neutral-200">Visa</span>
-                                    <span class="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold border border-neutral-200">Mastercard</span>
-                                    <span class="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold border border-neutral-200 text-blue-600">PayPal</span>
-                                    <span class="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold border border-neutral-200">G Pay</span>
-                                    <span class="px-1.5 py-0.5 bg-neutral-100 rounded text-[9px] font-bold border border-neutral-200">Apple Pay</span>
+                                    <span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 text-[8px] font-bold rounded">Visa</span>
+                                    <span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 text-[8px] font-bold rounded">Mastercard</span>
+                                    <span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 text-[8px] font-bold rounded text-blue-600">PayPal</span>
+                                    <span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 text-[8px] font-bold rounded">Apple Pay</span>
+                                    <span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 text-[8px] font-bold rounded">Google Pay</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- RIGHT COLUMN: Seller Info Box & Customer Guarantee (lg:col-span-3) -->
+                    <div class="lg:col-span-3 space-y-4">
+                        <!-- Seller Card -->
+                        <div class="border border-neutral-200 rounded-lg p-3 bg-neutral-50/50 space-y-3">
+                            <h3 class="font-bold text-neutral-800 border-b pb-1.5 text-[11px] uppercase tracking-wider">Informations vendeur</h3>
+                            <div>
+                                <span class="text-blue-600 font-bold underline text-xs cursor-pointer">daisy_brocante</span>
+                                <div class="flex items-center gap-1 mt-0.5 text-[10px] text-neutral-500">
+                                    <span>Score de confiance : 142</span>
+                                    <span class="text-amber-500">★</span>
+                                </div>
+                                <span class="text-[9px] bg-green-100 text-green-700 px-1 rounded font-semibold inline-block mt-1">100% d'évaluations positives</span>
+                            </div>
+                            <div class="h-px bg-neutral-200"></div>
+                            <div class="flex flex-col gap-1.5 text-[10px] text-blue-600 underline">
+                                <span class="cursor-pointer">Visiter la boutique du vendeur</span>
+                                <span class="cursor-pointer">Afficher les autres objets</span>
+                                <span class="cursor-pointer text-neutral-600 no-underline hover:underline">Contacter le vendeur</span>
+                            </div>
+                        </div>
+
+                        <!-- eBay Guarantee Card -->
+                        <div class="border border-neutral-200 rounded-lg p-3 space-y-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-amber-500 text-lg">🛡️</span>
+                                <span class="font-extrabold text-neutral-800 text-[11px]">Garantie client eBay</span>
+                            </div>
+                            <p class="text-[10px] text-neutral-500 leading-snug">
+                                Bénéficiez d'un remboursement intégral si l'objet ne correspond pas à la description ou s'il n'est pas livré.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Bottom Description Tab Mockup -->
+                <!-- 6. eBay Caractéristiques de l'objet (Item Specifics) -->
+                <div class="border-t border-neutral-200 p-5 bg-white space-y-3">
+                    <h3 class="text-sm font-bold text-neutral-900 border-b pb-1.5">Caractéristiques de l'objet</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 border border-neutral-200 rounded overflow-hidden text-[10px]">
+                        <!-- Row 1 -->
+                        <div class="bg-neutral-100 p-2 font-bold text-neutral-600 border-r border-b border-neutral-200">État :</div>
+                        <div class="p-2 border-r border-b border-neutral-200 md:col-span-3 text-neutral-700 font-medium">
+                            Occasion: Objet ayant été utilisé. Consulter la description pour plus de détails.
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="bg-neutral-100 p-2 font-bold text-neutral-600 border-r border-b border-neutral-200">Marque :</div>
+                        <div class="p-2 border-r border-b border-neutral-200 text-neutral-700">Sans marque</div>
+                        <div class="bg-neutral-100 p-2 font-bold text-neutral-600 border-r border-b border-neutral-200">Type :</div>
+                        <div class="p-2 border-b border-neutral-200 text-neutral-700">Antiquité unique</div>
+
+                        <!-- Row 3 -->
+                        <div class="bg-neutral-100 p-2 font-bold text-neutral-600 border-r border-neutral-200">Catégorie eBay :</div>
+                        <div class="p-2 border-r border-neutral-200 text-neutral-700 font-mono">{previewCategory}</div>
+                        <div class="bg-neutral-100 p-2 font-bold text-neutral-600 border-r border-neutral-200">Taille :</div>
+                        <div class="p-2 text-neutral-700 font-mono">Format {antiquite.size}</div>
+                    </div>
+                </div>
+
+                <!-- 7. Bottom Faux description panel -->
                 <div class="border-t border-neutral-200 bg-neutral-50/50">
                     <div class="flex border-b border-neutral-200 bg-white">
-                        <span class="px-4 py-2 text-xs font-bold text-neutral-800 border-b-2 border-[#0064d2] bg-neutral-50 cursor-pointer">
+                        <span class="px-4 py-2 text-xs font-bold text-neutral-800 border-b-2 border-blue-600 bg-neutral-50">
                             Description du vendeur
                         </span>
+                        <span class="px-4 py-2 text-xs font-semibold text-neutral-400 hover:text-neutral-600 cursor-pointer">
+                            Livraison et paiements
+                        </span>
                     </div>
-                    <div class="p-6 bg-white min-h-[160px] text-neutral-700 leading-relaxed text-xs">
-                        <p class="whitespace-pre-line bg-neutral-50 p-4 border border-neutral-200 rounded-lg shadow-inner font-mono text-[11px]">
-                            {previewDescription}
-                        </p>
+                    
+                    <div class="p-5 bg-white">
+                        <!-- Simulated eBay Description Frame -->
+                        <div class="border border-neutral-200 p-6 rounded bg-neutral-50/20 font-serif leading-relaxed text-neutral-700 text-xs shadow-inner">
+                            <div class="text-center font-sans text-xs font-bold uppercase tracking-wider text-neutral-400 border-b border-dashed border-neutral-300 pb-2 mb-4">
+                                Début de la description de l'objet
+                            </div>
+                            <p class="whitespace-pre-line font-mono text-[11px] leading-relaxed">
+                                {previewDescription}
+                            </p>
+                            <div class="text-center font-sans text-xs font-bold uppercase tracking-wider text-neutral-400 border-t border-dashed border-neutral-300 pt-2 mt-4">
+                                Fin de la description
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
