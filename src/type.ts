@@ -35,6 +35,8 @@ export interface Antiquite {
     ebay_category_id?: string;
     ebay_listing_id?: string;
     ebay_status?: string;
+    prev_id?: number;
+    next_id?: number;
 }
 
 export interface Livraison {

@@ -103,8 +103,55 @@
         }
     }
 
+    import { onMount } from "svelte";
+
+    let isSaving = $state(false);
+
+    async function saveAndNavigate(targetId: number, path: string = 'antiquites') {
+        if (isSaving) return;
+        isSaving = true;
+        const ok = await saveAntiquity(antiquite.id);
+        isSaving = false;
+        if (ok) {
+            window.location.href = `/${path}/${targetId}`;
+        } else {
+            alert("❌ Erreur lors de l'enregistrement de l'objet. Navigation annulée.");
+        }
+    }
+
+    onMount(() => {
+        (window as any).saveAndNavigateTo = (targetId: number, path: string = 'antiquites') => {
+            saveAndNavigate(targetId, path);
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const activeElement = document.activeElement;
+            if (activeElement) {
+                const tagName = activeElement.tagName.toLowerCase();
+                const isContentEditable = activeElement.getAttribute('contenteditable') === 'true';
+                if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || isContentEditable) {
+                    return;
+                }
+            }
+
+            if (e.key === 'ArrowLeft' && antiquite.prev_id) {
+                saveAndNavigate(antiquite.prev_id, 'antiquites');
+            } else if (e.key === 'ArrowRight' && antiquite.next_id) {
+                saveAndNavigate(antiquite.next_id, 'antiquites');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            delete (window as any).saveAndNavigateTo;
+        };
+    });
+
     async function modifyAntiquity(id: number) {
+        isSaving = true;
         const ok = await saveAntiquity(id);
+        isSaving = false;
         if (ok) {
             alert("Objet mis à jour avec succès ! ✨");
             window.history.back();
@@ -238,10 +285,38 @@
             {/if}
         </div>
         
-        <div class="flex gap-4">
+        <div class="flex flex-wrap gap-2">
+            {#if antiquite.prev_id}
+                <button 
+                    type="button"
+                    onclick={() => saveAndNavigate(antiquite.prev_id!)}
+                    disabled={isSaving}
+                    class="btn btn-outline btn-sm gap-1"
+                    title="Enregistrer et aller à l'objet précédent (←)"
+                >
+                    ‹ Enregistrer & Précédent #{antiquite.prev_id}
+                </button>
+            {/if}
+
+            {#if antiquite.next_id}
+                <button 
+                    type="button"
+                    onclick={() => saveAndNavigate(antiquite.next_id!)}
+                    disabled={isSaving}
+                    class="btn btn-outline btn-sm gap-1"
+                    title="Enregistrer et aller à l'objet suivant (→)"
+                >
+                    Enregistrer & Suivant #{antiquite.next_id} ›
+                </button>
+            {/if}
+            
             <button onclick={() => window.history.back()} class="btn btn-ghost">Annuler</button>
-            <button onclick={() => {modifyAntiquity(antiquite.id)}} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+            <button onclick={() => {modifyAntiquity(antiquite.id)}} disabled={isSaving} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
+                {#if isSaving}
+                    <span class="loading loading-spinner loading-xs mr-2"></span>
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                {/if}
                 Enregistrer les modifications
             </button>
         </div>

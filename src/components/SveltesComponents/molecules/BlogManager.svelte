@@ -374,6 +374,7 @@
                 {#if activePreviewPost.status === 'draft'}
                     <button 
                         onclick={async () => {
+                            if (!activePreviewPost) return;
                             const id = activePreviewPost.id;
                             activePreviewPost = null;
                             await publishArticle(id);

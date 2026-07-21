@@ -1,9 +1,9 @@
 <script lang="ts">
     import { filterStore } from "../../../store.svelte";
     interface Props {
-        data_string?: string;
-        data_number?: number;
-        data_bool?: boolean;
+        data_string?: string | null;
+        data_number?: number | null;
+        data_bool?: boolean | null;
         type: number;
         type_name?: string;
         mode?: string;

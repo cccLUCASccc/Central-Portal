@@ -35,12 +35,38 @@ if (userId) {
 
 <BasicLayout>
     <div class="max-w-5xl mx-auto">
-        <div class="mb-8 flex items-center justify-between">
-            <a href="/ebay" onclick="history.back(); return false;" class="btn btn-ghost btn-sm gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                Retour aux annonces eBay
-            </a>
-            <div class="text-sm breadcrumbs opacity-50">
+        <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <a href="/ebay" onclick="history.back(); return false;" class="btn btn-ghost btn-sm gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+                    Retour aux annonces eBay
+                </a>
+            </div>
+
+            <!-- Navigation Flèches Objet Précédent / Suivant -->
+            <div class="flex items-center gap-2" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
+                {current?.prev_id ? (
+                    <a href={`/ebay/${current.prev_id}`} id="btn-prev-item" class="btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce précédente (Flèche Gauche ←)">
+                        ‹ Précédente #{current.prev_id}
+                    </a>
+                ) : (
+                    <button class="btn btn-outline btn-sm gap-1 text-xs btn-disabled opacity-40">
+                        ‹ Précédente
+                    </button>
+                )}
+
+                {current?.next_id ? (
+                    <a href={`/ebay/${current.next_id}`} id="btn-next-item" class="btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce suivante (Flèche Droite →)">
+                        Suivante #{current.next_id} ›
+                    </a>
+                ) : (
+                    <button class="btn btn-outline btn-sm gap-1 text-xs btn-disabled opacity-40">
+                        Suivante ›
+                    </button>
+                )}
+            </div>
+
+            <div class="text-sm breadcrumbs opacity-50 hidden md:block">
                 <ul>
                     <li><a href="/">Accueil</a></li>
                     <li><a href="/ebay">eBay</a></li>
@@ -74,3 +100,39 @@ if (userId) {
         )}
     </div>
 </BasicLayout>
+
+<script>
+    function initKeyboardNav() {
+        const container = document.getElementById('nav-arrows-container');
+        if (!container) return;
+
+        const prevId = container.dataset.prevId;
+        const nextId = container.dataset.nextId;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const activeElement = document.activeElement;
+            if (activeElement) {
+                const tagName = activeElement.tagName.toLowerCase();
+                const isContentEditable = activeElement.getAttribute('contenteditable') === 'true';
+                if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || isContentEditable) {
+                    return;
+                }
+            }
+
+            if (e.key === 'ArrowLeft' && prevId) {
+                window.location.href = `/ebay/${prevId}`;
+            } else if (e.key === 'ArrowRight' && nextId) {
+                window.location.href = `/ebay/${nextId}`;
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+
+    let cleanup = initKeyboardNav();
+    document.addEventListener('astro:after-swap', () => {
+        if (cleanup) cleanup();
+        cleanup = initKeyboardNav();
+    });
+</script>
