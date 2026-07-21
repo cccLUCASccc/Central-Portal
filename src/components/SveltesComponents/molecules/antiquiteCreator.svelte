@@ -18,6 +18,7 @@
     let ebayPrice = $state<number>(0);
     let ebayCategoryID = $state("");
     
+    let isCreating = $state(false);
     let isEnhancing = $state(false);
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
@@ -56,6 +57,8 @@
     }
 
     async function createAntiquity() {
+        if (isCreating) return;
+        isCreating = true;
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
         const formData = new FormData();
         
@@ -76,16 +79,23 @@
             formData.append("image", file);  
         });
 
-        const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/add`, {
-            method: "POST",
-            body: formData 
-        });
+        try {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/add`, {
+                method: "POST",
+                body: formData 
+            });
 
-        if (response.ok) {
-            alert("Objet créé avec succès ! ✨");
-            window.location.href = "/"; 
-        } else {
-            alert("Erreur lors de la création de l'objet.");
+            if (response.ok) {
+                alert("Objet créé avec succès ! ✨");
+                window.location.href = "/"; 
+            } else {
+                alert("Erreur lors de la création de l'objet.");
+            }
+        } catch (error) {
+            console.error("Error creating object:", error);
+            alert("Une erreur de connexion est survenue.");
+        } finally {
+            isCreating = false;
         }
     }
 </script>
@@ -177,9 +187,13 @@
     </div>
 
     <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
-        <button onclick={() => window.location.href = '/'} class="btn btn-ghost">Annuler</button>
-        <button onclick={() => createAntiquity()} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+        <button onclick={() => window.location.href = '/'} disabled={isCreating} class="btn btn-ghost">Annuler</button>
+        <button onclick={() => createAntiquity()} disabled={isCreating} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
+            {#if isCreating}
+                <span class="loading loading-spinner loading-sm mr-2"></span>
+            {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            {/if}
             Créer l'objet
         </button>
     </div>
