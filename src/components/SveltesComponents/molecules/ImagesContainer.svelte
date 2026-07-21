@@ -13,15 +13,26 @@
     let { vehicule, antiquite, images = $bindable([]), new_Files = $bindable([]), mode }: Props = $props();
     let gallery = $state<Image[]>(images || [])
     let isDraggingOver = $state(false);
+    
+    const fileMap = new Map<number, File>();
 
     // Synchronisation locale si images change de l'extérieur
     $effect(() => {
         gallery = images;
     });
 
+    function syncNewFiles() {
+        new_Files = gallery.map(img => fileMap.get(img.id)).filter((f): f is File => f !== undefined);
+        images = gallery;
+    }
+
     function deleteImage(indexToDelete: number){
-        gallery = gallery.filter((_, index) => index !== indexToDelete)
-        images = gallery
+        const deleted = gallery[indexToDelete];
+        if (deleted) {
+            fileMap.delete(deleted.id);
+        }
+        gallery = gallery.filter((_, index) => index !== indexToDelete);
+        syncNewFiles();
     }
 
     function handleDragStart(event: DragEvent, imageId: number) {
@@ -44,7 +55,7 @@
             newGallery.splice(targetIndex, 0, movedItem);
             
             gallery = newGallery;
-            images = gallery;
+            syncNewFiles();
         }
     }
 
@@ -54,20 +65,19 @@
 
         const filesArray = Array.from(input.files);
         const nouvellesImages: Image[] = [];
-        const nouveauxFichiers: File[] = [];
 
         filesArray.forEach((file, index) => {
             const temporaryUrl = URL.createObjectURL(file);
+            const id = Date.now() + index;
             nouvellesImages.push({
-                id: Date.now() + index, 
+                id: id, 
                 url: temporaryUrl,
             });
-            nouveauxFichiers.push(file);
+            fileMap.set(id, file);
         });
 
-        new_Files = [...(new_Files || []), ...nouveauxFichiers];
         gallery = [...gallery, ...nouvellesImages];
-        images = gallery;
+        syncNewFiles();
         
         input.value = '';
     }
