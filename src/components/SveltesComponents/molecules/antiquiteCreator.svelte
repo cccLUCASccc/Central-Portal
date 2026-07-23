@@ -1,6 +1,7 @@
 <script lang="ts">
     import { apiFetch } from "../../../lib/api";
     import type { Image, Subcategory } from "../../../type";
+    import { untrack } from "svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
 
@@ -17,18 +18,21 @@
 
     // Charge les sous-catégories à chaque fois que la catégorie change
     $effect(() => {
-        if (category) {
+        const currentCategory = category;
+        if (currentCategory) {
             const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
-            apiFetch(`${PUBLIC_API_URL}/api/subcategories?category=${encodeURIComponent(category)}`)
+            fetch(`${PUBLIC_API_URL}/front/subcategories?category=${encodeURIComponent(currentCategory)}`)
                 .then(res => {
                     if (res.ok) return res.json();
                     return [];
                 })
                 .then(data => {
                     subcategories = data;
-                    if (!subcategories.find(s => s.id === subcategory_id)) {
-                        subcategory_id = null;
-                    }
+                    untrack(() => {
+                        if (subcategory_id !== null && !subcategories.find(s => Number(s.id) === Number(subcategory_id))) {
+                            subcategory_id = null;
+                        }
+                    });
                 })
                 .catch(err => console.error("Error fetching subcategories:", err));
         } else {

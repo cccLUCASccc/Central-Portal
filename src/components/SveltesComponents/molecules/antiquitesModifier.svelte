@@ -3,6 +3,7 @@
     import ImagesContainer from "./ImagesContainer.svelte";
     import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
+    import { untrack } from "svelte";
 
     interface Props {
         antiquite: Antiquite
@@ -12,6 +13,7 @@
     
     let name = $state(antiquite.name);
     let description = $state(antiquite.description);
+
     let year = $state(antiquite.year);
     let price = $state(antiquite.price);
     let category = $state(antiquite.category);
@@ -24,18 +26,21 @@
 
     // Charge les sous-catégories à chaque fois que la catégorie change
     $effect(() => {
-        if (category) {
+        const currentCategory = category;
+        if (currentCategory) {
             const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
-            apiFetch(`${PUBLIC_API_URL}/api/subcategories?category=${encodeURIComponent(category)}`)
+            fetch(`${PUBLIC_API_URL}/front/subcategories?category=${encodeURIComponent(currentCategory)}`)
                 .then(res => {
                     if (res.ok) return res.json();
                     return [];
                 })
                 .then(data => {
                     subcategories = data;
-                    if (subcategory_id !== null && !subcategories.find(s => s.id === subcategory_id)) {
-                        subcategory_id = null;
-                    }
+                    untrack(() => {
+                        if (subcategory_id !== null && !subcategories.find(s => Number(s.id) === Number(subcategory_id))) {
+                            subcategory_id = null;
+                        }
+                    });
                 })
                 .catch(err => console.error("Error fetching subcategories:", err));
         } else {
