@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import BulkAntiquitesImporter from "../atoms/BulkAntiquitesImporter.svelte";
     import CustomTable from "../atoms/CustomTable.svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
@@ -6,6 +7,10 @@
     import { filterStore } from "../../../store.svelte";
     import type { Antiquite, Pagination } from "../../../type";
     import { apiFetch } from "../../../lib/api";
+
+    onMount(() => {
+        filterStore.initFromUrl();
+    });
 
     interface Props {
         apiUrl: string;

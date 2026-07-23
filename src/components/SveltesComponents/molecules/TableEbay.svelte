@@ -1,9 +1,14 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
     import PaginationComponent from "../atoms/Pagination.svelte";
     import { filterStore } from "../../../store.svelte";
     import type { Antiquite, Pagination } from "../../../type";
     import { apiFetch } from "../../../lib/api";
+
+    onMount(() => {
+        filterStore.initFromUrl();
+    });
 
     interface Props {
         apiUrl: string;

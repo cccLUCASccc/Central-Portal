@@ -19,69 +19,47 @@ export const projectStore = new ProjectStore();
 
 
 class FilterStore {
-    price_filter = $state<number | null>(
-        typeof window !== 'undefined' && localStorage.getItem('price_filter') 
-            ? JSON.parse(localStorage.getItem('price_filter')!) 
-            : null
-    );
+    price_filter = $state<number | null>(null);
+    year_filter = $state<number | null>(null);
+    status_filter = $state<number | null>(null);
+    nouveaute_filter = $state<boolean | null>(null);
+    category_filter = $state<string | null>(null);
+
+    initFromUrl() {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        
+        const price = params.get('priceMax');
+        this.price_filter = price ? Number(price) : null;
+        
+        const status = params.get('status');
+        this.status_filter = status ? Number(status) : null;
+        
+        const nouveaute = params.get('nouveaute');
+        this.nouveaute_filter = nouveaute ? nouveaute === 'true' : null;
+        
+        const category = params.get('category');
+        this.category_filter = category || null;
+    }
 
     setPrice_filter(price: number | null) {
         this.price_filter = price;
-        this.sync('price_filter', price);
     }
 
-    year_filter = $state<number | null>(
-        typeof window !== 'undefined' && localStorage.getItem('year_filter') 
-            ? JSON.parse(localStorage.getItem('year_filter')!) 
-            : null
-    );
-        
     setYear_filter(year: number | null) {
         this.year_filter = year;
-        this.sync('year_filter', year);
     }
-
-    status_filter = $state<number | null>(
-        typeof window !== 'undefined' && localStorage.getItem('status_filter') 
-            ? JSON.parse(localStorage.getItem('status_filter')!) 
-            : null
-    );
 
     setStatus_filter(status: number | null) {
         this.status_filter = status;
-        this.sync('status_filter', status);
     }
-
-    nouveaute_filter = $state<boolean | null>(
-        typeof window !== 'undefined' && localStorage.getItem('nouveaute_filter') 
-            ? JSON.parse(localStorage.getItem('nouveaute_filter')!) 
-            : null
-    );
 
     setNouveaute_filter(nouveaute: boolean | null) {
         this.nouveaute_filter = nouveaute;
-        this.sync('nouveaute_filter', nouveaute);
     }
-
-    category_filter = $state<string | null>(
-        typeof window !== 'undefined' && localStorage.getItem('category_filter') 
-            ? JSON.parse(localStorage.getItem('category_filter')!) 
-            : null
-    );
 
     setCategory_filter(category: string | null) {
         this.category_filter = category;
-        this.sync('category_filter', category);
-    }
-
-    private sync(key: string, value: any) {
-        if (typeof window !== 'undefined') {
-            if (value === null) {
-                localStorage.removeItem(key);
-            } else {
-                localStorage.setItem(key, JSON.stringify(value));
-            }
-        }
     }
 
     reset() {
@@ -90,9 +68,6 @@ class FilterStore {
         this.status_filter = null;
         this.nouveaute_filter = null;
         this.category_filter = null;
-        if (typeof window !== 'undefined') {
-            ['price_filter', 'year_filter', 'status_filter', 'nouveaute_filter', 'category_filter'].forEach(k => localStorage.removeItem(k));
-        }
     }
 }
 
