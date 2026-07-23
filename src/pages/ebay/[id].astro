@@ -44,24 +44,30 @@ if (userId) {
             </div>
 
             <!-- Navigation Flèches Objet Précédent / Suivant -->
-            <div class="flex items-center gap-2" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
+            <div class="join shadow-xs" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
                 {current?.prev_id ? (
-                    <a href={`/ebay/${current.prev_id}`} id="btn-prev-item" class="btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce précédente (Flèche Gauche ←)">
-                        ‹ Précédente #{current.prev_id}
+                    <a href={`/ebay/${current.prev_id}`} id="btn-prev-item" class="join-item btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce précédente (Flèche Gauche ←)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                        <span>Précédente</span>
+                        <span class="hidden sm:inline">#{current.prev_id}</span>
                     </a>
                 ) : (
-                    <button class="btn btn-outline btn-sm gap-1 text-xs btn-disabled opacity-40">
-                        ‹ Précédente
+                    <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                        <span>Précédente</span>
                     </button>
                 )}
 
                 {current?.next_id ? (
-                    <a href={`/ebay/${current.next_id}`} id="btn-next-item" class="btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce suivante (Flèche Droite →)">
-                        Suivante #{current.next_id} ›
+                    <a href={`/ebay/${current.next_id}`} id="btn-next-item" class="join-item btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce suivante (Flèche Droite →)">
+                        <span>Suivante</span>
+                        <span class="hidden sm:inline">#{current.next_id}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </a>
                 ) : (
-                    <button class="btn btn-outline btn-sm gap-1 text-xs btn-disabled opacity-40">
-                        Suivante ›
+                    <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
+                        <span>Suivante</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </button>
                 )}
             </div>

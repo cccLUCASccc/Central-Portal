@@ -1,7 +1,7 @@
 <script lang="ts">
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
-    import type { Antiquite } from "../../../type";
+    import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
 
     interface Props {
@@ -15,10 +15,34 @@
     let year = $state(antiquite.year);
     let price = $state(antiquite.price);
     let category = $state(antiquite.category);
+    let subcategory_id = $state<number | null>(antiquite.subcategory_id ?? null);
+    let subcategories = $state<Subcategory[]>([]);
     let size = $state(antiquite.size);
     let images = $state(antiquite.images);
     let status = $state(antiquite.status)
     let nouveaute = $state(antiquite.nouveaute ?? false);
+
+    // Charge les sous-catégories à chaque fois que la catégorie change
+    $effect(() => {
+        if (category) {
+            const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+            apiFetch(`${PUBLIC_API_URL}/api/subcategories?category=${encodeURIComponent(category)}`)
+                .then(res => {
+                    if (res.ok) return res.json();
+                    return [];
+                })
+                .then(data => {
+                    subcategories = data;
+                    if (subcategory_id !== null && !subcategories.find(s => s.id === subcategory_id)) {
+                        subcategory_id = null;
+                    }
+                })
+                .catch(err => console.error("Error fetching subcategories:", err));
+        } else {
+            subcategories = [];
+            subcategory_id = null;
+        }
+    });
     
     let ebayTitle = $state(antiquite.ebay_title ?? "");
     let ebayDescription = $state(antiquite.ebay_description ?? "");
@@ -70,6 +94,7 @@
         formData.append("name", name);
         formData.append("description", description);
         formData.append("category", category);
+        formData.append("subcategory_id", subcategory_id !== null ? subcategory_id.toString() : "");
         formData.append("size", size);
         formData.append("price", price.toString());
         formData.append("year", year.toString());
@@ -251,6 +276,17 @@
             </div>
             <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
             <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
+            
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend font-semibold">Sous-catégorie</legend>
+                <select bind:value={subcategory_id} class="select select-bordered w-full rounded-md">
+                    <option value={null}>Aucune sous-catégorie</option>
+                    {#each subcategories as sub}
+                        <option value={sub.id}>{sub.name}</option>
+                    {/each}
+                </select>
+            </fieldset>
+
             <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
             
             <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
@@ -268,57 +304,65 @@
         />
     </div>
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12 pt-6 border-t border-base-200">
-        <div class="flex gap-2">
+        <div class="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
             {#if antiquite.id}
             <button 
                 onclick={() => publishToFacebook(antiquite.id)} 
                 disabled={isPublishingFB}
-                class="btn bg-[#1877F2] hover:bg-[#0C5DC7] text-white border-none shadow-md"
+                class="btn btn-sm bg-[#1877F2] hover:bg-[#0C5DC7] text-white border-none shadow-md"
             >
                 {#if isPublishingFB}
-                    <span class="loading loading-spinner loading-sm"></span>
+                    <span class="loading loading-spinner loading-xs"></span>
                 {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 {/if}
                 Publier sur Facebook
             </button>
             {/if}
         </div>
         
-        <div class="flex flex-wrap gap-2">
-            {#if antiquite.prev_id}
-                <button 
-                    type="button"
-                    onclick={() => saveAndNavigate(antiquite.prev_id!)}
-                    disabled={isSaving}
-                    class="btn btn-outline btn-sm gap-1"
-                    title="Enregistrer et aller à l'objet précédent (←)"
-                >
-                    ‹ Enregistrer & Précédent #{antiquite.prev_id}
-                </button>
-            {/if}
+        <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
+            {#if antiquite.prev_id || antiquite.next_id}
+                <div class="join shadow-xs">
+                    {#if antiquite.prev_id}
+                        <button 
+                            type="button"
+                            onclick={() => saveAndNavigate(antiquite.prev_id!)}
+                            disabled={isSaving}
+                            class="join-item btn btn-outline btn-sm gap-1"
+                            title="Enregistrer et aller à l'objet précédent (←)"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                            <span>Enregistrer & Précédent</span>
+                        </button>
+                    {/if}
 
-            {#if antiquite.next_id}
-                <button 
-                    type="button"
-                    onclick={() => saveAndNavigate(antiquite.next_id!)}
-                    disabled={isSaving}
-                    class="btn btn-outline btn-sm gap-1"
-                    title="Enregistrer et aller à l'objet suivant (→)"
-                >
-                    Enregistrer & Suivant #{antiquite.next_id} ›
-                </button>
+                    {#if antiquite.next_id}
+                        <button 
+                            type="button"
+                            onclick={() => saveAndNavigate(antiquite.next_id!)}
+                            disabled={isSaving}
+                            class="join-item btn btn-outline btn-sm gap-1"
+                            title="Enregistrer et aller à l'objet suivant (→)"
+                        >
+                            <span>Enregistrer & Suivant</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                        </button>
+                    {/if}
+                </div>
             {/if}
             
-            <button onclick={() => window.history.back()} class="btn btn-ghost">Annuler</button>
-            <button onclick={() => {modifyAntiquity(antiquite.id)}} disabled={isSaving} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
-                {#if isSaving}
-                    <span class="loading loading-spinner loading-xs mr-2"></span>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                {/if}
-                Enregistrer les modifications
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick={() => window.history.back()} class="btn btn-ghost btn-sm">Annuler</button>
+                <button onclick={() => {modifyAntiquity(antiquite.id)}} disabled={isSaving} class="btn btn-primary btn-sm px-6 shadow-lg shadow-primary/20">
+                    {#if isSaving}
+                        <span class="loading loading-spinner loading-xs mr-2"></span>
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                    {/if}
+                    Enregistrer les modifications
+                </button>
+            </div>
         </div>
     </div>
 </div>

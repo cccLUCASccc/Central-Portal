@@ -217,9 +217,14 @@
               </td>
 
               <td class="text-center">
-                  <span class="badge badge-info h-auto py-1 px-3 font-bold uppercase text-[10px] leading-tight text-center">
-                    {antiquite.category || "Inconnu"}
-                  </span>
+                  <div class="flex flex-col items-center gap-1">
+                      <span class="badge badge-info h-auto py-1 px-3 font-bold uppercase text-[10px] leading-tight text-center">
+                        {antiquite.category || "Inconnu"}
+                      </span>
+                      {#if antiquite.subcategory}
+                        <span class="text-[10px] opacity-70 italic">({antiquite.subcategory.name})</span>
+                      {/if}
+                  </div>
               </td>
               
               <td class="text-center">

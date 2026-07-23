@@ -1,0 +1,22 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import SubcategoriesManager from '../components/SveltesComponents/molecules/SubcategoriesManager.svelte';
+import { Show } from '@clerk/astro/components';
+
+const auth = Astro.locals.auth()
+const userId = auth.userId
+---
+
+<BasicLayout>
+    <Show when="signed-in">
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold tracking-tight">Gestion des Sous-catégories</h1>
+            <p class="text-base-content/60 mt-1">Créez et organisez les sous-catégories pour chaque galerie.</p>
+        </div>
+        
+        <SubcategoriesManager 
+            client:load 
+            apiUrl={import.meta.env.API_URL}
+        />
+    </Show>
+</BasicLayout>

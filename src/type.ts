@@ -16,6 +16,12 @@ export interface PaginatedResponse<T> {
     pagination: Pagination;
 }
 
+export interface Subcategory {
+    id: number;
+    name: string;
+    category: string;
+}
+
 export interface Antiquite {
     id: number; 
     name: string;
@@ -37,6 +43,8 @@ export interface Antiquite {
     ebay_status?: string;
     prev_id?: number;
     next_id?: number;
+    subcategory_id?: number;
+    subcategory?: Subcategory;
 }
 
 export interface Livraison {

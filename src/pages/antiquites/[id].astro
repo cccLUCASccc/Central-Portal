@@ -44,20 +44,23 @@ if(userId){
             </div>
 
             <!-- Navigation Flèches Objet Précédent / Suivant -->
-            <div class="flex items-center gap-2" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
+            <div class="join shadow-xs" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
                 {current?.prev_id ? (
                     <button 
                         type="button" 
                         onclick={`if (window.saveAndNavigateTo) { window.saveAndNavigateTo(${current.prev_id}); } else { window.location.href='/antiquites/${current.prev_id}'; }`} 
                         id="btn-prev-item" 
-                        class="btn btn-outline btn-primary btn-sm gap-1 text-xs cursor-pointer" 
+                        class="join-item btn btn-outline btn-primary btn-sm gap-1 text-xs cursor-pointer" 
                         title="Enregistrer et passer à l'objet précédent (Flèche Gauche ←)"
                     >
-                        ‹ Précédent #{current.prev_id}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                        <span>Précédent</span>
+                        <span class="hidden sm:inline">#{current.prev_id}</span>
                     </button>
                 ) : (
-                    <button class="btn btn-outline btn-sm gap-1 text-xs btn-disabled opacity-40">
-                        ‹ Précédent
+                    <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                        <span>Précédent</span>
                     </button>
                 )}
 
@@ -66,14 +69,17 @@ if(userId){
                         type="button" 
                         onclick={`if (window.saveAndNavigateTo) { window.saveAndNavigateTo(${current.next_id}); } else { window.location.href='/antiquites/${current.next_id}'; }`} 
                         id="btn-next-item" 
-                        class="btn btn-outline btn-primary btn-sm gap-1 text-xs cursor-pointer" 
+                        class="join-item btn btn-outline btn-primary btn-sm gap-1 text-xs cursor-pointer" 
                         title="Enregistrer et passer à l'objet suivant (Flèche Droite →)"
                     >
-                        Suivant #{current.next_id} ›
+                        <span>Suivant</span>
+                        <span class="hidden sm:inline">#{current.next_id}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </button>
                 ) : (
-                    <button class="btn btn-outline btn-sm gap-1 text-xs btn-disabled opacity-40">
-                        Suivant ›
+                    <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
+                        <span>Suivant</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </button>
                 )}
             </div>

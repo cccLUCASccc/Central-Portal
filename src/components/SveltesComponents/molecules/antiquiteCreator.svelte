@@ -1,6 +1,6 @@
 <script lang="ts">
     import { apiFetch } from "../../../lib/api";
-    import type { Image } from "../../../type";
+    import type { Image, Subcategory } from "../../../type";
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
 
@@ -10,8 +10,32 @@
     let price = $state<number>(0);
     let status = $state<number>(0);
     let category = $state("Mobilier");
+    let subcategories = $state<Subcategory[]>([]);
+    let subcategory_id = $state<number | null>(null);
     let size = $state("S");
     let nouveaute = $state(false);
+
+    // Charge les sous-catégories à chaque fois que la catégorie change
+    $effect(() => {
+        if (category) {
+            const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+            apiFetch(`${PUBLIC_API_URL}/api/subcategories?category=${encodeURIComponent(category)}`)
+                .then(res => {
+                    if (res.ok) return res.json();
+                    return [];
+                })
+                .then(data => {
+                    subcategories = data;
+                    if (!subcategories.find(s => s.id === subcategory_id)) {
+                        subcategory_id = null;
+                    }
+                })
+                .catch(err => console.error("Error fetching subcategories:", err));
+        } else {
+            subcategories = [];
+            subcategory_id = null;
+        }
+    });
     
     let ebayTitle = $state("");
     let ebayDescription = $state("");
@@ -68,6 +92,7 @@
         formData.append("year", year.toString());
         formData.append("status", status.toString());
         formData.append("category", category);
+        formData.append("subcategory_id", subcategory_id !== null ? subcategory_id.toString() : "");
         formData.append("size", size);
         formData.append("nouveaute", nouveaute.toString());
         formData.append("ebay_title", ebayTitle);
@@ -127,6 +152,17 @@
             </div>
             <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
             <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
+            
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend font-semibold">Sous-catégorie</legend>
+                <select bind:value={subcategory_id} class="select select-bordered w-full rounded-md">
+                    <option value={null}>Aucune sous-catégorie</option>
+                    {#each subcategories as sub}
+                        <option value={sub.id}>{sub.name}</option>
+                    {/each}
+                </select>
+            </fieldset>
+
             <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
             
             <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
