@@ -215,7 +215,6 @@
           <div class="item">
             <img src="${qrUrl}" alt="QR Code ${item.id}" />
             <h3>${item.name}</h3>
-            <p>${item.price} €</p>
           </div>
         `;
       } catch (err) {
