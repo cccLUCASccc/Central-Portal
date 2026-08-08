@@ -41,58 +41,67 @@ try {
     <!-- On empêche l'indexation comme demandé -->
     <meta name="robots" content="noindex, nofollow">
 </head>
-<body class="bg-base-200 min-h-screen flex items-center justify-center p-4">
-    <div class="card bg-base-100 shadow-xl max-w-md w-full border border-base-300">
-        <div class="card-body">
+<body class="bg-gradient-to-br from-base-200 to-base-300 min-h-screen flex items-center justify-center p-4 font-sans">
+    <div class="card bg-base-100 shadow-2xl max-w-md w-full border border-base-100 overflow-hidden relative">
+        <!-- Ligne décorative en haut -->
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-secondary"></div>
+        
+        <div class="card-body p-8">
             {current ? (
                 <>
-                <div class="flex justify-between items-start mb-4">
-                    <h2 class="card-title text-2xl font-bold">{current.name}</h2>
-                    <span class="badge badge-neutral text-xs">ID: {current.id}</span>
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-base-content leading-tight">{current.name}</h2>
+                        <span class="text-xs font-medium text-base-content/40 tracking-widest uppercase mt-1 block">Ref: #{current.id}</span>
+                    </div>
                 </div>
                 
-                <div class="text-3xl font-black text-primary mb-6">
+                <div class="text-4xl font-black text-primary mb-8 tracking-tight">
                     {current.price} €
                 </div>
 
-                <div class="space-y-4">
-                    <div>
-                        <h3 class="text-sm font-bold text-base-content/50 uppercase tracking-wider mb-1">Description</h3>
-                        <p class="text-base-content text-sm bg-base-200 p-3 rounded-lg whitespace-pre-line">
-                            {current.description || "Aucune description."}
+                <div class="space-y-6">
+                    <div class="bg-base-200/50 p-5 rounded-xl border border-base-200">
+                        <h3 class="text-xs font-bold text-base-content/50 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                            Description
+                        </h3>
+                        <p class="text-base-content/80 text-sm whitespace-pre-line leading-relaxed">
+                            {current.description || "Aucune description détaillée n'est disponible pour cet objet."}
                         </p>
                     </div>
 
-                    <div>
-                        <h3 class="text-sm font-bold text-base-content/50 uppercase tracking-wider mb-1">Statut</h3>
+                    <div class="flex items-center justify-between py-2 border-b border-base-200/50">
+                        <h3 class="text-xs font-bold text-base-content/50 uppercase tracking-widest">État</h3>
                         {current.status === 1 ? (
-                            <div class="badge badge-success gap-2">
-                                <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                                Publié
+                            <div class="badge badge-success badge-outline gap-2 font-bold px-3 py-3">
+                                <span class="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
+                                En ligne
                             </div>
                         ) : current.status === 2 ? (
-                            <div class="badge badge-error">Vendu</div>
+                            <div class="badge badge-error badge-outline font-bold px-3 py-3">Vendu</div>
                         ) : (
-                            <div class="badge badge-warning">Brouillon / Non publié</div>
+                            <div class="badge badge-warning badge-outline font-bold px-3 py-3">Non publié</div>
                         )}
                     </div>
 
                     {current.status === 1 && (
-                        <div>
-                            <h3 class="text-sm font-bold text-base-content/50 uppercase tracking-wider mb-2">Lien Boutique</h3>
-                            <a href={`https://www.daisybrocante.com/boutique/${encodeURIComponent(current.name)}`} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-primary btn-sm w-full">
-                                Voir sur le site
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-1"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                        <div class="pt-4 mt-4">
+                            <a href={`https://www.daisybrocante.com/boutique/${encodeURIComponent(current.name)}`} target="_blank" rel="noopener noreferrer" class="btn btn-primary w-full shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                                Voir sur la boutique en ligne
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 ml-1"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
                             </a>
                         </div>
                     )}
                 </div>
                 </>
             ) : (
-                <div class="text-center py-10">
-                    <span class="text-5xl mb-4 block">🔍</span>
-                    <h2 class="text-xl font-bold text-error">Objet introuvable</h2>
-                    <p class="text-sm text-base-content/60 mt-2">Impossible de récupérer les informations de cet objet.</p>
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-4xl opacity-50">🔍</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-base-content mb-2">Objet introuvable</h2>
+                    <p class="text-sm text-base-content/60 max-w-[250px] mx-auto">Impossible de récupérer les informations de cet objet. Il a peut-être été supprimé.</p>
                 </div>
             )}
         </div>
