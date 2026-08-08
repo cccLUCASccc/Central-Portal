@@ -2,8 +2,6 @@
 import BasicLayout from '../layouts/basic.astro';
 import BlogManager from '../components/SveltesComponents/molecules/BlogManager.svelte';
 import { Show } from '@clerk/astro/components';
-<<<<<<< HEAD
-=======
 
 const auth = Astro.locals.auth();
 const token = await auth.getToken();
@@ -38,14 +36,10 @@ if (userId && token) {
         console.error("🔥 Erreur lors du fetch SSR (Blog):", error.message);
     }
 }
->>>>>>> main
 ---
 
 <BasicLayout>
     <Show when="signed-in">
-<<<<<<< HEAD
-        <BlogManager client:load apiUrl={import.meta.env.API_URL} />
-=======
         <div class="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <BlogManager 
                 client:load 
@@ -54,6 +48,5 @@ if (userId && token) {
                 pagination={initialPagination}
             />
         </div>
->>>>>>> main
     </Show>
 </BasicLayout>
