@@ -1,8 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/astro/server";
 
 // On définit les routes qui ne nécessitent pas d'authentification
-// Ici, on veut que TOUTES les pages soient protégées.
-const isPublicRoute = createRouteMatcher([]);
+const isPublicRoute = createRouteMatcher(['/inventoryt5hr4hr85g48412r(.*)']);
 
 export const onRequest = clerkMiddleware((auth, context) => {
   const { userId } = auth();
