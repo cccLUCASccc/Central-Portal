@@ -96,9 +96,9 @@
                         <img src="${qrCodeDataUrl}" />
                         <h3>${name}</h3>
                         <p>${price} €</p>
-                        <script>
+                        <scr` + `ipt>
                             window.onload = function() { window.print(); window.close(); }
-                        </script>
+                        </scr` + `ipt>
                     </body>
                 </html>
             `);

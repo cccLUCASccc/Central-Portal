@@ -225,9 +225,9 @@
     
     htmlContent += `
           </div>
-          <script>
+          <scr` + `ipt>
             window.onload = function() { window.print(); window.close(); }
-          </script>
+          </scr` + `ipt>
         </body>
       </html>
     `;
