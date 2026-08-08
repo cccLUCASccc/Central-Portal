@@ -1,34 +1,34 @@
 ---
 import BasicLayout from '../../layouts/basic.astro';
-import AntiquitesModifier from '../../components/SveltesComponents/molecules/antiquitesModifier.svelte';
+import EbayModifier from '../../components/SveltesComponents/molecules/EbayModifier.svelte';
 
-export const prerender = false
-const auth = Astro.locals.auth()
-const token  = await auth.getToken()
-const userId = auth.userId
+export const prerender = false;
+const auth = Astro.locals.auth();
+const token = await auth.getToken();
+const userId = auth.userId;
 
 const { id } = Astro.params;
 const API_URL = import.meta.env.API_URL;
 const finalUrl = `${API_URL}/api/antiquites/single/${id}`;
 
-let current
+let current = null;
 
-if(userId){
-    try{
+if (userId) {
+    try {
         const response = await fetch(finalUrl, {
-            headers : {
-                'Authorization' : `Bearer ${token}`
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
         });
 
         if (!response.ok) {
-            return Astro.redirect('/'); 
+            return Astro.redirect('/ebay'); 
         }
 
         current = await response.json();
     }
-    catch(error : any){
-        console.error(error.message)
+    catch (error: any) {
+        console.error("🔥 [eBay Detail] Erreur fetch :", error.message);
     }
 }
 ---
@@ -37,48 +37,36 @@ if(userId){
     <div class="max-w-5xl mx-auto">
         <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <a href="/" onclick="history.back(); return false;" class="btn btn-ghost btn-sm gap-2">
+                <a href="/ebay" onclick="history.back(); return false;" class="btn btn-ghost btn-sm gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                    Retour à l'inventaire
+                    Retour aux annonces eBay
                 </a>
             </div>
 
             <!-- Navigation Flèches Objet Précédent / Suivant -->
             <div class="join shadow-xs" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
                 {current?.prev_id ? (
-                    <button 
-                        type="button" 
-                        onclick={`if (window.saveAndNavigateTo) { window.saveAndNavigateTo(${current.prev_id}); } else { window.location.href='/antiquites/${current.prev_id}'; }`} 
-                        id="btn-prev-item" 
-                        class="join-item btn btn-outline btn-primary btn-sm gap-1 text-xs cursor-pointer" 
-                        title="Enregistrer et passer à l'objet précédent (Flèche Gauche ←)"
-                    >
+                    <a href={`/ebay/${current.prev_id}`} id="btn-prev-item" class="join-item btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce précédente (Flèche Gauche ←)">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-                        <span>Précédent</span>
+                        <span>Précédente</span>
                         <span class="hidden sm:inline">#{current.prev_id}</span>
-                    </button>
+                    </a>
                 ) : (
                     <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-                        <span>Précédent</span>
+                        <span>Précédente</span>
                     </button>
                 )}
 
                 {current?.next_id ? (
-                    <button 
-                        type="button" 
-                        onclick={`if (window.saveAndNavigateTo) { window.saveAndNavigateTo(${current.next_id}); } else { window.location.href='/antiquites/${current.next_id}'; }`} 
-                        id="btn-next-item" 
-                        class="join-item btn btn-outline btn-primary btn-sm gap-1 text-xs cursor-pointer" 
-                        title="Enregistrer et passer à l'objet suivant (Flèche Droite →)"
-                    >
-                        <span>Suivant</span>
+                    <a href={`/ebay/${current.next_id}`} id="btn-next-item" class="join-item btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce suivante (Flèche Droite →)">
+                        <span>Suivante</span>
                         <span class="hidden sm:inline">#{current.next_id}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-                    </button>
+                    </a>
                 ) : (
                     <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
-                        <span>Suivant</span>
+                        <span>Suivante</span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </button>
                 )}
@@ -87,24 +75,35 @@ if(userId){
             <div class="text-sm breadcrumbs opacity-50 hidden md:block">
                 <ul>
                     <li><a href="/">Accueil</a></li>
-                    <li><a href="/">Antiquités</a></li>
-                    <li>Modifier</li>
+                    <li><a href="/ebay">eBay</a></li>
+                    <li>Annonce {id}</li>
                 </ul>
             </div>
         </div>
 
-        <div class="card bg-base-100 shadow-xl border border-base-200 overflow-hidden">
-            <div class="bg-primary/5 p-6 border-b border-base-200 flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold">Modifier l'objet</h1>
-                    <p class="text-sm opacity-60">ID: {id} • Mise à jour des informations et des médias.</p>
+        {current ? (
+            <div class="card bg-base-100 shadow-xl border border-base-200 overflow-hidden">
+                <div class="bg-info/5 p-6 border-b border-base-200 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            Annonce eBay
+                        </h1>
+                        <p class="text-sm opacity-60">Personnalisez les détails spécifiquement pour eBay, indépendamment du site.</p>
+                    </div>
+                    <div class="badge badge-info badge-outline font-semibold font-mono">{current.name}</div>
                 </div>
-                <div class="badge badge-primary badge-outline font-mono">{current.name}</div>
+                <div class="p-6 md:p-10">
+                    <EbayModifier client:load antiquite={current} />
+                </div>
             </div>
-            <div class="p-6 md:p-10">
-                <AntiquitesModifier client:load antiquite={current}/>
+        ) : (
+            <div class="alert alert-error">
+                <span>Erreur : Impossible de charger les détails de l'antiquité.</span>
             </div>
-        </div>
+        )}
     </div>
 </BasicLayout>
 
@@ -117,7 +116,6 @@ if(userId){
         const nextId = container.dataset.nextId;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignorer la navigation si l'utilisateur saisit dans un champ de texte
             const activeElement = document.activeElement;
             if (activeElement) {
                 const tagName = activeElement.tagName.toLowerCase();
@@ -128,9 +126,9 @@ if(userId){
             }
 
             if (e.key === 'ArrowLeft' && prevId) {
-                window.location.href = `/antiquites/${prevId}`;
+                window.location.href = `/ebay/${prevId}`;
             } else if (e.key === 'ArrowRight' && nextId) {
-                window.location.href = `/antiquites/${nextId}`;
+                window.location.href = `/ebay/${nextId}`;
             }
         };
 

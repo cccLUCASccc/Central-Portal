@@ -1,0 +1,90 @@
+---
+import BasicLayout from '../../layouts/basic.astro';
+import { Show } from '@clerk/astro/components';
+
+const auth = Astro.locals.auth();
+const token = await auth.getToken();
+const userId = auth.userId;
+---
+
+<BasicLayout>
+    <Show when="signed-in">
+        <div class="flex flex-col items-center justify-center min-h-[50vh] max-w-lg mx-auto bg-base-100 p-8 rounded-3xl shadow-xl border border-base-200 text-center space-y-6 my-12 animate-in fade-in duration-500">
+            <div class="relative flex items-center justify-center w-20 h-20 bg-info/10 rounded-full mx-auto">
+                <span id="logo-icon" class="text-3xl animate-bounce">🔑</span>
+            </div>
+            
+            <h1 class="text-2xl font-black tracking-tight">Authentification eBay</h1>
+            <p id="status-text" class="text-base-content/70">Échange du code d'autorisation en cours, veuillez patienter...</p>
+            
+            <div id="loader" class="flex justify-center py-2">
+                <span class="loading loading-ring loading-lg text-info"></span>
+            </div>
+
+            <div id="success-icon" class="hidden text-5xl text-success animate-in zoom-in-50 duration-300">
+                ✅
+            </div>
+
+            <div id="error-icon" class="hidden text-5xl text-error animate-in zoom-in-50 duration-300">
+                ❌
+            </div>
+        </div>
+
+        <script define:vars={{ apiUrl: import.meta.env.API_URL, clerkToken: token }}>
+            async function handleCallback() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                
+                const statusText = document.getElementById('status-text');
+                const loader = document.getElementById('loader');
+                const successIcon = document.getElementById('success-icon');
+                const errorIcon = document.getElementById('error-icon');
+                const logoIcon = document.getElementById('logo-icon');
+
+                if (!code) {
+                    statusText.innerText = "Code d'autorisation manquant dans l'URL. Veuillez ré-essayer.";
+                    loader.classList.add('hidden');
+                    errorIcon.classList.remove('hidden');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${apiUrl}/api/antiquites/ebay/exchange-code`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${clerkToken}`
+                        },
+                        body: JSON.stringify({ code })
+                    });
+
+                    if (response.ok) {
+                        statusText.innerText = "Connexion réussie ! Vos identifiants eBay ont été configurés. Redirection en cours...";
+                        loader.classList.add('hidden');
+                        successIcon.classList.remove('hidden');
+                        if (logoIcon) logoIcon.innerText = "🎉";
+                        
+                        setTimeout(() => {
+                            window.location.href = '/ebay';
+                        }, 3000);
+                    } else {
+                        const result = await response.json();
+                        statusText.innerText = "Erreur lors de l'échange du code : " + (result.error || response.statusText);
+                        loader.classList.add('hidden');
+                        errorIcon.classList.remove('hidden');
+                        if (logoIcon) logoIcon.innerText = "⚠️";
+                    }
+                } catch (e) {
+                    console.error("❌ Erreur OAuth :", e);
+                    statusText.innerText = "Impossible de contacter le serveur central. Veuillez réessayer.";
+                    loader.classList.add('hidden');
+                    errorIcon.classList.remove('hidden');
+                    if (logoIcon) logoIcon.innerText = "⚠️";
+                }
+            }
+
+            // Lancer le traitement au chargement de la page
+            handleCallback();
+        </script>
+    </Show>
+</BasicLayout>

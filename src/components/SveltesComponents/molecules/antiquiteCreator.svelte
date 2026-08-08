@@ -1,6 +1,7 @@
 <script lang="ts">
     import { apiFetch } from "../../../lib/api";
-    import type { Image } from "../../../type";
+    import type { Image, Subcategory } from "../../../type";
+    import { untrack } from "svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
 
@@ -10,9 +11,42 @@
     let price = $state<number>(0);
     let status = $state<number>(0);
     let category = $state("Mobilier");
+    let subcategories = $state<Subcategory[]>([]);
+    let subcategory_id = $state<number | null>(null);
     let size = $state("S");
     let nouveaute = $state(false);
+
+    // Charge les sous-catégories à chaque fois que la catégorie change
+    $effect(() => {
+        const currentCategory = category;
+        if (currentCategory) {
+            const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+            fetch(`${PUBLIC_API_URL}/front/subcategories?category=${encodeURIComponent(currentCategory)}`)
+                .then(res => {
+                    if (res.ok) return res.json();
+                    return [];
+                })
+                .then(data => {
+                    subcategories = data;
+                    untrack(() => {
+                        if (subcategory_id !== null && !subcategories.find(s => Number(s.id) === Number(subcategory_id))) {
+                            subcategory_id = null;
+                        }
+                    });
+                })
+                .catch(err => console.error("Error fetching subcategories:", err));
+        } else {
+            subcategories = [];
+            subcategory_id = null;
+        }
+    });
     
+    let ebayTitle = $state("");
+    let ebayDescription = $state("");
+    let ebayPrice = $state<number>(0);
+    let ebayCategoryID = $state("");
+    
+    let isCreating = $state(false);
     let isEnhancing = $state(false);
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
@@ -51,6 +85,8 @@
     }
 
     async function createAntiquity() {
+        if (isCreating) return;
+        isCreating = true;
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
         const formData = new FormData();
         
@@ -60,23 +96,35 @@
         formData.append("year", year.toString());
         formData.append("status", status.toString());
         formData.append("category", category);
+        formData.append("subcategory_id", subcategory_id !== null ? subcategory_id.toString() : "");
         formData.append("size", size);
         formData.append("nouveaute", nouveaute.toString());
+        formData.append("ebay_title", ebayTitle);
+        formData.append("ebay_description", ebayDescription);
+        formData.append("ebay_price", ebayPrice !== null ? ebayPrice.toString() : "0");
+        formData.append("ebay_category_id", ebayCategoryID);
 
         newFiles.forEach(file => {
             formData.append("image", file);  
         });
 
-        const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/add`, {
-            method: "POST",
-            body: formData 
-        });
+        try {
+            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/add`, {
+                method: "POST",
+                body: formData 
+            });
 
-        if (response.ok) {
-            alert("Objet créé avec succès ! ✨");
-            window.location.href = "/"; 
-        } else {
-            alert("Erreur lors de la création de l'objet.");
+            if (response.ok) {
+                alert("Objet créé avec succès ! ✨");
+                window.location.href = "/"; 
+            } else {
+                alert("Erreur lors de la création de l'objet.");
+            }
+        } catch (error) {
+            console.error("Error creating object:", error);
+            alert("Une erreur de connexion est survenue.");
+        } finally {
+            isCreating = false;
         }
     }
 </script>
@@ -108,6 +156,17 @@
             </div>
             <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
             <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
+            
+            <fieldset class="fieldset">
+                <legend class="fieldset-legend font-semibold">Sous-catégorie</legend>
+                <select bind:value={subcategory_id} class="select select-bordered w-full rounded-md">
+                    <option value={null}>Aucune sous-catégorie</option>
+                    {#each subcategories as sub}
+                        <option value={sub.id}>{sub.name}</option>
+                    {/each}
+                </select>
+            </fieldset>
+
             <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
             
             <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
@@ -124,10 +183,57 @@
         />
     </div>
 
+    <div class="divider">eBay (Optionnel)</div>
+    
+    <div class="collapse collapse-arrow bg-base-200/30 border border-base-200 rounded-2xl">
+        <input type="checkbox" class="peer" /> 
+        <div class="collapse-title text-base font-bold flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Personnaliser les informations eBay
+        </div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div class="space-y-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Titre de l'objet sur eBay</legend>
+                        <input type="text" placeholder="Par défaut : {name || 'Nom de l\'objet'}" bind:value={ebayTitle} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Si vide, le nom principal sera envoyé à eBay.</span>
+                    </fieldset>
+                    
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Description sur eBay</legend>
+                        <textarea placeholder="Par défaut : {description || 'Description de l\'objet'}" bind:value={ebayDescription} class="textarea textarea-bordered h-28 w-full rounded-md"></textarea>
+                        <span class="text-xs opacity-50">Si vide, la description principale sera envoyée à eBay.</span>
+                    </fieldset>
+                </div>
+                
+                <div class="space-y-4">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">Prix sur eBay (EUR)</legend>
+                        <input type="number" step="0.01" placeholder="Par défaut : {price || '0'}" bind:value={ebayPrice} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Si à 0 ou vide, le prix standard sera envoyé.</span>
+                    </fieldset>
+                    
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend font-semibold">ID Catégorie eBay</legend>
+                        <input type="text" placeholder="Par défaut : 119168" bind:value={ebayCategoryID} class="input input-bordered w-full rounded-md" />
+                        <span class="text-xs opacity-50">Saisissez l'ID de catégorie eBay (ex: 119168 pour Architecture/Matériaux).</span>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
-        <button onclick={() => window.location.href = '/'} class="btn btn-ghost">Annuler</button>
-        <button onclick={() => createAntiquity()} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+        <button onclick={() => window.location.href = '/'} disabled={isCreating} class="btn btn-ghost">Annuler</button>
+        <button onclick={() => createAntiquity()} disabled={isCreating} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
+            {#if isCreating}
+                <span class="loading loading-spinner loading-sm mr-2"></span>
+            {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            {/if}
             Créer l'objet
         </button>
     </div>

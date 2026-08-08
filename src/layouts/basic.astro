@@ -1,21 +1,23 @@
 ---
 import "../styles/global.css";
-import { Show, UserButton } from '@clerk/astro/components';
+import { Show, UserButton } from "@clerk/astro/components";
 import ThemeController from "../components/SveltesComponents/atoms/ThemeController.svelte";
 
-const auth = Astro.locals.auth()
-const token  = await auth.getToken()
-const userId = auth.userId
+const auth = Astro.locals.auth();
+const token = await auth.getToken();
+const userId = auth.userId;
 
 console.log("🛠️ [Layout] Debug Auth - UserId:", userId);
 console.log("🛠️ [Layout] Debug Auth - Token present:", !!token);
 
 if (userId && !token) {
-    console.warn("⚠️ [Layout] L'utilisateur est connecté mais aucun token n'a pu être récupéré.");
+  console.warn(
+    "⚠️ [Layout] L'utilisateur est connecté mais aucun token n'a pu être récupéré.",
+  );
 }
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
@@ -27,40 +29,66 @@ if (userId && !token) {
     <script is:inline>
       // Initialisation du thème pour éviter le flash blanc/noir
       const theme = (() => {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-          return localStorage.getItem('theme');
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme");
         }
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          return 'dracula';
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          return "dracula";
         }
-        return 'corporate';
+        return "corporate";
       })();
-      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute("data-theme", theme);
     </script>
   </head>
-  
-  <body class="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300">
-    
+
+  <body
+    class="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300"
+  >
     <div class="drawer">
       <input id="my-drawer" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content flex flex-col">
-        
         <Show when="signed-in">
           <!-- Navbar -->
-          <header class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-200 px-4">
+          <header
+            class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-200 px-4"
+          >
             <div class="flex-none lg:hidden">
-              <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              <label
+                for="my-drawer"
+                aria-label="open sidebar"
+                class="btn btn-square btn-ghost"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  class="inline-block w-6 h-6 stroke-current"
+                  ><path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"></path></svg
+                >
               </label>
             </div>
-            
+
             <div class="flex-1 px-2 mx-2 font-bold text-xl tracking-tight">
-              <a href="/" class="hover:text-primary transition-colors">Central Portal</a>
+              <a href="/" class="hover:text-primary transition-colors"
+                >Central Portal</a
+              >
             </div>
 
             <div class="flex-none hidden lg:block">
               <ul class="menu menu-horizontal px-1 gap-2">
                 <li><a href="/" class="rounded-lg">Inventaire</a></li>
+                <li>
+                  <a href="/subcategories" class="rounded-lg"
+                    >Sous-catégories</a>
+                </li>
+                <li><a href="/ebay" class="rounded-lg">eBay</a></li>
                 <li><a href="/Livraison" class="rounded-lg">Livraisons</a></li>
                 <li><a href="/blog" class="rounded-lg">Blog</a></li>
               </ul>
@@ -68,7 +96,8 @@ if (userId && !token) {
 
             <div class="flex-none gap-4 ml-2">
               <ThemeController client:load />
-              <div class="divider divider-horizontal mx-0 h-8 self-center"></div>
+              <div class="divider divider-horizontal mx-0 h-8 self-center">
+              </div>
               <UserButton />
             </div>
           </header>
@@ -77,29 +106,48 @@ if (userId && !token) {
         <!-- Main Content -->
         <main class="flex-grow flex flex-col relative">
           <Show when="signed-in">
-            <div class="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div
+              class="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
+            >
               <slot />
             </div>
           </Show>
         </main>
-        
-        <footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300">
+
+        <footer
+          class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300"
+        >
           <aside>
             <p>Copyright © 2026 - Tous droits réservés par Central Portal</p>
           </aside>
         </footer>
-      </div> 
+      </div>
 
       <!-- Drawer Side (Mobile Navigation) -->
       <div class="drawer-side z-[100]">
-        <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"
+        ></label>
         <ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
           <li class="mb-4">
             <div class="text-xl font-bold px-2 py-4">Menu</div>
           </li>
-          <li><a href="/" class="flex items-center gap-3">🏠 Accueil</a></li>
-          <li><a href="/Livraison" class="flex items-center gap-3">🚚 Livraisons</a></li>
-          <li><a href="/blog" class="flex items-center gap-3">📝 Blog</a></li>
+          <li>
+            <a href="/" class="flex items-center gap-3"
+              >🏠 Boutique (Inventaire)</a>
+          </li>
+          <li>
+            <a href="/subcategories" class="flex items-center gap-3"
+              >🏷️ Sous-catégories</a>
+          </li>
+          <li>
+            <a href="/ebay" class="flex items-center gap-3"
+              >📦 eBay (Annonces)</a>
+          </li>
+          <li>
+            <a href="/Livraison" class="flex items-center gap-3"
+              >🚚 Livraisons</a>
+          </li>
+          <li><a href="/blog" class="flex items-center gap-3">📰 Blog</a></li>
         </ul>
       </div>
     </div>
