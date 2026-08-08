@@ -73,7 +73,7 @@ try {
 
                     <div class="flex items-center justify-between py-2 border-b border-base-200/50">
                         <h3 class="text-xs font-bold text-base-content/50 uppercase tracking-widest">État</h3>
-                        {current.status === 1 ? (
+                        {current.status === 0 ? (
                             <div class="badge badge-success badge-outline gap-2 font-bold px-3 py-3">
                                 <span class="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
                                 En ligne
@@ -85,7 +85,7 @@ try {
                         )}
                     </div>
 
-                    {current.status === 1 && (
+                    {current.status === 0 && (
                         <div class="pt-4 mt-4">
                             <a href={`https://www.daisybrocante.com/boutique/${encodeURIComponent(current.name)}`} target="_blank" rel="noopener noreferrer" class="btn btn-primary w-full shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
                                 Voir sur la boutique en ligne
