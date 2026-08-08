@@ -6,26 +6,15 @@ export const prerender = false;
 const { id } = Astro.params;
 const API_URL = import.meta.env.API_URL;
 
-// On essaie d'utiliser l'endpoint public pour récupérer l'article par son ID.
-const finalUrl = `${API_URL}/front/antiquites?id=${id}`;
+// On utilise l'endpoint public pour récupérer l'article par son ID.
+const finalUrl = `${API_URL}/front/antiquites/single/${id}`;
 
 let current;
 
 try {
     const response = await fetch(finalUrl);
     if (response.ok) {
-        const result = await response.json();
-        const data = Array.isArray(result) ? result : (result.data || []);
-        current = data.find((item: any) => item.id == id);
-        
-        // Si non trouvé dans front (peut-être pas publié), on essaie l'endpoint admin sans token 
-        // ou avec une requête spécifique. Mais si ce n'est pas publié, l'endpoint front peut ne pas le retourner.
-        if (!current) {
-            const adminResponse = await fetch(`${API_URL}/api/antiquites/single/${id}`);
-            if (adminResponse.ok) {
-                current = await adminResponse.json();
-            }
-        }
+        current = await response.json();
     }
 } catch (error: any) {
     console.error(error.message);
