@@ -1,0 +1,101 @@
+---
+import BasicLayout from '../../layouts/basic.astro';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const API_URL = import.meta.env.API_URL;
+
+// On essaie d'utiliser l'endpoint public pour récupérer l'article par son ID.
+const finalUrl = `${API_URL}/front/antiquites?id=${id}`;
+
+let current;
+
+try {
+    const response = await fetch(finalUrl);
+    if (response.ok) {
+        const result = await response.json();
+        const data = Array.isArray(result) ? result : (result.data || []);
+        current = data.find((item: any) => item.id == id);
+        
+        // Si non trouvé dans front (peut-être pas publié), on essaie l'endpoint admin sans token 
+        // ou avec une requête spécifique. Mais si ce n'est pas publié, l'endpoint front peut ne pas le retourner.
+        if (!current) {
+            const adminResponse = await fetch(`${API_URL}/api/antiquites/single/${id}`);
+            if (adminResponse.ok) {
+                current = await adminResponse.json();
+            }
+        }
+    }
+} catch (error: any) {
+    console.error(error.message);
+}
+---
+
+<!DOCTYPE html>
+<html lang="fr" data-theme="lofi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{current ? current.name : "Objet introuvable"} - Fiche Inventaire</title>
+    <!-- On empêche l'indexation comme demandé -->
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body class="bg-base-200 min-h-screen flex items-center justify-center p-4">
+    <div class="card bg-base-100 shadow-xl max-w-md w-full border border-base-300">
+        <div class="card-body">
+            {current ? (
+                <>
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="card-title text-2xl font-bold">{current.name}</h2>
+                    <span class="badge badge-neutral text-xs">ID: {current.id}</span>
+                </div>
+                
+                <div class="text-3xl font-black text-primary mb-6">
+                    {current.price} €
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-base-content/50 uppercase tracking-wider mb-1">Description</h3>
+                        <p class="text-base-content text-sm bg-base-200 p-3 rounded-lg whitespace-pre-line">
+                            {current.description || "Aucune description."}
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-sm font-bold text-base-content/50 uppercase tracking-wider mb-1">Statut</h3>
+                        {current.status === 1 ? (
+                            <div class="badge badge-success gap-2">
+                                <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                                Publié
+                            </div>
+                        ) : current.status === 2 ? (
+                            <div class="badge badge-error">Vendu</div>
+                        ) : (
+                            <div class="badge badge-warning">Brouillon / Non publié</div>
+                        )}
+                    </div>
+
+                    {current.status === 1 && (
+                        <div>
+                            <h3 class="text-sm font-bold text-base-content/50 uppercase tracking-wider mb-2">Lien Boutique</h3>
+                            <a href={`https://www.daisybrocante.com/boutique/${encodeURIComponent(current.name)}`} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-primary btn-sm w-full">
+                                Voir sur le site
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-1"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                            </a>
+                        </div>
+                    )}
+                </div>
+                </>
+            ) : (
+                <div class="text-center py-10">
+                    <span class="text-5xl mb-4 block">🔍</span>
+                    <h2 class="text-xl font-bold text-error">Objet introuvable</h2>
+                    <p class="text-sm text-base-content/60 mt-2">Impossible de récupérer les informations de cet objet.</p>
+                </div>
+            )}
+        </div>
+    </div>
+</body>
+</html>

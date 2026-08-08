@@ -20,11 +20,13 @@
     "astro": "^6.1.2",
     "daisyui": "^5.5.19",
     "papaparse": "^5.5.3",
+    "qrcode": "^1.5.4",
     "svelte": "^5.55.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/papaparse": "^5.5.2"
+    "@types/papaparse": "^5.5.2",
+    "@types/qrcode": "^1.5.6"
   }
 }

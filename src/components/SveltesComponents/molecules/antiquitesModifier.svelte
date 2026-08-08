@@ -3,6 +3,7 @@
     import ImagesContainer from "./ImagesContainer.svelte";
     import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
+    import QRCode from 'qrcode';
     import { untrack } from "svelte";
 
     interface Props {
@@ -57,6 +58,53 @@
     
     let isEnhancing = $state(false);
     let newFiles = $state<File[]>([]); 
+
+    let qrCodeDataUrl = $state("");
+
+    $effect(() => {
+        if (antiquite.id) {
+            const currentUrl = window.location.origin;
+            const url = `${currentUrl}/inventoryt5hr4hr85g48412r/${antiquite.id}`;
+            QRCode.toDataURL(url, { margin: 1, width: 200 })
+                .then(url => {
+                    qrCodeDataUrl = url;
+                })
+                .catch(err => {
+                    console.error("Erreur de génération QR Code", err);
+                });
+        }
+    });
+
+    function printQRCode() {
+        if (!qrCodeDataUrl) return;
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimer QR Code</title>
+                        <style>
+                            body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
+                            img { max-width: 100%; height: auto; margin-bottom: 1rem; }
+                            @media print {
+                                @page { margin: 0; }
+                                body { margin: 1cm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${qrCodeDataUrl}" />
+                        <h3>${name}</h3>
+                        <p>${price} €</p>
+                        <script>
+                            window.onload = function() { window.print(); window.close(); }
+                        </script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    }
 
     async function enhanceDescription() {
         console.log("🪄 [AI] Bouton Améliorer cliqué !");
@@ -308,6 +356,24 @@
             mode={"antiquites"}
         />
     </div>
+
+    <div class="divider">QR Code Inventaire</div>
+    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200 flex flex-col items-center justify-center gap-4">
+        {#if qrCodeDataUrl}
+            <img src={qrCodeDataUrl} alt="QR Code Inventaire" class="rounded-xl shadow-sm border border-base-300 bg-white p-2" />
+            <button onclick={printQRCode} type="button" class="btn btn-outline btn-primary gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                </svg>
+                Imprimer le QR Code
+            </button>
+        {:else}
+            <div class="flex items-center justify-center p-8">
+                <span class="loading loading-spinner loading-md text-primary"></span>
+            </div>
+        {/if}
+    </div>
+
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12 pt-6 border-t border-base-200">
         <div class="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
             {#if antiquite.id}
