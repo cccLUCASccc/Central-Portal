@@ -6,22 +6,22 @@ export const prerender = false;
 const { id } = Astro.params;
 const API_URL = import.meta.env.API_URL;
 
-const finalUrl = `${API_URL}/front/antiquites?id=${id}`;
-
 let current;
 
 try {
-    const response = await fetch(finalUrl);
+    // 1. Essayer l'endpoint dédié d'inventaire (permet de charger l'objet même s'il est inactif)
+    const inventoryUrl = `${API_URL}/front/antiquites/inventory/${id}`;
+    const response = await fetch(inventoryUrl);
     if (response.ok) {
-        const result = await response.json();
-        const data = Array.isArray(result) ? result : (result.data || []);
-        current = data.find((item: any) => item.id == id);
-        
-        if (!current) {
-            const adminResponse = await fetch(`${API_URL}/api/antiquites/single/${id}`);
-            if (adminResponse.ok) {
-                current = await adminResponse.json();
-            }
+        current = await response.json();
+    } else {
+        // Fallbacks
+        const fallbackUrl = `${API_URL}/front/antiquites?id=${id}`;
+        const fbRes = await fetch(fallbackUrl);
+        if (fbRes.ok) {
+            const result = await fbRes.json();
+            const data = Array.isArray(result) ? result : (result.data || []);
+            current = data.find((item: any) => item.id == id);
         }
     }
 } catch (error: any) {
