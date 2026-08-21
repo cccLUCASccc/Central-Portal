@@ -111,6 +111,11 @@ if (userId) {
         <span>DAISY BROCANTE</span>
       </div>
     </footer>
+    <script is:inline>
+      try {
+        sessionStorage.removeItem('daisy_portal_booted');
+      } catch (e) {}
+    </script>
   </body>
 </html>
 
