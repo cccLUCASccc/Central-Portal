@@ -19,7 +19,7 @@
     let progress = $state(0);
     
     interface LogEntry {
-        type: "info" | "success" | "warn" | "accent";
+        type: "info" | "success" | "warn" | "accent" | "cmd";
         tag: string;
         text: string;
         time?: string;
@@ -28,13 +28,15 @@
     let logs = $state<LogEntry[]>([]);
 
     const BOOT_STEPS: LogEntry[] = [
-        { type: "info", tag: "BOOT_INIT", text: "Initialisation du noyau Gestionnaire.SYS (v3.2)..." },
-        { type: "success", tag: "AUTH_OK", text: "Protocole Clerk validé • Session active" },
-        { type: "accent", tag: "NET_API", text: "Connexion API Centrale (Railway) : CONNECTÉ [200 OK]" },
-        { type: "success", tag: "STORAGE", text: "Montage du bucket AWS S3 (daisy-brocante) : PRÊT" },
-        { type: "info", tag: "EBAY_SYNC", text: "Synchronisation du module eBay Marketplace... ACTIF" },
-        { type: "accent", tag: "CACHE", text: "Chargement du catalogue & des tables d'inventaire... 100%" },
-        { type: "success", tag: "SYS_READY", text: "Système opérationnel. Redirection vers le portail..." },
+        { type: "cmd", tag: "EXEC", text: "guest@gestionnaire-sys:~$ ./start_system.sh --env=production" },
+        { type: "info", tag: "BIOS", text: "DAISY-BIOS v4.02 — RAM Check: 1024KB OK • BUS: 32-BIT VME" },
+        { type: "info", tag: "BOOT_INIT", text: "Chargement du micro-noyau Gestionnaire.SYS (v3.2)..." },
+        { type: "success", tag: "AUTH_OK", text: "Protocole Clerk validé • Clé de session injectée" },
+        { type: "accent", tag: "NET_API", text: "Connexion API Centrale (Railway) : https://central-api... [200 OK]" },
+        { type: "success", tag: "STORAGE", text: "Montage du bucket AWS S3 (daisy-brocante) : ACTIF & PRÊT" },
+        { type: "info", tag: "EBAY_SYNC", text: "Synchronisation du service eBay Marketplace... ÉTABLIE" },
+        { type: "accent", tag: "CACHE", text: "Indexation du catalogue d'antiquités & tables d'inventaire... 100%" },
+        { type: "success", tag: "SYS_READY", text: "STATION OPÉRATIONNELLE. Redirection vers le tableau de bord..." },
     ];
 
     function startTerminalSequence() {
@@ -43,6 +45,7 @@
         const totalSteps = BOOT_STEPS.length;
         let step = 0;
 
+        // Intervalle plus lent (~360ms par ligne pour laisser le temps de lire)
         const interval = setInterval(() => {
             if (step < totalSteps) {
                 const item = BOOT_STEPS[step];
@@ -56,9 +59,9 @@
                 progress = 100;
                 setTimeout(() => {
                     redirectToPortal();
-                }, 350);
+                }, 500);
             }
-        }, 200);
+        }, 360);
     }
 
     function triggerMorphToTerminal() {
@@ -67,11 +70,11 @@
         // 1. Fermeture / repli de la fenêtre
         phase = "closing";
         
-        // 2. Après 260ms, réouverture en mode Terminal
+        // 2. Après 280ms, réouverture en mode Terminal
         setTimeout(() => {
             phase = "terminal";
             startTerminalSequence();
-        }, 280);
+        }, 300);
     }
 
     function redirectToPortal() {
@@ -106,7 +109,6 @@
 
             if (signInAttempt.status === "complete") {
                 await clerk.setActive({ session: signInAttempt.createdSessionId });
-                // Lancer la fermeture puis réouverture en terminal
                 triggerMorphToTerminal();
             } else {
                 console.warn("Statut Clerk non complété:", signInAttempt);
@@ -132,7 +134,7 @@
     }
 
     onMount(() => {
-        // Détection de session active Clerk (au cas où)
+        // Détection de session active Clerk
         const checkInterval = setInterval(() => {
             const clerk = (window as any).Clerk;
             if (clerk && clerk.loaded) {
@@ -159,7 +161,7 @@
     });
 </script>
 
-<div class="w-full flex flex-col items-center">
+<div class="w-full flex flex-col items-center max-w-xl md:max-w-2xl mx-auto transition-all duration-300">
     
     <!-- Application Header -->
     <div class="w-full mb-6 text-center flex flex-col items-center">
@@ -168,7 +170,7 @@
                 G
             </div>
             <div class="text-left flex flex-col">
-                <span class="font-black text-2xl tracking-tight uppercase leading-none font-mono">
+                <span class="font-black text-2xl md:text-3xl tracking-tight uppercase leading-none font-mono">
                     GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span>
                 </span>
                 <span class="text-[11px] font-mono font-bold tracking-widest text-black/60 uppercase">
@@ -180,50 +182,54 @@
         <div class="flex items-center gap-2 font-mono text-xs mt-1">
             <span class="retro-badge bg-[#99E7DC]">AUTHENTIFICATION</span>
             <span class="retro-badge bg-[#FFF394]">ZONE SÉCURISÉE</span>
+            <span class="retro-badge bg-[#D4E2FD] hidden sm:inline-flex">VT100 READY</span>
         </div>
     </div>
 
-    <!-- Retro Window Frame avec animation de fermeture/réouverture (morphing) -->
+    <!-- Retro Window Frame avec animation de morphing et dimensions confortables -->
     <div 
-        class="w-full bg-[#EDE9DF] border-3 border-black shadow-[6px_6px_0px_0px_#000] p-1 transition-all duration-300 transform origin-center {phase === 'closing' ? 'scale-y-0 opacity-40' : 'scale-y-100 opacity-100'}"
+        class="w-full bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] p-1.5 transition-all duration-300 transform origin-center {phase === 'closing' ? 'scale-y-0 opacity-20' : 'scale-y-100 opacity-100'}"
     >
         {#if phase === "login" || phase === "closing"}
             <!-- Window Titlebar Login -->
-            <div class="bg-[#2B2D42] text-white px-3 py-1.5 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold mb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-[#99E7DC]">▶</span>
-                    <span class="tracking-wider uppercase">LOGIN_PROMPT.EXE</span>
+            <div class="bg-[#2B2D42] text-white px-3.5 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold mb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-[#99E7DC] font-black">▶</span>
+                    <span class="tracking-wider uppercase">LOGIN_PROMPT.EXE — SESSION CONSOLE</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 bg-[#FFC2D1] border border-black inline-block"></span>
-                    <span class="w-3 h-3 bg-[#FFF394] border border-black inline-block"></span>
-                    <span class="w-3 h-3 bg-[#99E7DC] border border-black inline-block"></span>
+                    <span class="w-3.5 h-3.5 bg-[#FFC2D1] border border-black inline-block shadow-[1px_1px_0px_0px_#000]"></span>
+                    <span class="w-3.5 h-3.5 bg-[#FFF394] border border-black inline-block shadow-[1px_1px_0px_0px_#000]"></span>
+                    <span class="w-3.5 h-3.5 bg-[#99E7DC] border border-black inline-block shadow-[1px_1px_0px_0px_#000]"></span>
                 </div>
             </div>
 
             <!-- Login Form Content -->
-            <div class="p-4 sm:p-6 bg-white border-2 border-black m-1 shadow-[2px_2px_0px_0px_#000]">
+            <div class="p-5 sm:p-8 bg-white border-2 border-black m-1 shadow-[3px_3px_0px_0px_#000]">
                 
-                <div class="mb-5 text-center sm:text-left">
-                    <h2 class="font-mono font-black text-lg uppercase text-black tracking-tight">
+                <div class="mb-6 text-center sm:text-left">
+                    <div class="inline-block bg-[#FFD2A6] px-2 py-0.5 border border-black text-[10px] font-mono font-bold uppercase mb-1 shadow-[1px_1px_0px_0px_#000]">
+                        ACCÈS ADMINISTRATEUR
+                    </div>
+                    <h2 class="font-mono font-black text-xl uppercase text-black tracking-tight">
                         Connexion au portail
                     </h2>
-                    <p class="font-mono text-xs text-black/60 font-semibold mt-0.5">
-                        Saisissez vos accès pour déverrouiller la console.
+                    <p class="font-mono text-xs text-black/60 font-semibold mt-1">
+                        Saisissez vos identifiants pour démarrer le terminal Gestionnaire.SYS.
                     </p>
                 </div>
 
                 {#if errorMessage}
-                    <div class="mb-4 p-3 bg-[#FFC2D1] border-2 border-black font-mono text-xs font-bold shadow-[2px_2px_0px_0px_#000] flex items-center gap-2">
-                        <span>⚠️</span>
+                    <div class="mb-5 p-3.5 bg-[#FFC2D1] border-2 border-black font-mono text-xs font-bold shadow-[2px_2px_0px_0px_#000] flex items-center gap-2.5">
+                        <span class="text-base">⚠️</span>
                         <span>{errorMessage}</span>
                     </div>
                 {/if}
 
                 <form onsubmit={handleLogin} class="space-y-4 font-mono">
                     <div>
-                        <label for="identifier" class="block text-xs font-black uppercase text-black mb-1 tracking-wider">
-                            Identifiant / E-mail
+                        <label for="identifier" class="block text-xs font-black uppercase text-black mb-1.5 tracking-wider">
+                            Identifiant / Adresse E-mail
                         </label>
                         <input
                             id="identifier"
@@ -232,19 +238,19 @@
                             placeholder="admin@daisybrocante.fr"
                             required
                             disabled={isLoading}
-                            class="retro-input"
+                            class="retro-input text-sm py-2.5"
                         />
                     </div>
 
                     <div>
-                        <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center justify-between mb-1.5">
                             <label for="password" class="text-xs font-black uppercase text-black tracking-wider">
                                 Mot de passe
                             </label>
                             <button
                                 type="button"
                                 onclick={() => showPassword = !showPassword}
-                                class="text-[10px] text-black/60 hover:text-black font-bold uppercase underline cursor-pointer"
+                                class="text-[11px] text-black/70 hover:text-black font-bold uppercase underline cursor-pointer"
                             >
                                 {showPassword ? "Masquer" : "Afficher"}
                             </button>
@@ -256,19 +262,19 @@
                             placeholder="••••••••••••"
                             required
                             disabled={isLoading}
-                            class="retro-input"
+                            class="retro-input text-sm py-2.5"
                         />
                     </div>
 
-                    <div class="pt-2">
+                    <div class="pt-3">
                         <button
                             type="submit"
                             disabled={isLoading}
-                            class="w-full retro-btn retro-btn-primary py-3 text-sm font-black flex items-center justify-center gap-2 cursor-pointer {isLoading ? 'opacity-70 cursor-wait' : ''}"
+                            class="w-full retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
                         >
                             {#if isLoading}
-                                <span class="inline-block w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-                                <span>VÉRIFICATION DU COMPTE...</span>
+                                <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                <span>VÉRIFICATION DES DROITS...</span>
                             {:else}
                                 <span>⚡ SE CONNECTER AU SYSTÈME</span>
                             {/if}
@@ -279,22 +285,24 @@
             </div>
 
             <!-- Window Bottom Status Bar -->
-            <div class="mt-2 px-3 py-1.5 bg-white border-t-2 border-black flex items-center justify-between font-mono text-[11px] text-black/70">
-                <span>CLERK_SECURITY // v3.2</span>
-                <span class="font-bold text-black flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span>
-                    PRÊT POUR AUTH
+            <div class="mt-2 px-4 py-2 bg-white border-t-2 border-black flex items-center justify-between font-mono text-xs text-black/70">
+                <span class="font-bold">CLERK_SECURITY // v3.2</span>
+                <span class="font-bold text-black flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-green-500 rounded-full inline-block animate-pulse"></span>
+                    PRÊT POUR AUTHENTIFICATION
                 </span>
             </div>
 
         {:else}
             <!-- Window Titlebar Terminal (Reopen) -->
-            <div class="bg-[#161B22] text-white px-3 py-1.5 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold mb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-[#99E7DC] animate-ping">▶</span>
-                    <span class="text-[#99E7DC] tracking-wider uppercase">GESTIONNAIRE.SYS // TERMINAL_BOOT.EXE</span>
+            <div class="bg-[#111827] text-white px-3.5 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold mb-2">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-none bg-[#99E7DC] inline-block animate-ping"></span>
+                    <span class="text-[#99E7DC] tracking-wider uppercase font-black">
+                        GESTIONNAIRE.SYS // TERMINAL_BOOT.EXE [PID: 4092]
+                    </span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
                     <span class="text-[10px] text-white/50 hidden sm:inline">[ESC pour passer]</span>
                     <button 
                         type="button"
@@ -307,85 +315,122 @@
                 </div>
             </div>
 
-            <!-- Terminal Screen -->
-            <div class="p-4 sm:p-5 bg-[#0D1117] text-white border-2 border-black m-1 shadow-[2px_2px_0px_0px_#000] font-mono text-xs space-y-4">
+            <!-- Enhanced CRT Retro Terminal Screen -->
+            <div class="relative p-5 sm:p-6 bg-[#090D13] text-white border-2 border-black m-1 shadow-[4px_4px_0px_0px_#000] font-mono text-xs space-y-4 overflow-hidden rounded-none">
                 
-                <!-- Retro ASCII Mini Banner -->
-                <div class="text-[#FFD2A6] text-[9px] sm:text-[10px] leading-tight whitespace-pre opacity-90 border-b border-white/10 pb-2 overflow-x-auto">
-{`  ___   _   ___ ______   __  ___ ___  ___   ___   _  _ _____ ___ 
- |   \\ /_\\ |_ _/ __\\ \\ / / | _ ) _ \\/ _ \\ / __| /_\\| \\| |_   _| __|
- | |) / _ \\ | |\\__ \\\\ V /  | _ \\   / (_) | (__ / _ \\ .\` | | | | _| 
- |___/_/ \\_\\___|___/ |_|   |___/_|_\\\\___/ \\___/_/ \\_\\_|\\_| |_| |___|`}
+                <!-- CRT Scanline Background Overlay -->
+                <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.4)_50%)] bg-[length:100%_4px] opacity-70 z-10"></div>
+                
+                <!-- CRT Screen Radial Vignette / Glow -->
+                <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-10"></div>
+
+                <!-- Terminal Header Status Bar -->
+                <div class="relative z-20 flex items-center justify-between border-b border-white/15 pb-2 text-[10px] text-white/60">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[#99E7DC] font-bold">● ONLINE</span>
+                        <span>TTY1 : /dev/console</span>
+                        <span class="hidden sm:inline">BAUD: 115200</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[#FFF394] font-bold">
+                        <span>CPU: 4.8%</span>
+                        <span>MEM: 1024KB</span>
+                    </div>
                 </div>
 
-                <!-- Logs stream -->
-                <div class="space-y-1.5 max-h-48 overflow-y-auto py-1">
+                <!-- Retro ASCII Mini Banner avec Phosphor Glow -->
+                <div class="relative z-20 text-[#FFD2A6] text-[9px] sm:text-[11px] leading-tight whitespace-pre opacity-95 border-b border-white/10 pb-3 overflow-x-auto drop-shadow-[0_0_6px_rgba(255,210,166,0.5)]">
+{`  ██████╗  █████╗ ██╗███████╗██╗   ██╗    ██████╗ ██████╗  ██████╗  ██████╗ 
+  ██╔══██╗██╔══██╗██║██╔════╝╚██╗ ██╔╝    ██╔══██╗██╔══██╗██╔═══██╗██╔════╝ 
+  ██║  ██║███████║██║███████╗ ╚████╔╝     ██████╔╝██████╔╝██║   ██║██║      
+  ██║  ██║██╔══██║██║╚════██║  ╚██╔╝      ██╔══██╗██╔══██╗██║   ██║██║      
+  ██████╔╝██║  ██║██║███████║   ██║       ██████╔╝██║  ██║╚██████╔╝╚██████╗ 
+  ╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝   ╚═╝       ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ `}
+                </div>
+
+                <!-- Logs stream avec styles rétro et Phosphor Glow -->
+                <div class="relative z-20 space-y-2 min-h-[190px] max-h-64 overflow-y-auto py-1">
                     {#each logs as log}
-                        <div class="flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-left-1 duration-100">
-                            <span class="text-white/40 text-[10px] select-none">[{log.time}]</span>
-                            {#if log.type === 'success'}
-                                <span class="bg-[#99E7DC] text-black px-1 font-bold text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
+                        <div class="flex items-start gap-2.5 leading-relaxed animate-in fade-in slide-in-from-left-2 duration-150 font-mono text-[11px] sm:text-xs">
+                            <span class="text-white/35 text-[10px] select-none">[{log.time}]</span>
+                            
+                            {#if log.type === 'cmd'}
+                                <span class="text-[#FFF394] font-bold tracking-wide drop-shadow-[0_0_4px_rgba(255,243,148,0.6)]">
+                                    {log.text}
+                                </span>
+                            {:else if log.type === 'success'}
+                                <span class="bg-[#99E7DC] text-black px-1.5 py-0.2 font-black text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
                                     {log.tag}
                                 </span>
-                                <span class="text-[#99E7DC] font-bold">{log.text}</span>
+                                <span class="text-[#99E7DC] font-bold drop-shadow-[0_0_5px_rgba(153,231,220,0.6)]">
+                                    {log.text}
+                                </span>
                             {:else if log.type === 'accent'}
-                                <span class="bg-[#FFD2A6] text-black px-1 font-bold text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
+                                <span class="bg-[#FFD2A6] text-black px-1.5 py-0.2 font-black text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
                                     {log.tag}
                                 </span>
-                                <span class="text-[#FFD2A6] font-semibold">{log.text}</span>
+                                <span class="text-[#FFD2A6] font-semibold drop-shadow-[0_0_5px_rgba(255,210,166,0.5)]">
+                                    {log.text}
+                                </span>
                             {:else if log.type === 'warn'}
-                                <span class="bg-[#FFF394] text-black px-1 font-bold text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
+                                <span class="bg-[#FFF394] text-black px-1.5 py-0.2 font-black text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
                                     {log.tag}
                                 </span>
-                                <span class="text-[#FFF394]">{log.text}</span>
+                                <span class="text-[#FFF394] drop-shadow-[0_0_5px_rgba(255,243,148,0.5)]">{log.text}</span>
                             {:else}
-                                <span class="bg-[#D4E2FD] text-black px-1 font-bold text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
+                                <span class="bg-[#D4E2FD] text-black px-1.5 py-0.2 font-black text-[10px] uppercase shadow-[1px_1px_0px_0px_#000]">
                                     {log.tag}
                                 </span>
                                 <span class="text-white/90">{log.text}</span>
                             {/if}
                         </div>
                     {/each}
+                    
                     <div class="flex items-center gap-1 text-[#99E7DC] font-bold pt-1">
-                        <span>&gt;</span>
-                        <span class="inline-block w-2 h-3 bg-[#99E7DC] animate-pulse"></span>
+                        <span class="text-[#99E7DC]">&gt;</span>
+                        <span class="inline-block w-2.5 h-4 bg-[#99E7DC] animate-pulse drop-shadow-[0_0_6px_#99E7DC]"></span>
                     </div>
                 </div>
 
-                <!-- Progress Bar -->
-                <div class="pt-2 border-t border-white/10 space-y-1.5">
-                    <div class="flex items-center justify-between text-[11px] font-bold">
-                        <span class="text-white/80">CHARGEMENT DU PORTAIL :</span>
-                        <span class="text-[#99E7DC]">{progress}%</span>
+                <!-- Progress Bar Rétro Néo-Brutaliste -->
+                <div class="relative z-20 pt-3 border-t border-white/15 space-y-2">
+                    <div class="flex items-center justify-between text-xs font-black">
+                        <span class="text-white/80 uppercase tracking-wider">CHARGEMENT DU PORTAIL EN COURS :</span>
+                        <span class="text-[#99E7DC] font-mono text-sm drop-shadow-[0_0_6px_#99E7DC]">{progress}%</span>
                     </div>
-                    <div class="w-full h-3.5 bg-black border border-white/20 p-0.5 relative">
+                    
+                    <div class="w-full h-5 bg-black border-2 border-white/30 p-0.5 relative shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
                         <div 
-                            class="h-full bg-[#99E7DC] transition-all duration-150"
+                            class="h-full bg-gradient-to-r from-[#99E7DC] to-[#FFD2A6] transition-all duration-250 relative overflow-hidden"
                             style="width: {progress}%;"
-                        ></div>
+                        >
+                            <!-- Animated Stripes inside progress bar -->
+                            <div class="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,rgba(0,0,0,0.25)_6px,rgba(0,0,0,0.25)_12px)]"></div>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Terminal Bottom Bar -->
-            <div class="mt-2 px-3 py-1.5 bg-white border-t-2 border-black flex items-center justify-between font-mono text-[11px] text-black/70">
-                <span class="text-[10px] text-black/60">SESSION ACTIVE // REDIRECTION AUTOMATIQUE</span>
+            <!-- Terminal Bottom Controls -->
+            <div class="mt-2 px-4 py-2 bg-white border-t-2 border-black flex items-center justify-between font-mono text-xs text-black">
+                <div class="flex items-center gap-2 text-black/70">
+                    <span class="w-2 h-2 bg-green-500 rounded-full inline-block animate-ping"></span>
+                    <span class="font-bold text-[11px]">FLUX SÉCURISÉ SSL // RAILWAY-API</span>
+                </div>
                 <button 
                     type="button"
                     onclick={redirectToPortal}
-                    class="retro-btn btn-xs bg-[#FFC2D1] hover:bg-white text-black text-[10px] font-bold px-2 py-0.5 border border-black shadow-[1px_1px_0px_0px_#000]"
+                    class="retro-btn btn-xs bg-[#FFC2D1] hover:bg-white text-black font-black px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                 >
-                    PASSER »
+                    PASSER L'ANIMATION »
                 </button>
             </div>
         {/if}
     </div>
 
     <!-- Security notice -->
-    <div class="mt-6 text-center font-mono text-xs text-black/60 max-w-sm">
+    <div class="mt-6 text-center font-mono text-xs text-black/60 max-w-md">
         <p>🔒 Accès strictement réservé aux gestionnaires autorisés de Daisy Brocante.</p>
     </div>
 
 </div>
-
