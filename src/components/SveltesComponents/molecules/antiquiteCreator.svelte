@@ -50,6 +50,7 @@
     let isEnhancing = $state(false);
     let images = $state<Image[]>([]); 
     let newFiles = $state<File[]>([]); 
+    let s3Keys = $state<string[]>([]); 
 
     async function enhanceDescription() {
         if (!name || !category) {
@@ -103,6 +104,10 @@
         formData.append("ebay_description", ebayDescription);
         formData.append("ebay_price", ebayPrice !== null ? ebayPrice.toString() : "0");
         formData.append("ebay_category_id", ebayCategoryID);
+
+        if (s3Keys.length > 0) {
+            formData.append("s3_keys", s3Keys.join(","));
+        }
 
         newFiles.forEach(file => {
             formData.append("image", file);  
@@ -180,6 +185,7 @@
             mode="antiquites"
             bind:images={images} 
             bind:new_Files={newFiles} 
+            bind:s3_Keys={s3Keys}
         />
     </div>
 

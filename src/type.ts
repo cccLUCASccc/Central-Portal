@@ -2,6 +2,7 @@ export interface Image {
     id: number;
     url: string;
     position?: number;
+    s3_key?: string;
 }
 
 export interface Pagination {
