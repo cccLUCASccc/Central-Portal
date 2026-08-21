@@ -69,52 +69,50 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
               </label>
 
               <!-- Logo & System Badge -->
-              <a href="/" class="flex items-center gap-2.5 group" title="Retour au Hub des Projets">
+              <a href="/" class="flex items-center gap-2.5 group flex-shrink-0" title="Retour au Hub des Projets">
                 <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
                   G
                 </div>
                 <div class="flex flex-col">
                   <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span></span>
-                  <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">Portail Multi-Projets</span>
+                  <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">
+                    {isDaisyBrocante ? "Daisy Brocante" : "Portail Multi-Projets"}
+                  </span>
                 </div>
               </a>
             </div>
 
             <!-- Desktop Nav Buttons -->
-            <nav class="hidden lg:flex items-center gap-2 font-mono">
+            <nav class="hidden lg:flex items-center gap-1.5 font-mono flex-shrink-0">
               <!-- Bouton Cross-Projet : Hub Projets -->
-              <a href="/" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD] {pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+              <a href="/" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#D4E2FD] {pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 🗂️ Hub Projets
               </a>
 
               {isDaisyBrocante && (
                 <>
-                  <div class="h-5 w-px bg-black/30 mx-1"></div>
-                  
-                  <span class="retro-badge bg-[#FFD2A6] text-black text-[10px] py-1 border border-black shadow-[1px_1px_0px_0px_#000] font-black">
-                    🌼 DAISY BROCANTE
-                  </span>
+                  <div class="h-5 w-px bg-black/30 mx-0.5"></div>
 
                   <!-- Boutons Spécifiques Daisy Brocante -->
-                  <a href="/antiquites" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                  <a href="/antiquites" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     📋 Inventaire
                   </a>
-                  <a href="/subcategories" class="retro-btn text-xs bg-white hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                  <a href="/subcategories" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     🏷️ Sous-catégories
                   </a>
-                  <a href="/ebay" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                  <a href="/ebay" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     📦 eBay
                   </a>
-                  <a href="/Livraison" class="retro-btn text-xs bg-white hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                  <a href="/Livraison" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     🚚 Livraisons
                   </a>
                 </>
               )}
 
-              <div class="h-5 w-px bg-black/30 mx-1"></div>
+              <div class="h-5 w-px bg-black/30 mx-0.5"></div>
 
               <!-- Bouton Cross-Projet : Fichiers S3 -->
-              <a href="/storage" class="retro-btn text-xs bg-white hover:bg-[#99E7DC] {pathname.startsWith('/storage') ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+              <a href="/storage" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#99E7DC] {pathname.startsWith('/storage') ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 📁 Fichiers S3
               </a>
             </nav>
