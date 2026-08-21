@@ -2,11 +2,10 @@
     import { onMount } from "svelte";
 
     interface Props {
-        mode?: "signIn" | "portal" | "manual";
-        targetUrl?: string;
+        initialActive?: boolean;
     }
 
-    let { mode = "portal", targetUrl = "/" }: Props = $props();
+    let { initialActive = false }: Props = $props();
 
     interface LogEntry {
         type: "info" | "success" | "warn" | "accent";
@@ -15,7 +14,7 @@
         time?: string;
     }
 
-    let isVisible = $state(false);
+    let isVisible = $state(initialActive);
     let isExiting = $state(false);
     let progress = $state(0);
     let logs = $state<LogEntry[]>([]);
@@ -28,22 +27,24 @@
         { type: "success", tag: "STORAGE", text: "Montage du bucket AWS S3 (daisy-brocante) : PRÊT" },
         { type: "info", tag: "EBAY_SYNC", text: "Synchronisation du module eBay Marketplace... ACTIF" },
         { type: "accent", tag: "CACHE", text: "Chargement du catalogue & des tables d'inventaire... 100%" },
-        { type: "success", tag: "SYS_READY", text: "Système prêt. Redirection vers le portail..." },
+        { type: "success", tag: "SYS_READY", text: "Système opérationnel. Bienvenue sur le Portail !" },
     ];
 
     function finishBoot() {
         if (isExiting) return;
         isExiting = true;
 
-        if (mode === "signIn") {
-            // Sur la page de login, on redirige une fois l'animation terminée
-            window.location.replace(targetUrl);
-        } else {
-            setTimeout(() => {
-                isVisible = false;
-                isExiting = false;
-            }, 400);
-        }
+        // Nettoyage de l'URL pour enlever le paramètre ?boot=1
+        try {
+            if (window.location.search.includes("boot")) {
+                window.history.replaceState({}, "", window.location.pathname);
+            }
+        } catch (_) {}
+
+        setTimeout(() => {
+            isVisible = false;
+            isExiting = false;
+        }, 400);
     }
 
     function startSequence() {
@@ -76,39 +77,15 @@
     }
 
     onMount(() => {
-        // Expose global replay method
+        // Exposer la méthode globale pour rejouer l'animation
         (window as any).replayBoot = () => {
             startSequence();
         };
 
-        if (mode === "signIn") {
-            let authTriggered = false;
-
-            const triggerAuthBoot = () => {
-                if (authTriggered) return;
-                authTriggered = true;
-                startSequence();
-            };
-
-            // Surveillance de l'état de connexion Clerk
-            const checkInterval = setInterval(() => {
-                const clerk = (window as any).Clerk;
-                if (clerk && clerk.loaded) {
-                    clearInterval(checkInterval);
-
-                    clerk.addListener((payload: any) => {
-                        if (payload.session && payload.user) {
-                            triggerAuthBoot();
-                        }
-                    });
-
-                    if (clerk.session && clerk.user) {
-                        triggerAuthBoot();
-                    }
-                }
-            }, 100);
-
-            return () => clearInterval(checkInterval);
+        // Lancer la séquence si initialActive est true ou si ?boot= dans l'URL
+        const hasBootParam = window.location.search.includes("boot");
+        if (initialActive || hasBootParam) {
+            startSequence();
         }
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -126,7 +103,7 @@
     <div 
         role="dialog"
         aria-modal="true"
-        class="fixed inset-0 z-[99999] bg-[#0D1117]/95 flex flex-col items-center justify-center p-3 sm:p-6 select-none transition-all duration-400 {isExiting ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'}"
+        class="fixed inset-0 z-[99999] bg-[#0D1117] flex flex-col items-center justify-center p-3 sm:p-6 select-none transition-all duration-400 {isExiting ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'}"
     >
         <!-- Background CRT Scanline Effect -->
         <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.35)_50%)] bg-[length:100%_4px] opacity-60"></div>
@@ -167,7 +144,7 @@
 
                 <!-- Logs Stream -->
                 <div class="space-y-1.5 flex-grow overflow-y-auto max-h-48 py-1">
-                    {#each logs as log, idx}
+                    {#each logs as log}
                         <div class="flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-left-2 duration-150">
                             <span class="text-white/40 text-[10px] select-none">[{log.time}]</span>
                             {#if log.type === 'success'}
