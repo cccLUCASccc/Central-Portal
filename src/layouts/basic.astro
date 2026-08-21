@@ -12,6 +12,7 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
                         pathname.startsWith('/subcategories') || 
                         pathname.startsWith('/ebay') || 
                         pathname.startsWith('/Livraison');
+const isMarty = pathname.startsWith('/marty');
 ---
 
 <!doctype html>
@@ -22,7 +23,7 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>Gestionnaire // Daisy Brocante</title>
+    <title>{isMarty ? "Marty // Scrapper Leads" : "Gestionnaire // Daisy Brocante"}</title>
   </head>
 
   <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFC2D1] selection:text-black">
@@ -43,6 +44,8 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
                 <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — HUB MULTI-PROJETS</span>
               ) : isDaisyBrocante ? (
                 <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
+              ) : isMarty ? (
+                <span>⚡ MARTY // GESTIONNAIRE.SYS — STATION PROSPECTION & LEADS</span>
               ) : (
                 <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — SERVICE GLOBAL</span>
               )}
@@ -71,12 +74,12 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
               <!-- Logo & System Badge -->
               <a href="/" class="flex items-center gap-2.5 group flex-shrink-0" title="Retour au Hub des Projets">
                 <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
-                  G
+                  {isMarty ? 'M' : 'G'}
                 </div>
                 <div class="flex flex-col">
                   <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span></span>
                   <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">
-                    {isDaisyBrocante ? "Daisy Brocante" : "Portail Multi-Projets"}
+                    {isDaisyBrocante ? "Daisy Brocante" : isMarty ? "Marty // Lead Scrapper" : "Portail Multi-Projets"}
                   </span>
                 </div>
               </a>
@@ -109,6 +112,17 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
                 </>
               )}
 
+              {isMarty && (
+                <>
+                  <div class="h-5 w-px bg-black/30 mx-0.5"></div>
+
+                  <!-- Boutons Spécifiques Marty -->
+                  <a href="/marty" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFE600] {pathname.startsWith('/marty') ? '!bg-[#FFE600] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 font-black' : ''}">
+                    ⚡ Scrapper & Leads
+                  </a>
+                </>
+              )}
+
               <div class="h-5 w-px bg-black/30 mx-0.5"></div>
 
               <!-- Bouton Cross-Projet : Fichiers S3 -->
@@ -116,6 +130,7 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
                 📁 Fichiers S3
               </a>
             </nav>
+
 
             <!-- Actions Right (Clerk UserButton) -->
             <div class="flex items-center gap-2">
@@ -188,6 +203,18 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
                   </a>
                   <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1]' : ''}">
                     🚚 Livraisons
+                  </a>
+                </>
+              )}
+
+              {isMarty && (
+                <>
+                  <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
+                    <span>🕵️</span> Projet Marty (Lead Gen)
+                  </div>
+
+                  <a href="/marty" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFE600] {pathname.startsWith('/marty') ? '!bg-[#FFE600] font-black' : ''}">
+                    ⚡ Scrapper & Leads
                   </a>
                 </>
               )}

@@ -56,3 +56,10 @@ export interface Livraison {
     pricelarge: number | null;
     pricextralarge: number | null;
 }
+
+export interface Prospect {
+    id?: number;
+    email: string;
+    worktype?: string;
+    creaton?: string;
+}

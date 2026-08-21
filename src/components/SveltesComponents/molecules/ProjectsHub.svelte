@@ -28,7 +28,7 @@
         <div class="space-y-2">
             <div class="flex items-center gap-2.5 flex-wrap">
                 <span class="retro-badge bg-black text-white text-xs px-2.5 py-0.5">HUB CENTRAL // MULTI-PROJETS</span>
-                <span class="retro-badge bg-[#99E7DC] text-black text-xs font-black">● 1 PROJET ACTIF</span>
+                <span class="retro-badge bg-[#99E7DC] text-black text-xs font-black">● 2 PROJETS ACTIFS</span>
                 <span class="retro-badge bg-white text-black text-xs">V3.2-STABLE</span>
             </div>
             <h1 class="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
@@ -64,7 +64,7 @@
                 Projets Disponibles & Stations
             </h2>
         </div>
-        <span class="text-xs font-bold text-black/60">1 sur 3 emplacements configurés</span>
+        <span class="text-xs font-bold text-black/60">2 sur 3 emplacements configurés</span>
     </div>
 
     <!-- Grid of Projects -->
@@ -146,44 +146,76 @@
 
         </div>
 
-        <!-- PROJET #02 : SLOT LIBRE / DISPONIBLE -->
-        <div class="border-3 border-dashed border-black/40 bg-[#EDE9DF]/60 p-1 flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:border-black transition-all">
+        <!-- PROJET #02 : MARTY (ACTIVE) -->
+        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] hover:shadow-[10px_10px_0px_0px_#000] transition-all flex flex-col justify-between group overflow-hidden">
             
-            <div class="bg-[#2B2D42]/70 text-white px-4 py-2 border-b-2 border-black/30 flex items-center justify-between font-mono text-xs font-bold">
-                <span class="tracking-wider uppercase text-white/70">PROJET_02.SYS</span>
-                <span class="retro-badge bg-[#FFF394] text-black text-[10px] py-0 font-black">
-                    DISPONIBLE
+            <!-- Window Titlebar -->
+            <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
+                <div class="flex items-center gap-2">
+                    <span class="text-[#FFE600] font-black">▶</span>
+                    <span class="tracking-wider uppercase">PROJET_02.SYS</span>
+                </div>
+                <span class="retro-badge bg-[#FFE600] text-black text-[10px] py-0 font-black">
+                    ● PROSPECTION
                 </span>
             </div>
 
-            <div class="p-6 space-y-4 flex-grow flex flex-col justify-center items-center text-center">
-                <div class="w-14 h-14 bg-white/80 border-2 border-dashed border-black/40 flex items-center justify-center text-2xl">
-                    ➕
+            <!-- Card Body -->
+            <div class="p-6 space-y-5 flex-grow">
+                
+                <!-- Project Icon & Title -->
+                <div class="flex items-start gap-4">
+                    <div class="w-14 h-14 bg-[#99E7DC] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFE600] transition-colors">
+                        🕵️
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-black bg-black text-white px-1.5 py-0.5">LEAD GEN</span>
+                            <span class="text-xs font-bold text-black/60">MARTY.SYS</span>
+                        </div>
+                        <h3 class="text-xl font-black uppercase text-black tracking-tight group-hover:text-[#D1495B] transition-colors">
+                            Marty
+                        </h3>
+                    </div>
                 </div>
-                <div class="space-y-1">
-                    <h3 class="text-lg font-black uppercase text-black/80">
-                        Nouvel Emplacement Projet
-                    </h3>
-                    <p class="text-xs text-black/60 max-w-xs">
-                        Emplacement prêt pour déployer une deuxième boutique, un catalogue ou une application dédiée.
-                    </p>
+
+                <!-- Description -->
+                <p class="text-xs text-black/75 leading-relaxed">
+                    Scrapper automatisé d'adresses emails de prospects et clients qualifiés via SearXNG, DuckDuckGo et Playwright Chromium avec export CSV.
+                </p>
+
+                <!-- Modules Badges -->
+                <div class="space-y-2 pt-2 border-t border-black/10">
+                    <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
+                    <div class="flex flex-wrap gap-1.5 text-[11px]">
+                        <a href="/marty" class="retro-badge bg-[#FFE600] hover:bg-white text-black transition-colors cursor-pointer" title="Lancer le scraping">
+                            ⚡ Scrapper de Leads
+                        </a>
+                        <a href="/marty" class="retro-badge bg-[#D4E2FD] hover:bg-white text-black transition-colors cursor-pointer" title="Voir les prospects">
+                            📋 Table des Emails
+                        </a>
+                        <a href="/marty" class="retro-badge bg-[#99E7DC] hover:bg-white text-black transition-colors cursor-pointer" title="Télécharger CSV">
+                            📥 Export CSV
+                        </a>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2 text-[10px] text-black/50 font-bold">
-                    <span class="border border-black/30 px-2 py-0.5 bg-white">MULTI-TENANT READY</span>
-                </div>
+
             </div>
 
-            <div class="p-4 bg-white/40 border-t-2 border-dashed border-black/30 flex items-center justify-center">
-                <button 
-                    type="button" 
-                    onclick={() => openSlotModal("Projet #02")}
-                    class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] font-black border border-black shadow-[2px_2px_0px_0px_#000] cursor-pointer"
+            <!-- Card Action Footer -->
+            <div class="p-4 bg-[#F6F4EE] border-t-2 border-black flex items-center justify-between gap-3">
+                <span class="text-[11px] font-bold text-black/60">STATION #02</span>
+                <a 
+                    href="/marty" 
+                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000]"
                 >
-                    + CONFIGURER CE SLOT
-                </button>
+                    <span>OUVRIR LA STATION</span>
+                    <span>»</span>
+                </a>
             </div>
 
         </div>
+
 
         <!-- PROJET #03 : SLOT DISPONIBLE -->
         <div class="border-3 border-dashed border-black/40 bg-[#EDE9DF]/60 p-1 flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:border-black transition-all">

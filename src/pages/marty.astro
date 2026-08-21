@@ -1,0 +1,15 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import MartyManager from '../components/SveltesComponents/molecules/MartyManager.svelte';
+import { Show } from '@clerk/astro/components';
+
+const auth = Astro.locals.auth();
+const userId = auth.userId;
+---
+
+<BasicLayout>
+    <Show when="signed-in">
+        <MartyManager client:load />
+    </Show>
+</BasicLayout>
+
