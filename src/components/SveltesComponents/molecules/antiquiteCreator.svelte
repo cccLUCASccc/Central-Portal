@@ -270,7 +270,7 @@
 
         <!-- Boutons d'Action -->
         <div class="flex flex-wrap justify-end gap-3 pt-6 border-t-2 border-black">
-            <button onclick={() => window.location.href = '/'} disabled={isCreating} class="retro-btn py-2 px-5 text-xs bg-white hover:bg-[#FFC2D1]">
+            <button onclick={() => window.location.href = '/antiquites'} disabled={isCreating} class="retro-btn py-2 px-5 text-xs bg-white hover:bg-[#FFC2D1]">
                 Annuler
             </button>
             <button onclick={createAntiquity} disabled={isCreating} class="retro-btn-primary py-2 px-8 text-xs font-black shadow-[4px_4px_0px_0px_#000]">

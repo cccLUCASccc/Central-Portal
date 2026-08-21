@@ -33,7 +33,11 @@ const userId = auth.userId;
           <div class="w-full bg-[#FFC2D1] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
             <div class="flex items-center gap-3">
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
-              <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — OS INVENTORY PORTAL</span>
+              {Astro.url.pathname === '/' ? (
+                <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — HUB MULTI-PROJETS</span>
+              ) : (
+                <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
+              )}
             </div>
             <div class="hidden md:flex items-center gap-4 text-[11px] font-mono">
               <button 
@@ -56,14 +60,14 @@ const userId = auth.userId;
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-5 h-5 stroke-current stroke-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
               </label>
 
-              <!-- Logo & System Badge (Sans canard) -->
-              <a href="/" class="flex items-center gap-2.5 group">
+              <!-- Logo & System Badge -->
+              <a href="/" class="flex items-center gap-2.5 group" title="Retour au Hub des Projets">
                 <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
                   G
                 </div>
                 <div class="flex flex-col">
                   <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span></span>
-                  <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">Daisy Brocante</span>
+                  <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">Portail Multi-Projets</span>
                 </div>
               </a>
             </div>
@@ -71,7 +75,13 @@ const userId = auth.userId;
             <!-- Desktop Nav Buttons -->
             <nav class="hidden lg:flex items-center gap-2 font-mono">
               <a href="/" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD] {Astro.url.pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                🏠 Inventaire
+                🗂️ Hub Projets
+              </a>
+
+              <div class="h-5 w-px bg-black/30 mx-1"></div>
+
+              <a href="/antiquites" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                📋 Inventaire
               </a>
               <a href="/subcategories" class="retro-btn text-xs bg-white hover:bg-[#FFD2A6] {Astro.url.pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 🏷️ Sous-catégories
@@ -120,7 +130,7 @@ const userId = auth.userId;
           </div>
           <div class="flex items-center gap-4 text-black/60 text-[11px]">
             <span>ENV: PRODUCTION</span>
-            <span>DAISY BROCANTE</span>
+            <span>PORTAIL CENTRAL</span>
           </div>
         </footer>
       </div>
@@ -137,7 +147,13 @@ const userId = auth.userId;
 
             <nav class="flex flex-col gap-2.5">
               <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#D4E2FD] {Astro.url.pathname === '/' ? '!bg-[#D4E2FD]' : ''}">
-                🏠 Boutique (Inventaire)
+                🗂️ Hub des Projets
+              </a>
+
+              <div class="text-[10px] font-black uppercase text-black/50 px-1 pt-2">Projet Daisy Brocante</div>
+
+              <a href="/antiquites" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/antiquites') ? '!bg-[#FFF394]' : ''}">
+                📋 Inventaire
               </a>
               <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {Astro.url.pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
                 🏷️ Sous-catégories
@@ -156,7 +172,7 @@ const userId = auth.userId;
 
           <div class="p-3 bg-white border-2 border-black text-[10px] text-black/70 shadow-[2px_2px_0px_0px_#000]">
             <p class="font-bold uppercase text-black mb-1">Station Gestionnaire.SYS</p>
-            <p>Daisy Brocante Central</p>
+            <p>Portail Multi-Projets Central</p>
           </div>
         </div>
       </div>
