@@ -1,17 +1,8 @@
 ---
 import BasicLayout from '../layouts/basic.astro';
 import StorageManager from '../components/SveltesComponents/molecules/StorageManager.svelte';
-import { Show } from '@clerk/astro/components';
-
-const auth = Astro.locals.auth();
-const userId = auth.userId;
 ---
 
 <BasicLayout>
-    <Show when="signed-in">
-        <div class="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <StorageManager client:load />
-        </div>
-    </Show>
+    <StorageManager client:load />
 </BasicLayout>
-
