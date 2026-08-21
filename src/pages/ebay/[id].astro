@@ -34,73 +34,42 @@ if (userId) {
 ---
 
 <BasicLayout>
-    <div class="max-w-5xl mx-auto">
-        <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="max-w-5xl mx-auto space-y-4 font-mono">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <a href="/ebay" onclick="history.back(); return false;" class="btn btn-ghost btn-sm gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                    Retour aux annonces eBay
+                <a href="/ebay" onclick="history.back(); return false;" class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#FFE600]">
+                    « Retour aux annonces eBay
                 </a>
             </div>
 
             <!-- Navigation Flèches Objet Précédent / Suivant -->
-            <div class="join shadow-xs" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
+            <div class="flex items-center gap-1" id="nav-arrows-container" data-prev-id={current?.prev_id} data-next-id={current?.next_id}>
                 {current?.prev_id ? (
-                    <a href={`/ebay/${current.prev_id}`} id="btn-prev-item" class="join-item btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce précédente (Flèche Gauche ←)">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-                        <span>Précédente</span>
-                        <span class="hidden sm:inline">#{current.prev_id}</span>
+                    <a href={`/ebay/${current.prev_id}`} id="btn-prev-item" class="retro-btn text-xs py-1 px-2.5 bg-white hover:bg-[#D4E2FD]" title="Annonce précédente (Flèche Gauche ←)">
+                        « #{current.prev_id}
                     </a>
                 ) : (
-                    <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-                        <span>Précédente</span>
+                    <button class="retro-btn text-xs py-1 px-2.5 bg-[#EDE9DF] opacity-40 cursor-not-allowed" disabled>
+                        « Précédente
                     </button>
                 )}
 
                 {current?.next_id ? (
-                    <a href={`/ebay/${current.next_id}`} id="btn-next-item" class="join-item btn btn-outline btn-info btn-sm gap-1 text-xs" title="Annonce suivante (Flèche Droite →)">
-                        <span>Suivante</span>
-                        <span class="hidden sm:inline">#{current.next_id}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                    <a href={`/ebay/${current.next_id}`} id="btn-next-item" class="retro-btn text-xs py-1 px-2.5 bg-white hover:bg-[#D4E2FD]" title="Annonce suivante (Flèche Droite →)">
+                        #{current.next_id} »
                     </a>
                 ) : (
-                    <button class="join-item btn btn-outline btn-sm gap-1 text-xs cursor-not-allowed opacity-40" disabled>
-                        <span>Suivante</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                    <button class="retro-btn text-xs py-1 px-2.5 bg-[#EDE9DF] opacity-40 cursor-not-allowed" disabled>
+                        Suivante »
                     </button>
                 )}
-            </div>
-
-            <div class="text-sm breadcrumbs opacity-50 hidden md:block">
-                <ul>
-                    <li><a href="/">Accueil</a></li>
-                    <li><a href="/ebay">eBay</a></li>
-                    <li>Annonce {id}</li>
-                </ul>
             </div>
         </div>
 
         {current ? (
-            <div class="card bg-base-100 shadow-xl border border-base-200 overflow-hidden">
-                <div class="bg-info/5 p-6 border-b border-base-200 flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                            Annonce eBay
-                        </h1>
-                        <p class="text-sm opacity-60">Personnalisez les détails spécifiquement pour eBay, indépendamment du site.</p>
-                    </div>
-                    <div class="badge badge-info badge-outline font-semibold font-mono">{current.name}</div>
-                </div>
-                <div class="p-6 md:p-10">
-                    <EbayModifier client:load antiquite={current} />
-                </div>
-            </div>
+            <EbayModifier client:load antiquite={current} />
         ) : (
-            <div class="alert alert-error">
+            <div class="retro-card p-8 text-center text-xs text-black/70">
                 <span>Erreur : Impossible de charger les détails de l'antiquité.</span>
             </div>
         )}

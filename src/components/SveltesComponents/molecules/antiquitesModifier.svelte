@@ -4,7 +4,7 @@
     import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
     import QRCode from 'qrcode';
-    import { untrack } from "svelte";
+    import { untrack, onMount } from "svelte";
 
     interface Props {
         antiquite: Antiquite
@@ -22,7 +22,7 @@
     let subcategories = $state<Subcategory[]>([]);
     let size = $state(antiquite.size);
     let images = $state(antiquite.images);
-    let status = $state(antiquite.status)
+    let status = $state(antiquite.status);
     let nouveaute = $state(antiquite.nouveaute ?? false);
 
     // Charge les sous-catégories à chaque fois que la catégorie change
@@ -55,11 +55,12 @@
     let ebayPrice = $state(antiquite.ebay_price ?? 0);
     let ebayCategoryID = $state(antiquite.ebay_category_id ?? "");
     let isPublishingEbay = $state(false);
-    
+    let isPublishingFB = $state(false);
+    let isSaving = $state(false);
     let isEnhancing = $state(false);
+
     let newFiles = $state<File[]>([]); 
     let s3Keys = $state<string[]>([]); 
-
     let qrCodeDataUrl = $state("");
 
     $effect(() => {
@@ -83,10 +84,12 @@
             printWindow.document.write(`
                 <html>
                     <head>
-                        <title>Imprimer QR Code</title>
+                        <title>Imprimer QR Code #${antiquite.id}</title>
                         <style>
-                            body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
-                            img { max-width: 100%; height: auto; margin-bottom: 1rem; }
+                            body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: monospace; }
+                            img { max-width: 180px; height: auto; margin-bottom: 0.5rem; border: 2px solid #000; padding: 5px; }
+                            h3 { font-size: 14px; margin: 0; text-transform: uppercase; }
+                            p { font-size: 12px; margin: 2px 0 0 0; }
                             @media print {
                                 @page { margin: 0; }
                                 body { margin: 1cm; }
@@ -96,6 +99,7 @@
                     <body>
                         <img src="${qrCodeDataUrl}" />
                         <h3>${name}</h3>
+                        <p>ID: #${antiquite.id} - ${price} €</p>
                         <scr` + `ipt>
                             window.onload = function() { window.print(); window.close(); }
                         </scr` + `ipt>
@@ -107,7 +111,6 @@
     }
 
     async function enhanceDescription() {
-        console.log("🪄 [AI] Bouton Améliorer cliqué !");
         if (!name || !category) {
             alert("Veuillez renseigner le nom et la catégorie pour aider l'IA.");
             return;
@@ -185,10 +188,6 @@
         }
     }
 
-    import { onMount } from "svelte";
-
-    let isSaving = $state(false);
-
     async function saveAndNavigate(targetId: number, path: string = 'antiquites') {
         if (isSaving) return;
         isSaving = true;
@@ -241,7 +240,6 @@
             alert("Une erreur est survenue lors de la mise à jour de l'objet.");
         }
     }
-    let isPublishingFB = $state(false);
 
     async function publishToFacebook(id: number) {
         if (!confirm("Voulez-vous enregistrer les modifications et publier cet objet sur la Page Facebook et l'ajouter au Catalogue ?")) return;
@@ -272,171 +270,179 @@
             isPublishingFB = false;
         }
     }
-
-    async function publishToEbay(id: number) {
-        if (!confirm("Voulez-vous enregistrer les modifications et publier/mettre à jour cet objet sur eBay ?")) return;
-        
-        isPublishingEbay = true;
-        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
-        
-        try {
-            const saved = await saveAntiquity(id);
-            if (!saved) {
-                alert("❌ Impossible d'enregistrer les modifications de l'objet. Publication/Mise à jour annulée.");
-                return;
-            }
-
-            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}/publish-ebay`, {
-                method: "POST",
-            });
-
-            const res = await response.json();
-            if (response.ok) {
-                alert(`✅ ${res.message || "Objet synchronisé sur eBay avec succès !"} \nListing ID: ${res.listingId}`);
-            } else {
-                alert(`❌ Erreur lors de la publication/mise à jour : ${res.error || 'Erreur inconnue'}`);
-            }
-        } catch (error) {
-            console.error("Error publishing to eBay:", error);
-            alert("Une erreur de connexion est survenue.");
-        } finally {
-            isPublishingEbay = false;
-        }
-    }
-
 </script>
 
-<div class="space-y-6 max-w-4xl mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="space-y-4">
-            <DataModifier bind:data_string={name} type={1} type_name='Nom'/>
-            <div class="relative">
-                <DataModifier bind:data_string={description} type={2} type_name='Description'/>
+<div class="space-y-6 max-w-4xl mx-auto font-mono">
+    <!-- Header Rétro -->
+    <div class="retro-card-peach p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="retro-badge bg-black text-white text-[10px]">FICHE OBJET #{antiquite.id}</span>
+                <span class="text-xs font-bold text-black/70">{category}</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">
+                {name || "Modification Antiquité"}
+            </h1>
+            <p class="text-xs text-black/80 mt-0.5">Modifiez les caractéristiques, visuels et options de vente.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            {#if antiquite.id}
                 <button 
-                    onclick={enhanceDescription} 
-                    disabled={isEnhancing}
-                    class="btn btn-xs btn-outline btn-secondary absolute top-0 right-0 gap-1 border-none hover:bg-secondary/10"
+                    onclick={() => publishToFacebook(antiquite.id)} 
+                    disabled={isPublishingFB}
+                    class="retro-btn py-1.5 px-3 text-xs bg-[#D4E2FD] hover:bg-[#b8d2fe]"
+                    title="Publier sur Facebook"
                 >
-                    {#if isEnhancing}
+                    {#if isPublishingFB}
                         <span class="loading loading-spinner loading-xs"></span>
                     {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>
+                        📘 Facebook
                     {/if}
-                    Améliorer
+                </button>
+            {/if}
+            <div class="retro-icon-box bg-white">
+                🏷️
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire Principal -->
+    <div class="retro-card p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Colonne 1 : Nom & Description -->
+            <div class="space-y-4">
+                <DataModifier bind:data_string={name} type={1} type_name='Nom de la pièce'/>
+                
+                <div class="relative flex flex-col gap-1">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-bold uppercase tracking-wider text-black">Description</label>
+                        <button 
+                            onclick={enhanceDescription} 
+                            disabled={isEnhancing}
+                            class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066]"
+                        >
+                            {#if isEnhancing}
+                                <span class="loading loading-spinner loading-xs"></span>
+                            {:else}
+                                🪄 Améliorer IA
+                            {/if}
+                        </button>
+                    </div>
+                    <textarea 
+                        class="retro-input h-48 resize-y" 
+                        placeholder="Description de l'antiquité..." 
+                        bind:value={description}
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- Colonne 2 : Données Techniques -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <DataModifier bind:data_number={year} type={3} type_name='Année (Époque)'/>
+                    <DataModifier bind:data_number={status} type={4} type_name="Statut boutique"/>
+                </div>
+
+                <DataModifier bind:data_number={price} type={3} type_name='Prix de vente (€)'/>
+                
+                <DataModifier bind:data_string={category} type={5} type_name='Catégorie Principale'/>
+                
+                <div class="flex flex-col gap-1 w-full">
+                    <label class="text-xs font-bold uppercase tracking-wider text-black">Sous-catégorie</label>
+                    <select bind:value={subcategory_id} class="retro-select">
+                        <option value={null}>Aucune sous-catégorie</option>
+                        {#each subcategories as sub}
+                            <option value={sub.id}>{sub.name}</option>
+                        {/each}
+                    </select>
+                </div>
+
+                <DataModifier bind:data_string={size} type={8} type_name='Gabarit / Taille Livraison'/>
+                
+                <DataModifier bind:data_bool={nouveaute} type={6} type_name="Mettre en Nouveauté"/>
+            </div>
+        </div>
+
+        <!-- Section Médias -->
+        <div class="border-t-2 border-black pt-6">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="retro-badge bg-[#FFD2A6] text-xs">PHOTOS</span>
+                <h3 class="text-sm font-black uppercase tracking-wider text-black">Galerie & Visuels</h3>
+            </div>
+            
+            <div class="p-4 bg-[#EDE9DF] border-2 border-black shadow-[3px_3px_0px_0px_#000]">
+                <ImagesContainer 
+                    antiquite={antiquite} 
+                    bind:images={images} 
+                    bind:new_Files={newFiles} 
+                    bind:s3_Keys={s3Keys}
+                    mode={"antiquites"}
+                />
+            </div>
+        </div>
+
+        <!-- Section QR Code Inventaire -->
+        <div class="border-t-2 border-black pt-6">
+            <div class="retro-card-yellow p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    {#if qrCodeDataUrl}
+                        <img src={qrCodeDataUrl} alt="QR Code" class="w-20 h-20 border-2 border-black bg-white p-1 shadow-[2px_2px_0px_0px_#000]" />
+                    {/if}
+                    <div>
+                        <span class="retro-badge bg-black text-white text-[9px]">TAGGING</span>
+                        <h4 class="text-sm font-black uppercase text-black mt-1">QR Code d'Inventaire</h4>
+                        <p class="text-xs text-black/70">Scannable sur smartphone pour ouvrir directement la fiche en atelier.</p>
+                    </div>
+                </div>
+
+                <button onclick={printQRCode} type="button" class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] font-black">
+                    🖨️ Imprimer l'Étiquette
                 </button>
             </div>
         </div>
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <DataModifier bind:data_number={year} type={3} type_name='Année'/>
-                <DataModifier bind:data_number={status} type={4} type_name="Statut"/>
-            </div>
-            <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
-            <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
-            
-            <fieldset class="fieldset">
-                <legend class="fieldset-legend font-semibold">Sous-catégorie</legend>
-                <select bind:value={subcategory_id} class="select select-bordered w-full rounded-md">
-                    <option value={null}>Aucune sous-catégorie</option>
-                    {#each subcategories as sub}
-                        <option value={sub.id}>{sub.name}</option>
-                    {/each}
-                </select>
-            </fieldset>
 
-            <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
-            
-            <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
-        </div>
-    </div>
-
-    <div class="divider">Médias et Images</div>
-    
-    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200">
-        <ImagesContainer 
-            antiquite={antiquite} 
-            bind:images={images} 
-            bind:new_Files={newFiles} 
-            bind:s3_Keys={s3Keys}
-            mode={"antiquites"}
-        />
-    </div>
-
-    <div class="divider">QR Code Inventaire</div>
-    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200 flex flex-col items-center justify-center gap-4">
-        {#if qrCodeDataUrl}
-            <img src={qrCodeDataUrl} alt="QR Code Inventaire" class="rounded-xl shadow-sm border border-base-300 bg-white p-2" />
-            <button onclick={printQRCode} type="button" class="btn btn-outline btn-primary gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
-                </svg>
-                Imprimer le QR Code
-            </button>
-        {:else}
-            <div class="flex items-center justify-center p-8">
-                <span class="loading loading-spinner loading-md text-primary"></span>
-            </div>
-        {/if}
-    </div>
-
-    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12 pt-6 border-t border-base-200">
-        <div class="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
-            {#if antiquite.id}
-            <button 
-                onclick={() => publishToFacebook(antiquite.id)} 
-                disabled={isPublishingFB}
-                class="btn btn-sm bg-[#1877F2] hover:bg-[#0C5DC7] text-white border-none shadow-md"
-            >
-                {#if isPublishingFB}
-                    <span class="loading loading-spinner loading-xs"></span>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                {/if}
-                Publier sur Facebook
-            </button>
-            {/if}
-        </div>
-        
-        <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
-            {#if antiquite.prev_id || antiquite.next_id}
-                <div class="join shadow-xs">
-                    {#if antiquite.prev_id}
-                        <button 
-                            type="button"
-                            onclick={() => saveAndNavigate(antiquite.prev_id!)}
-                            disabled={isSaving}
-                            class="join-item btn btn-outline btn-sm gap-1"
-                            title="Enregistrer et aller à l'objet précédent (←)"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-                            <span>Enregistrer & Précédent</span>
-                        </button>
-                    {/if}
-
-                    {#if antiquite.next_id}
-                        <button 
-                            type="button"
-                            onclick={() => saveAndNavigate(antiquite.next_id!)}
-                            disabled={isSaving}
-                            class="join-item btn btn-outline btn-sm gap-1"
-                            title="Enregistrer et aller à l'objet suivant (→)"
-                        >
-                            <span>Enregistrer & Suivant</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-                        </button>
-                    {/if}
-                </div>
-            {/if}
-            
+        <!-- Navigation Précédent / Suivant et Actions de Sauvegarde -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t-2 border-black">
+            <!-- Touches Rapides Précédent / Suivant -->
             <div class="flex items-center gap-2">
-                <button onclick={() => window.history.back()} class="btn btn-ghost btn-sm">Annuler</button>
-                <button onclick={() => {modifyAntiquity(antiquite.id)}} disabled={isSaving} class="btn btn-primary btn-sm px-6 shadow-lg shadow-primary/20">
+                {#if antiquite.prev_id}
+                    <button 
+                        type="button"
+                        onclick={() => saveAndNavigate(antiquite.prev_id!)}
+                        disabled={isSaving}
+                        class="retro-btn text-xs py-1.5 px-3 bg-white hover:bg-[#D4E2FD]"
+                        title="Enregistrer et aller au précédent (Flèche Gauche ←)"
+                    >
+                        <span>« #{antiquite.prev_id}</span>
+                    </button>
+                {/if}
+
+                {#if antiquite.next_id}
+                    <button 
+                        type="button"
+                        onclick={() => saveAndNavigate(antiquite.next_id!)}
+                        disabled={isSaving}
+                        class="retro-btn text-xs py-1.5 px-3 bg-white hover:bg-[#D4E2FD]"
+                        title="Enregistrer et aller au suivant (Flèche Droite →)"
+                    >
+                        <span>#{antiquite.next_id} »</span>
+                    </button>
+                {/if}
+            </div>
+
+            <!-- Validation -->
+            <div class="flex items-center gap-2">
+                <button onclick={() => window.history.back()} class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFC2D1]">
+                    Annuler
+                </button>
+                <button onclick={() => modifyAntiquity(antiquite.id)} disabled={isSaving} class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[4px_4px_0px_0px_#000]">
                     {#if isSaving}
-                        <span class="loading loading-spinner loading-xs mr-2"></span>
+                        <span class="loading loading-spinner loading-xs mr-1"></span>
+                        Enregistrement...
                     {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        💾 Enregistrer les modifications
                     {/if}
-                    Enregistrer les modifications
                 </button>
             </div>
         </div>

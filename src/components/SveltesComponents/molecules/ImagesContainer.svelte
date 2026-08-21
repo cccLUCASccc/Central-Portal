@@ -21,7 +21,6 @@
     
     const fileMap = new Map<number, File>();
 
-    // Synchronisation locale si images change de l'extérieur
     $effect(() => {
         gallery = images;
     });
@@ -117,11 +116,11 @@
     }
 </script>
 
-<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 w-full">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
     {#each gallery as image, index (image.id)}
         <div 
             draggable="true"
-            class="transition-all duration-300 relative group"
+            class="transition-all duration-150 relative group cursor-grab active:cursor-grabbing"
             ondragstart={(e) => handleDragStart(e, image.id)}
             ondragover={(e) => { e.preventDefault(); isDraggingOver = true; }}
             ondragleave={() => isDraggingOver = false}
@@ -135,7 +134,7 @@
 
             {#if image.s3_key}
                 <div class="absolute top-2 left-2 z-10 pointer-events-none">
-                    <span class="badge badge-primary badge-xs gap-1 shadow-sm font-semibold">
+                    <span class="retro-badge bg-[#99E7DC] text-[10px]">
                         ☁️ S3
                     </span>
                 </div>
@@ -143,8 +142,8 @@
         </div>
     {/each}
 
-    <!-- Bouton 1 : Téléverser un fichier local (avec compression auto) -->
-    <label class="group relative flex flex-col items-center justify-center aspect-square w-full rounded-2xl border-2 border-dashed border-base-300 bg-base-100 hover:bg-base-200 hover:border-primary/50 transition-all cursor-pointer overflow-hidden {isCompressing ? 'opacity-70 pointer-events-none' : ''}">
+    <!-- Bouton 1 : Téléverser un fichier local -->
+    <label class="group relative flex flex-col items-center justify-center aspect-square w-full border-2 border-dashed border-black bg-white hover:bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden text-center p-3 {isCompressing ? 'opacity-70 pointer-events-none' : ''}">
         <input 
             multiple 
             onchange={handleFileChange} 
@@ -154,22 +153,17 @@
             disabled={isCompressing}
         />
         
-        <div class="flex flex-col items-center gap-3 p-3 text-center">
+        <div class="flex flex-col items-center gap-2">
             {#if isCompressing}
-                <div class="p-2.5 rounded-full bg-primary/10 text-primary">
-                    <span class="loading loading-spinner loading-md text-primary"></span>
-                </div>
-                <div class="space-y-0.5">
-                    <p class="text-xs font-bold text-primary">Optimisation...</p>
-                    <p class="text-[10px] opacity-50">Compression WebP</p>
-                </div>
+                <span class="loading loading-spinner loading-md text-black"></span>
+                <p class="text-xs font-mono font-bold uppercase text-black">Compression...</p>
             {:else}
-                <div class="p-2.5 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <div class="w-8 h-8 border-2 border-black bg-[#FFE600] flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000] group-hover:scale-110 transition-transform">
+                    ➕
                 </div>
-                <div class="space-y-0.5">
-                    <p class="text-xs font-bold">Importer photos</p>
-                    <p class="text-[10px] opacity-50">Fichiers locaux</p>
+                <div class="space-y-0.5 font-mono">
+                    <p class="text-xs font-bold uppercase text-black">Importer</p>
+                    <p class="text-[10px] text-black/60">Fichiers locaux</p>
                 </div>
             {/if}
         </div>
@@ -179,14 +173,14 @@
     <button 
         type="button"
         onclick={() => isS3PickerOpen = true}
-        class="group relative flex flex-col items-center justify-center aspect-square w-full rounded-2xl border-2 border-dashed border-info/40 bg-info/5 hover:bg-info/10 hover:border-info transition-all cursor-pointer overflow-hidden text-center p-3 gap-3"
+        class="group relative flex flex-col items-center justify-center aspect-square w-full border-2 border-dashed border-black bg-[#FFD2A6] hover:bg-[#fcae6c] shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden text-center p-3"
     >
-        <div class="p-2.5 rounded-full bg-info/10 text-info group-hover:scale-110 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+        <div class="w-8 h-8 border-2 border-black bg-white flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000] group-hover:scale-110 transition-transform">
+            🖼️
         </div>
-        <div class="space-y-0.5">
-            <p class="text-xs font-bold text-info">Choisir sur S3</p>
-            <p class="text-[10px] opacity-60">Photos cloud existantes</p>
+        <div class="space-y-0.5 font-mono mt-2">
+            <p class="text-xs font-bold uppercase text-black">Choisir sur S3</p>
+            <p class="text-[10px] text-black/70">Images cloud</p>
         </div>
     </button>
 </div>

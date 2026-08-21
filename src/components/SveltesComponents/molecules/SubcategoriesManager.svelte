@@ -78,65 +78,96 @@
     });
 </script>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-    <!-- Formulaire d'ajout -->
-    <div class="card bg-base-100 shadow-sm border border-base-200 p-6 h-fit">
-        <h2 class="text-xl font-bold mb-4">Nouvelle sous-catégorie</h2>
-        <form onsubmit={(e) => { e.preventDefault(); addSubcategory(); }} class="space-y-4">
-            <fieldset class="fieldset">
-                <legend class="fieldset-legend font-semibold">Nom de la sous-catégorie</legend>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto font-mono">
+    <!-- Formulaire d'ajout Rétro -->
+    <div class="retro-card p-6 h-fit space-y-4">
+        <div class="flex items-center gap-2">
+            <span class="retro-badge bg-[#FFE600] text-[10px]">CRÉATION</span>
+            <span class="text-xs font-bold text-black/70">NOUVELLE SOUS-CATÉGORIE</span>
+        </div>
+        <h2 class="text-xl font-black uppercase tracking-tight text-black">
+            Ajouter un filtre
+        </h2>
+        
+        <form onsubmit={(e) => { e.preventDefault(); addSubcategory(); }} class="space-y-4 pt-2 border-t-2 border-black">
+            <div class="space-y-1">
+                <label class="text-xs font-bold uppercase tracking-wider text-black">Nom de la sous-catégorie</label>
                 <input 
                     type="text" 
-                    placeholder="Ex: Tables, Vases, Assiettes..." 
+                    placeholder="Ex: Fauteuils, Vases, Argenterie..." 
                     bind:value={name} 
-                    class="input input-bordered w-full rounded-md" 
+                    class="retro-input" 
                     required 
                 />
-            </fieldset>
+            </div>
 
-            <fieldset class="fieldset">
-                <legend class="fieldset-legend font-semibold">Catégorie parente (Galerie)</legend>
-                <select bind:value={category} class="select select-bordered w-full rounded-md">
+            <div class="space-y-1">
+                <label class="text-xs font-bold uppercase tracking-wider text-black">Galerie parente</label>
+                <select bind:value={category} class="retro-select">
                     {#each categories as cat}
                         <option value={cat}>{cat}</option>
                     {/each}
                 </select>
-            </fieldset>
+            </div>
 
-            <button type="submit" disabled={isCreating} class="btn btn-primary w-full mt-4 rounded-xl">
+            <button type="submit" disabled={isCreating} class="retro-btn-primary w-full py-2.5 mt-2 font-black shadow-[3px_3px_0px_0px_#000]">
                 {#if isCreating}
-                    <span class="loading loading-spinner loading-sm"></span>
+                    <span class="loading loading-spinner loading-xs mr-2"></span>
+                    Création...
                 {:else}
-                    Ajouter
+                    ➕ Ajouter la sous-catégorie
                 {/if}
             </button>
         </form>
     </div>
 
-    <!-- Liste des sous-catégories -->
-    <div class="lg:col-span-2 card bg-base-100 shadow-sm border border-base-200 p-6">
-        <h2 class="text-xl font-bold mb-4">Sous-catégories existantes</h2>
+    <!-- Liste des sous-catégories Rétro -->
+    <div class="lg:col-span-2 retro-card p-6 space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="retro-badge bg-[#D4E2FD] text-[10px]">RÉPERTOIRE</span>
+                    <span class="text-xs font-bold text-black/70">CATÉGORIES & SOUS-GROUPES</span>
+                </div>
+                <h2 class="text-xl font-black uppercase tracking-tight text-black mt-0.5">
+                    Sous-catégories actives
+                </h2>
+            </div>
+            <div class="retro-icon-box bg-white">
+                🏷️
+            </div>
+        </div>
         
         {#if isLoading}
-            <div class="flex justify-center py-12">
-                <span class="loading loading-spinner loading-lg text-primary"></span>
+            <div class="flex flex-col items-center justify-center py-16 gap-3">
+                <span class="loading loading-spinner loading-lg text-black"></span>
+                <p class="text-xs font-bold uppercase text-black">Chargement des sous-catégories...</p>
             </div>
         {:else if subcategories.length === 0}
-            <p class="text-base-content/60 py-12 text-center">Aucune sous-catégorie pour le moment.</p>
+            <div class="p-12 text-center border-2 border-dashed border-black/40 bg-[#F6F4EE]">
+                <p class="text-xs font-bold uppercase text-black/60">Aucune sous-catégorie configurée.</p>
+            </div>
         {:else}
-            <div class="space-y-6">
+            <div class="space-y-6 pt-2 border-t-2 border-black">
                 {#each categories as cat}
                     {@const catSubs = subcategories.filter(s => s.category === cat)}
                     {#if catSubs.length > 0}
-                        <div class="border-b border-base-200 pb-4 last:border-none">
-                            <h3 class="font-bold text-lg text-primary mb-3">{cat}</h3>
+                        <div class="border-2 border-black p-4 bg-[#EDE9DF] shadow-[2px_2px_0px_0px_#000]">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-black text-sm uppercase text-black flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 bg-black"></span>
+                                    <span>{cat}</span>
+                                </h3>
+                                <span class="retro-badge bg-white text-[10px]">{catSubs.length} élément(s)</span>
+                            </div>
+
                             <div class="flex flex-wrap gap-2">
                                 {#each catSubs as sub}
-                                    <div class="flex items-center gap-2 bg-base-200 px-3 py-1.5 rounded-lg border border-base-300 text-sm">
+                                    <div class="flex items-center gap-2 bg-white px-3 py-1.5 border-2 border-black text-xs font-bold text-black shadow-[1.5px_1.5px_0px_0px_#000]">
                                         <span>{sub.name}</span>
                                         <button 
                                             onclick={() => deleteSubcategory(sub.id)}
-                                            class="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10"
+                                            class="w-4 h-4 border border-black bg-[#FFC2D1] hover:bg-[#fca2b4] flex items-center justify-center font-bold text-[10px]"
                                             title="Supprimer"
                                         >
                                             ✕
