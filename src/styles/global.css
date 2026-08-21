@@ -395,3 +395,257 @@
   background-color: #F6F4EE !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 }
+
+/* ==========================================================================
+   CLERK SIGN-IN RETRO NEO-BRUTALIST STYLING
+   ========================================================================== */
+
+.cl-signIn-root,
+.cl-signUp-root,
+.cl-rootBox {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.cl-card {
+  border: 3px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  width: 100% !important;
+}
+
+.cl-header {
+  padding-bottom: 1.25rem !important;
+}
+
+.cl-headerTitle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  font-size: 1.25rem !important;
+  letter-spacing: -0.025em !important;
+  color: #000000 !important;
+}
+
+.cl-headerSubtitle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.8rem !important;
+  color: rgba(0, 0, 0, 0.7) !important;
+  font-weight: 600 !important;
+}
+
+.cl-socialButtonsBlockButton {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease !important;
+}
+.cl-socialButtonsBlockButton:hover {
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px) !important;
+  background-color: #EDE9DF !important;
+}
+.cl-socialButtonsBlockButton:active {
+  box-shadow: 0px 0px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  font-size: 0.8rem !important;
+  color: #000000 !important;
+}
+
+.cl-dividerLine {
+  background-color: #000000 !important;
+  height: 2px !important;
+}
+
+.cl-dividerText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  color: #000000 !important;
+  background-color: #EDE9DF !important;
+  border: 1.5px solid #000000 !important;
+  padding: 0.15rem 0.5rem !important;
+  box-shadow: 1.5px 1.5px 0px 0px #000000 !important;
+}
+
+.cl-formFieldLabel {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  color: #000000 !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.cl-formFieldInput {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  padding: 0.6rem 0.75rem !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transition: box-shadow 0.15s ease !important;
+}
+.cl-formFieldInput:focus {
+  outline: none !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  background-color: #FFFFFF !important;
+}
+
+.cl-formButtonPrimary {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #99E7DC !important;
+  color: #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 900 !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  cursor: pointer !important;
+  padding: 0.7rem 1.25rem !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease !important;
+}
+.cl-formButtonPrimary:hover {
+  background-color: #7ce0d3 !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px) !important;
+}
+.cl-formButtonPrimary:active {
+  box-shadow: 0px 0px 0px 0px #000000 !important;
+  transform: translate(2px, 2px) !important;
+}
+
+.cl-formButtonReset {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  text-decoration: underline !important;
+  font-size: 0.75rem !important;
+}
+
+.cl-footerActionText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.75rem !important;
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.cl-footerActionLink {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  color: #000000 !important;
+  text-decoration: underline !important;
+  font-size: 0.75rem !important;
+}
+
+.cl-footer {
+  background-color: #EDE9DF !important;
+  border-top: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  padding: 1rem !important;
+}
+
+.cl-identityPreview {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #F6F4EE !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.cl-identityPreviewText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  color: #000000 !important;
+}
+
+.cl-identityPreviewEditButton {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  color: #000000 !important;
+  text-decoration: underline !important;
+}
+
+.cl-formFieldAction {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  color: #000000 !important;
+  text-decoration: underline !important;
+}
+
+.cl-alert {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #FFC2D1 !important;
+  color: #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+}
+
+.cl-alertText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  color: #000000 !important;
+}
+
+.cl-formFieldErrorText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  color: #000000 !important;
+  background-color: #FFC2D1 !important;
+  border: 1px solid #000000 !important;
+  padding: 0.2rem 0.4rem !important;
+  display: inline-block !important;
+  margin-top: 0.25rem !important;
+  box-shadow: 1px 1px 0px 0px #000 !important;
+}
+
+.cl-otpCodeFieldInput {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+.cl-badge {
+  border: 1.5px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #FFF394 !important;
+  color: #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 800 !important;
+}
