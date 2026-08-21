@@ -15,6 +15,53 @@ export const ALL: APIRoute = async ({ request, url }) => {
     ).replace(/\/$/, "");
 
     try {
+        if (action === "list") {
+            const limit = url.searchParams.get("limit") || "";
+            const targetUrl = `${scrapperBaseUrl}/prospects?type=${encodeURIComponent(type)}${limit ? `&limit=${encodeURIComponent(limit)}` : ''}`;
+            const res = await fetch(targetUrl, { method: "GET" });
+
+            if (!res.ok) {
+                const text = await res.text();
+                return new Response(JSON.stringify({ error: `Erreur du scrapper (${res.status}): ${text}` }), {
+                    status: res.status,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+
+            const data = await res.json();
+            return new Response(JSON.stringify(data), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        if (action === "delete") {
+            const id = url.searchParams.get("id");
+            if (!id) {
+                return new Response(JSON.stringify({ error: "Paramètre 'id' manquant" }), {
+                    status: 400,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+
+            const targetUrl = `${scrapperBaseUrl}/prospects?id=${encodeURIComponent(id)}`;
+            const res = await fetch(targetUrl, { method: "DELETE" });
+
+            if (!res.ok) {
+                const text = await res.text();
+                return new Response(JSON.stringify({ error: `Erreur suppression (${res.status}): ${text}` }), {
+                    status: res.status,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+
+            const data = await res.json();
+            return new Response(JSON.stringify(data), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
         if (action === "scrape") {
             if (!q) {
                 return new Response(JSON.stringify({ error: "Le mot-clé (paramètre 'q') est requis." }), {
@@ -49,7 +96,7 @@ export const ALL: APIRoute = async ({ request, url }) => {
         if (action === "export") {
             const targetUrl = `${scrapperBaseUrl}/export-prospects?type=${encodeURIComponent(type)}`;
             const res = await fetch(targetUrl, {
-                method: "POST"
+                method: "GET"
             });
 
             if (!res.ok) {
@@ -68,7 +115,16 @@ export const ALL: APIRoute = async ({ request, url }) => {
         }
 
         if (action === "health") {
-            return new Response(JSON.stringify({ status: "ok", scrapperBaseUrl }), {
+            const targetUrl = `${scrapperBaseUrl}/health`;
+            let isOk = false;
+            try {
+                const res = await fetch(targetUrl, { signal: AbortSignal.timeout(3000) });
+                isOk = res.ok;
+            } catch {
+                isOk = false;
+            }
+
+            return new Response(JSON.stringify({ status: isOk ? "ok" : "offline", scrapperBaseUrl }), {
                 status: 200,
                 headers: { "Content-Type": "application/json" }
             });

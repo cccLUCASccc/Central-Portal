@@ -37,6 +37,7 @@
     let useAstroProxy = $state(true);
     let showAdvancedConfig = $state(false);
     let isServiceOnline = $state<boolean | null>(null);
+    let isLoadingProspects = $state(false);
 
     let notification = $state<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
@@ -58,13 +59,43 @@
         }, 4000);
     }
 
-    // Charger les prospects depuis le stockage local à l'initialisation
-    onMount(() => {
+    // Charger les prospects directement depuis la base de données de Marty
+    async function loadProspects(silent = false) {
+        if (!silent) isLoadingProspects = true;
         try {
+            let res: Response;
+            if (useAstroProxy) {
+                const proxyUrl = `/api/marty/proxy?action=list&scrapperUrl=${encodeURIComponent(scrapperUrl)}`;
+                res = await fetch(proxyUrl);
+            } else {
+                const directUrl = `${scrapperUrl.replace(/\/$/, "")}/prospects`;
+                res = await fetch(directUrl);
+            }
+
+            if (res.ok) {
+                const data: Prospect[] = await res.json();
+                if (Array.isArray(data)) {
+                    prospects = data;
+                    isServiceOnline = true;
+                    saveProspectsToLocal();
+                }
+            } else {
+                if (!silent) notify("Impossible de charger les prospects de la base.", "error");
+            }
+        } catch (err) {
+            console.warn("Erreur de connexion à l'API Marty:", err);
+            // Fallback sur le cache local en cas d'indisponibilité
             const saved = localStorage.getItem("marty_prospects");
-            if (saved) {
+            if (saved && prospects.length === 0) {
                 prospects = JSON.parse(saved);
             }
+        } finally {
+            if (!silent) isLoadingProspects = false;
+        }
+    }
+
+    onMount(() => {
+        try {
             const savedStats = localStorage.getItem("marty_last_stats");
             if (savedStats) {
                 lastScrapeStats = JSON.parse(savedStats);
@@ -73,11 +104,16 @@
             if (savedUrl) {
                 scrapperUrl = savedUrl;
             }
+            const saved = localStorage.getItem("marty_prospects");
+            if (saved) {
+                prospects = JSON.parse(saved);
+            }
         } catch (e) {
             console.error("Erreur de lecture du localStorage:", e);
         }
 
         checkServiceHealth();
+        loadProspects();
     });
 
     function saveProspectsToLocal() {
@@ -95,10 +131,10 @@
         try {
             const target = useAstroProxy 
                 ? `/api/marty/proxy?action=health&scrapperUrl=${encodeURIComponent(scrapperUrl)}`
-                : `${scrapperUrl}/generer-leads?q=ping`;
+                : `${scrapperUrl.replace(/\/$/, "")}/health`;
 
             const res = await fetch(target, { signal: AbortSignal.timeout(3000) });
-            isServiceOnline = res.ok || res.status === 400; // 400 signifie que le serveur Bun tourne et attend un q valide
+            isServiceOnline = res.ok;
         } catch {
             isServiceOnline = false;
         }
@@ -187,6 +223,9 @@
                 notify(`ℹ️ Scraping terminé : ${data.totalScrappes} sites analysés, aucun nouvel email unique trouvé.`, "info");
             }
 
+            // Recharger la liste officielle depuis la base PostgreSQL
+            await loadProspects(true);
+
         } catch (err: any) {
             console.error("Erreur de scraping :", err);
             notify(`Échec du scraping : ${err.message || "Service inaccessible"}`, "error");
@@ -265,20 +304,42 @@
         copyToClipboard(text, `${selectedEmails.length} email(s) copiés (séparateur ';') !`);
     }
 
-    function deleteSelectedProspects() {
-        if (!confirm(`Supprimer ces ${selectedIds.length} lead(s) de la liste ?`)) return;
+    async function deleteSelectedProspects() {
+        if (!confirm(`Supprimer définitivement ces ${selectedIds.length} lead(s) de la base de données ?`)) return;
 
-        prospects = prospects.filter(p => !selectedIds.includes(p.id as number));
-        selectedIds = [];
-        saveProspectsToLocal();
-        notify("Leads supprimés avec succès.", "info");
+        const idsToDelete = [...selectedIds];
+        try {
+            await Promise.all(idsToDelete.map(id => {
+                const url = useAstroProxy 
+                    ? `/api/marty/proxy?action=delete&id=${id}&scrapperUrl=${encodeURIComponent(scrapperUrl)}`
+                    : `${scrapperUrl.replace(/\/$/, "")}/prospects?id=${id}`;
+                return fetch(url, { method: "DELETE" });
+            }));
+            prospects = prospects.filter(p => !idsToDelete.includes(p.id as number));
+            selectedIds = [];
+            saveProspectsToLocal();
+            notify(`${idsToDelete.length} lead(s) supprimé(s) de la base de données.`, "info");
+        } catch (err) {
+            console.error("Erreur suppression groupée :", err);
+            notify("Erreur lors de la suppression.", "error");
+        }
     }
 
-    function deleteSingleProspect(id: number) {
-        prospects = prospects.filter(p => p.id !== id);
-        selectedIds = selectedIds.filter(i => i !== id);
-        saveProspectsToLocal();
-        notify("Prospect retiré.", "info");
+    async function deleteSingleProspect(id: number) {
+        if (!confirm("Supprimer ce prospect de la base de données ?")) return;
+        try {
+            const url = useAstroProxy 
+                ? `/api/marty/proxy?action=delete&id=${id}&scrapperUrl=${encodeURIComponent(scrapperUrl)}`
+                : `${scrapperUrl.replace(/\/$/, "")}/prospects?id=${id}`;
+            await fetch(url, { method: "DELETE" });
+            prospects = prospects.filter(p => p.id !== id);
+            selectedIds = selectedIds.filter(i => i !== id);
+            saveProspectsToLocal();
+            notify("Prospect supprimé de la base.", "info");
+        } catch (err) {
+            console.error("Erreur suppression prospect :", err);
+            notify("Erreur lors de la suppression.", "error");
+        }
     }
 
     function exportToCSV(typeFilter?: string) {
@@ -354,13 +415,15 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-            <div class="bg-white border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] text-xs space-y-1">
-                <div class="text-[10px] text-black/60 font-bold uppercase">Moteur de Recherche</div>
-                <div class="font-black text-black flex items-center gap-1.5">
-                    <span class="w-2 h-2 bg-green-500 rounded-full inline-block animate-pulse"></span>
-                    SEARXNG + DUCKDUCKGO
-                </div>
-            </div>
+            <button 
+                onclick={() => loadProspects()} 
+                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3 flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_#000]"
+                disabled={isLoadingProspects}
+                title="Recharger la base de données"
+            >
+                <span class="{isLoadingProspects ? 'animate-spin' : ''}">🔄</span>
+                <span>{isLoadingProspects ? 'Chargement...' : 'Actualiser Base'}</span>
+            </button>
             <div class="bg-[#FFD2A6] border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] text-xs space-y-1">
                 <div class="text-[10px] text-black/60 font-bold uppercase">Moteur Web Scraper</div>
                 <div class="font-black text-black flex items-center gap-1.5">
@@ -369,6 +432,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- 4 Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
