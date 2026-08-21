@@ -12,10 +12,13 @@ import clerk from "@clerk/astro";
 // https://astro.build/config
 export default defineConfig({
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    ssr: {
+      noExternal: ['qrcode']
+    }
   },
 
-  integrations: [svelte(), clerk()],
+  integrations: [svelte(), clerk({ signInUrl: '/sign-in' })],
   adapter: node({ mode: "standalone" }),
   output: "server"
 });
