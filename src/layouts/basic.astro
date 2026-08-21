@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import { Show, UserButton } from "@clerk/astro/components";
+import TerminalBoot from "../components/SveltesComponents/atoms/TerminalBoot.svelte";
 
 const auth = Astro.locals.auth();
 const token = await auth.getToken();
@@ -19,6 +20,10 @@ const userId = auth.userId;
   </head>
 
   <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFC2D1] selection:text-black">
+    <Show when="signed-in">
+      <TerminalBoot client:load initialActive={false} />
+    </Show>
+
     <div class="drawer">
       <input id="my-drawer" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content flex flex-col min-h-screen">
@@ -31,7 +36,14 @@ const userId = auth.userId;
               <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — OS INVENTORY PORTAL</span>
             </div>
             <div class="hidden md:flex items-center gap-4 text-[11px] font-mono">
-              <span class="border border-black px-1.5 py-0.5 bg-white shadow-[1px_1px_0px_0px_#000]">SERVEUR: EN LIGNE</span>
+              <button 
+                type="button" 
+                onclick="window.replayBoot && window.replayBoot()"
+                class="border border-black px-1.5 py-0.5 bg-white shadow-[1px_1px_0px_0px_#000] hover:bg-[#FFF394] cursor-pointer flex items-center gap-1.5 transition-colors"
+                title="Rejouer la séquence de boot du terminal"
+              >
+                <span>🖥️</span> SERVEUR: EN LIGNE
+              </button>
               <span class="border border-black px-1.5 py-0.5 bg-[#99E7DC] shadow-[1px_1px_0px_0px_#000]">STORAGE: AWS S3</span>
             </div>
           </div>
@@ -96,7 +108,14 @@ const userId = auth.userId;
         <!-- Retro OS Status Footer -->
         <footer class="bg-[#EDE9DF] border-t-2 border-black py-3 px-6 text-black font-mono text-xs flex flex-col sm:flex-row items-center justify-between gap-2 shadow-[0_-2px_0px_0px_#000]">
           <div class="flex items-center gap-3">
-            <span class="retro-badge bg-[#99E7DC]">SYS_OK</span>
+            <button 
+              type="button"
+              onclick="window.replayBoot && window.replayBoot()"
+              class="retro-badge bg-[#99E7DC] hover:bg-[#7ce0d3] cursor-pointer transition-transform active:scale-95"
+              title="Cliquer pour relancer le terminal de démarrage"
+            >
+              ⚡ SYS_OK
+            </button>
             <span class="text-black/70">Gestionnaire.SYS Terminal © 2026</span>
           </div>
           <div class="flex items-center gap-4 text-black/60 text-[11px]">

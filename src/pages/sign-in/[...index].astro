@@ -1,6 +1,6 @@
 ---
 import "../../styles/global.css";
-import { SignIn } from "@clerk/astro/components";
+import RetroAuthTerminal from "../../components/SveltesComponents/molecules/RetroAuthTerminal.svelte";
 
 const auth = Astro.locals.auth();
 const userId = auth.userId;
@@ -37,66 +37,8 @@ if (userId) {
 
     <!-- Main Container -->
     <main class="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[#F6F4EE] relative">
-      <!-- Background subtle grid effect -->
-      <div class="w-full max-w-md mx-auto flex flex-col items-center">
-        
-        <!-- Retro Application Header Card -->
-        <div class="w-full mb-6 text-center flex flex-col items-center">
-          <div class="inline-flex items-center gap-3 mb-3">
-            <div class="w-12 h-12 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-2xl shadow-[3px_3px_0px_0px_#000]">
-              G
-            </div>
-            <div class="text-left flex flex-col">
-              <span class="font-black text-2xl tracking-tight uppercase leading-none font-mono">
-                GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span>
-              </span>
-              <span class="text-[11px] font-mono font-bold tracking-widest text-black/60 uppercase">
-                Daisy Brocante • Portail Gestion
-              </span>
-            </div>
-          </div>
-          
-          <div class="flex items-center gap-2 font-mono text-xs mt-1">
-            <span class="retro-badge bg-[#99E7DC]">AUTHENTIFICATION</span>
-            <span class="retro-badge bg-[#FFF394]">ZONE SÉCURISÉE</span>
-          </div>
-        </div>
-
-        <!-- Retro OS Window Frame -->
-        <div class="w-full bg-[#EDE9DF] border-3 border-black shadow-[6px_6px_0px_0px_#000] p-1">
-          <!-- Window Titlebar -->
-          <div class="bg-[#2B2D42] text-white px-3 py-1.5 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold mb-3">
-            <div class="flex items-center gap-2">
-              <span class="text-[#99E7DC]">▶</span>
-              <span class="tracking-wider uppercase">LOGIN_PROMPT.EXE</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 bg-[#FFC2D1] border border-black inline-block"></span>
-              <span class="w-3 h-3 bg-[#FFF394] border border-black inline-block"></span>
-              <span class="w-3 h-3 bg-[#99E7DC] border border-black inline-block"></span>
-            </div>
-          </div>
-
-          <!-- Clerk Sign-in Component Container -->
-          <div class="p-2 sm:p-4">
-            <SignIn 
-              path="/sign-in" 
-              routing="path" 
-            />
-          </div>
-
-          <!-- Window Inner Footer Info -->
-          <div class="mt-2 pt-2 border-t-2 border-black px-3 py-2 bg-white flex items-center justify-between font-mono text-[11px] text-black/70">
-            <span>CLERK_AUTH // PROTOCOL</span>
-            <span class="font-bold text-black">SSL_ENCRYPTED</span>
-          </div>
-        </div>
-
-        <!-- Security notice below box -->
-        <div class="mt-6 text-center font-mono text-xs text-black/60 max-w-sm">
-          <p>🔒 Accès strictement réservé aux gestionnaires autorisés de Daisy Brocante.</p>
-        </div>
-
+      <div class="w-full max-w-xl md:max-w-2xl mx-auto">
+        <RetroAuthTerminal client:load targetUrl="/" />
       </div>
     </main>
 
@@ -113,4 +55,3 @@ if (userId) {
     </footer>
   </body>
 </html>
-
