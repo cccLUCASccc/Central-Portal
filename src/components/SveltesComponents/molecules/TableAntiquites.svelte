@@ -113,7 +113,7 @@
     </div>
 
     <!-- Barre de Filtres Rétro avec Dropdowns Stylisés -->
-    <div class="retro-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end relative z-30">
+    <div class="retro-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
         <div>
             <DataModifier type={5} type_name="Catégorie" mode="filter" bind:data_string={filterStore.category_filter} />
         </div>
@@ -134,12 +134,12 @@
     </div>
 
     {#if is_visible}
-        <div class="animate-in fade-in duration-200 relative z-20">
+        <div class="animate-in fade-in duration-200">
             <BulkAntiquitesImporter />
         </div>
     {/if}
 
-    <div class="relative z-0">
+    <div class="relative">
         {#if isLoading}
             <div class="absolute inset-0 bg-[#F6F4EE]/60 backdrop-blur-xs z-10 flex items-center justify-center border-2 border-black">
                 <div class="border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_#000] flex items-center gap-3 font-bold text-xs uppercase">
