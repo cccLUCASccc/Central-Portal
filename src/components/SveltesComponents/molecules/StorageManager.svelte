@@ -37,7 +37,7 @@
     let isUploading = $state(false);
 
     let searchQuery = $state("");
-    let selectedFilter = $state("all"); // all, orphans, used, antiquite, blog, images
+    let selectedFilter = $state("all"); // all, orphans, used, antiquite, images
     let selectedSort = $state("date_desc");
     let viewMode = $state<"grid" | "table">("grid");
     let selectedKeys = $state<string[]>([]);
@@ -321,7 +321,7 @@
         <div class="card bg-base-200/50 border border-base-300 p-4 rounded-2xl shadow-sm">
             <div class="text-xs font-semibold uppercase tracking-wider opacity-60">Fichiers En Ligne</div>
             <div class="text-2xl font-bold mt-1 text-success">{stats?.used_files ?? "..."}</div>
-            <div class="text-xs opacity-50 mt-1">Liés à un objet ou blog</div>
+            <div class="text-xs opacity-50 mt-1">Liés aux objets en boutique</div>
         </div>
 
         <div class="card bg-base-200/50 border border-base-300 p-4 rounded-2xl shadow-sm">
@@ -412,12 +412,6 @@
                 onclick={() => handleFilterChange('antiquite')}
             >
                 🏷️ Boutique
-            </button>
-            <button 
-                class="btn btn-xs sm:btn-sm {selectedFilter === 'blog' ? 'btn-neutral' : 'btn-ghost'}"
-                onclick={() => handleFilterChange('blog')}
-            >
-                📰 Blog
             </button>
             <button 
                 class="btn btn-xs sm:btn-sm {selectedFilter === 'orphans' ? 'btn-warning' : 'btn-ghost text-warning'}"
@@ -538,15 +532,9 @@
                     <!-- Status badge -->
                     <div class="absolute top-2 right-2 z-20">
                         {#if file.is_used}
-                            {#if file.reference_type === 'antiquite'}
-                                <span class="badge badge-success badge-xs gap-1 shadow-sm" title={`Lié à l'objet : ${file.reference_title}`}>
-                                    🔗 #{file.reference_id}
-                                </span>
-                            {:else if file.reference_type === 'blog'}
-                                <span class="badge badge-info badge-xs gap-1 shadow-sm" title={`Blog : ${file.reference_title}`}>
-                                    📰 Blog
-                                </span>
-                            {/if}
+                            <span class="badge badge-success badge-xs gap-1 shadow-sm" title={`Lié à l'objet : ${file.reference_title}`}>
+                                🔗 #{file.reference_id}
+                            </span>
                         {:else}
                             <span class="badge badge-warning badge-xs shadow-sm" title="Non lié en base de données">
                                 Inutilisé
@@ -682,15 +670,9 @@
                             </td>
                             <td>
                                 {#if file.is_used}
-                                    {#if file.reference_type === 'antiquite'}
-                                        <a href={`/antiquites/${file.reference_id}`} class="badge badge-success badge-sm gap-1 hover:underline">
-                                            🔗 Objet #{file.reference_id} : {file.reference_title || 'Sans titre'}
-                                        </a>
-                                    {:else if file.reference_type === 'blog'}
-                                        <span class="badge badge-info badge-sm gap-1">
-                                            📰 Blog : {file.reference_title || 'Article'}
-                                        </span>
-                                    {/if}
+                                    <a href={`/antiquites/${file.reference_id}`} class="badge badge-success badge-sm gap-1 hover:underline">
+                                        🔗 Objet #{file.reference_id} : {file.reference_title || 'Sans titre'}
+                                    </a>
                                 {:else}
                                     <span class="badge badge-warning badge-sm">⚠️ Inutilisé (Orphelin)</span>
                                 {/if}
@@ -806,7 +788,7 @@
 
                     {#if previewFile.reference_title}
                         <div class="alert alert-info text-xs py-2">
-                            <span>Lié à : <strong>{previewFile.reference_title}</strong> ({previewFile.reference_type === 'antiquite' ? 'Objet' : 'Blog'} #{previewFile.reference_id})</span>
+                            <span>Lié à : <strong>{previewFile.reference_title}</strong> (Objet #{previewFile.reference_id})</span>
                         </div>
                     {/if}
 
