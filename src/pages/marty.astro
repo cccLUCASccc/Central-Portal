@@ -1,6 +1,6 @@
 ---
-import ProjectsHub from '../components/SveltesComponents/molecules/ProjectsHub.svelte';
 import BasicLayout from '../layouts/basic.astro';
+import MartyManager from '../components/SveltesComponents/molecules/MartyManager.svelte';
 import { Show } from '@clerk/astro/components';
 
 const auth = Astro.locals.auth();
@@ -9,6 +9,7 @@ const userId = auth.userId;
 
 <BasicLayout>
     <Show when="signed-in">
-        <ProjectsHub client:load />
+        <MartyManager client:load />
     </Show>
 </BasicLayout>
+
