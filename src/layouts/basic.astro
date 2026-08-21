@@ -6,37 +6,21 @@ import ThemeController from "../components/SveltesComponents/atoms/ThemeControll
 const auth = Astro.locals.auth();
 const token = await auth.getToken();
 const userId = auth.userId;
-
-console.log("🛠️ [Layout] Debug Auth - UserId:", userId);
-console.log("🛠️ [Layout] Debug Auth - Token present:", !!token);
-
-if (userId && !token) {
-  console.warn(
-    "⚠️ [Layout] L'utilisateur est connecté mais aucun token n'a pu être récupéré.",
-  );
-}
 ---
 
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="corporate">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>Central Portal</title>
+    <title>Central.SYS // Daisy Brocante</title>
     <script is:inline>
-      // Initialisation du thème pour éviter le flash blanc/noir
       const theme = (() => {
-        if (
-          typeof localStorage !== "undefined" &&
-          localStorage.getItem("theme")
-        ) {
+        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
           return localStorage.getItem("theme");
-        }
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          return "dracula";
         }
         return "corporate";
       })();
@@ -44,111 +28,130 @@ if (userId && !token) {
     </script>
   </head>
 
-  <body
-    class="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300"
-  >
+  <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFE600] selection:text-black">
     <div class="drawer">
       <input id="my-drawer" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content flex flex-col">
+      <div class="drawer-content flex flex-col min-h-screen">
+        
         <Show when="signed-in">
-          <!-- Navbar -->
-          <header
-            class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-200 px-4"
-          >
-            <div class="flex-none lg:hidden">
-              <label
-                for="my-drawer"
-                aria-label="open sidebar"
-                class="btn btn-square btn-ghost"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  class="inline-block w-6 h-6 stroke-current"
-                  ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 6h16M4 12h16M4 18h16"></path></svg
-                >
+          <!-- Retro Top Yellow Ticker / Announcement Banner -->
+          <div class="w-full bg-[#FFE600] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
+            <div class="flex items-center gap-3">
+              <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
+              <span>⚡ DAISY BROCANTE // CENTRAL.SYS V2.4 — OS INVENTORY PORTAL</span>
+            </div>
+            <div class="hidden md:flex items-center gap-4 text-[11px] font-mono">
+              <span class="border border-black px-1.5 py-0.5 bg-white shadow-[1px_1px_0px_0px_#000]">SERVER: ONLINE</span>
+              <span class="border border-black px-1.5 py-0.5 bg-[#99E7DC] shadow-[1px_1px_0px_0px_#000]">STORAGE: AWS S3</span>
+            </div>
+          </div>
+
+          <!-- Retro Navbar -->
+          <header class="bg-[#EDE9DF] border-b-2 border-black sticky top-0 z-40 px-4 py-2 flex items-center justify-between shadow-[0_2px_0px_0px_#000]">
+            <div class="flex items-center gap-3">
+              <!-- Mobile menu toggle button -->
+              <label for="my-drawer" aria-label="open sidebar" class="retro-btn btn-sm lg:hidden px-2.5 bg-white">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-5 h-5 stroke-current stroke-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
               </label>
+
+              <!-- Logo & System Badge -->
+              <a href="/" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-[#FFE600] border-2 border-black flex items-center justify-center font-mono font-black text-sm shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
+                  🦆
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">CENTRAL<span class="text-[#FFD2A6]">.SYS</span></span>
+                  <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">Daisy Brocante</span>
+                </div>
+              </a>
             </div>
 
-            <div class="flex-1 px-2 mx-2 font-bold text-xl tracking-tight">
-              <a href="/" class="hover:text-primary transition-colors"
-                >Central Portal</a
-              >
-            </div>
+            <!-- Desktop Nav Buttons -->
+            <nav class="hidden lg:flex items-center gap-2 font-mono">
+              <a href="/" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD] {Astro.url.pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                🏠 Inventaire
+              </a>
+              <a href="/subcategories" class="retro-btn text-xs bg-white hover:bg-[#FFD2A6] {Astro.url.pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                🏷️ Sous-catégories
+              </a>
+              <a href="/ebay" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                📦 eBay
+              </a>
+              <a href="/Livraison" class="retro-btn text-xs bg-white hover:bg-[#FFC2D1] {Astro.url.pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                🚚 Livraisons
+              </a>
+              <a href="/storage" class="retro-btn text-xs bg-white hover:bg-[#99E7DC] {Astro.url.pathname.startsWith('/storage') ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                📁 Fichiers S3
+              </a>
+            </nav>
 
-            <div class="flex-none hidden lg:block">
-              <ul class="menu menu-horizontal px-1 gap-2">
-                <li><a href="/" class="rounded-lg">Inventaire</a></li>
-                <li>
-                  <a href="/subcategories" class="rounded-lg"
-                    >Sous-catégories</a>
-                </li>
-                <li><a href="/ebay" class="rounded-lg">eBay</a></li>
-                <li><a href="/Livraison" class="rounded-lg">Livraisons</a></li>
-                <li><a href="/storage" class="rounded-lg">Fichiers S3</a></li>
-              </ul>
-            </div>
-
-            <div class="flex-none gap-4 ml-2">
+            <!-- Actions Right -->
+            <div class="flex items-center gap-2">
               <ThemeController client:load />
-              <div class="divider divider-horizontal mx-0 h-8 self-center">
+              <div class="h-6 w-0.5 bg-black mx-1 hidden sm:block"></div>
+              <div class="border-2 border-black p-0.5 bg-white shadow-[2px_2px_0px_0px_#000]">
+                <UserButton />
               </div>
-              <UserButton />
             </div>
           </header>
         </Show>
 
-        <!-- Main Content -->
-        <main class="flex-grow flex flex-col relative">
+        <!-- Main Content Area -->
+        <main class="flex-grow flex flex-col relative bg-[#F6F4EE]">
           <Show when="signed-in">
-            <div
-              class="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
-            >
+            <div class="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
               <slot />
             </div>
           </Show>
         </main>
 
-        <footer
-          class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300"
-        >
-          <aside>
-            <p>Copyright © 2026 - Tous droits réservés par Central Portal</p>
-          </aside>
+        <!-- Retro OS Status Footer -->
+        <footer class="bg-[#EDE9DF] border-t-2 border-black py-3 px-6 text-black font-mono text-xs flex flex-col sm:flex-row items-center justify-between gap-2 shadow-[0_-2px_0px_0px_#000]">
+          <div class="flex items-center gap-3">
+            <span class="retro-badge bg-[#99E7DC]">SYS_OK</span>
+            <span class="text-black/70">Central.SYS Terminal © 2026</span>
+          </div>
+          <div class="flex items-center gap-4 text-black/60 text-[11px]">
+            <span>ENV: PRODUCTION</span>
+            <span>BUILD: 2.4.0-RETRO</span>
+          </div>
         </footer>
       </div>
 
-      <!-- Drawer Side (Mobile Navigation) -->
+      <!-- Mobile Retro Drawer -->
       <div class="drawer-side z-[100]">
-        <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"
-        ></label>
-        <ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content">
-          <li class="mb-4">
-            <div class="text-xl font-bold px-2 py-4">Menu</div>
-          </li>
-          <li>
-            <a href="/" class="flex items-center gap-3"
-              >🏠 Boutique (Inventaire)</a>
-          </li>
-          <li>
-            <a href="/subcategories" class="flex items-center gap-3"
-              >🏷️ Sous-catégories</a>
-          </li>
-          <li>
-            <a href="/ebay" class="flex items-center gap-3"
-              >📦 eBay (Annonces)</a>
-          </li>
-          <li>
-            <a href="/Livraison" class="flex items-center gap-3"
-              >🚚 Livraisons</a>
-          </li>
-          <li><a href="/storage" class="flex items-center gap-3">📁 Fichiers S3</a></li>
-        </ul>
+        <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay bg-black/60"></label>
+        <div class="w-72 min-h-full bg-[#EDE9DF] border-r-2 border-black p-6 flex flex-col justify-between text-black font-mono">
+          <div>
+            <div class="p-3 bg-[#FFE600] border-2 border-black shadow-[3px_3px_0px_0px_#000] mb-6 flex items-center justify-between">
+              <span class="font-black font-mono text-sm uppercase">Menu Système</span>
+              <label for="my-drawer" class="cursor-pointer font-bold px-1.5 border border-black bg-white">✕</label>
+            </div>
+
+            <nav class="flex flex-col gap-2.5">
+              <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#D4E2FD] {Astro.url.pathname === '/' ? '!bg-[#D4E2FD]' : ''}">
+                🏠 Boutique (Inventaire)
+              </a>
+              <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {Astro.url.pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
+                🏷️ Sous-catégories
+              </a>
+              <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
+                📦 eBay (Annonces)
+              </a>
+              <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFC2D1] {Astro.url.pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1]' : ''}">
+                🚚 Livraisons
+              </a>
+              <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#99E7DC] {Astro.url.pathname.startsWith('/storage') ? '!bg-[#99E7DC]' : ''}">
+                📁 Fichiers S3
+              </a>
+            </nav>
+          </div>
+
+          <div class="p-3 bg-white border-2 border-black text-[10px] text-black/70 shadow-[2px_2px_0px_0px_#000]">
+            <p class="font-bold uppercase text-black mb-1">Station Central.SYS</p>
+            <p>Connecté avec Clerk Auth</p>
+          </div>
+        </div>
       </div>
     </div>
   </body>

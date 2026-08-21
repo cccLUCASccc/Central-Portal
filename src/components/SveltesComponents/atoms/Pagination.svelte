@@ -15,30 +15,30 @@
     }
 </script>
 
-<div class="flex items-center justify-between bg-base-100 p-4 rounded-2xl shadow-sm border border-base-200 mt-4">
-    <div class="text-sm text-base-content/60">
-        Affichage de <b>{pagination.page_size}</b> sur <b>{pagination.total_items}</b> articles
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#EDE9DF] border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] mt-6 font-mono">
+    <div class="text-xs font-bold uppercase text-black/70">
+        Articles : <span class="text-black bg-white px-1.5 py-0.5 border border-black">{pagination.page_size}</span> sur <span class="text-black bg-white px-1.5 py-0.5 border border-black">{pagination.total_items}</span>
     </div>
     
-    <div class="join">
+    <div class="flex items-center gap-1">
         <button 
-            class="join-item btn btn-sm" 
+            class="retro-btn py-1 px-3 text-xs bg-white hover:bg-[#FFE600]" 
             disabled={pagination.current_page <= 1}
             onclick={() => goToPage(pagination.current_page - 1)}
         >
-            Précédent
+            « Précédent
         </button>
         
-        <button class="join-item btn btn-sm no-animation pointer-events-none">
-            Page {pagination.current_page} sur {pagination.total_pages}
-        </button>
+        <div class="border-2 border-black bg-[#D4E2FD] px-3 py-1 text-xs font-bold text-black shadow-[2px_2px_0px_0px_#000]">
+            PAGE {pagination.current_page} / {pagination.total_pages}
+        </div>
         
         <button 
-            class="join-item btn btn-sm" 
+            class="retro-btn py-1 px-3 text-xs bg-white hover:bg-[#FFE600]" 
             disabled={pagination.current_page >= pagination.total_pages}
             onclick={() => goToPage(pagination.current_page + 1)}
         >
-            Suivant
+            Suivant »
         </button>
     </div>
 </div>

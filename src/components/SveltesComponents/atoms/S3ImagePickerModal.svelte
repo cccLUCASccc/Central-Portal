@@ -93,54 +93,59 @@
 </script>
 
 {#if isOpen}
-    <div class="modal modal-open z-50">
-        <div class="modal-box max-w-4xl p-6 relative max-h-[90vh] flex flex-col">
-            <!-- Header -->
-            <div class="flex items-center justify-between pb-4 border-b border-base-200">
-                <div>
-                    <h3 class="font-bold text-xl flex items-center gap-2">
-                        <span>🖼️</span> Choisir des images depuis S3
-                    </h3>
-                    <p class="text-xs opacity-50 mt-0.5">Sélectionnez des photos déjà hébergées sur votre stockage cloud.</p>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-mono">
+        <div class="w-full max-w-4xl bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col max-h-[90vh] overflow-hidden">
+            
+            <!-- Retro Window Titlebar -->
+            <div class="bg-[#FFE600] border-b-2 border-black px-4 py-2 flex items-center justify-between select-none">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 bg-black"></span>
+                    <span class="font-black text-xs uppercase tracking-wider text-black">
+                        🗔 S3 IMAGE EXPLORER // MEDIA SELECTOR
+                    </span>
                 </div>
-                <button onclick={onclose} class="btn btn-sm btn-circle btn-ghost">✕</button>
+                <div class="flex items-center gap-1.5">
+                    <button onclick={onclose} class="w-6 h-6 border border-black bg-white hover:bg-[#FFC2D1] flex items-center justify-center font-bold text-xs shadow-[1px_1px_0px_0px_#000]">
+                        ✕
+                    </button>
+                </div>
             </div>
 
             <!-- Toolbar & Search -->
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 py-3 border-b border-base-200">
-                <div class="flex gap-1 w-full sm:w-auto">
+            <div class="p-4 border-b-2 border-black bg-white flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex flex-wrap gap-1.5 w-full sm:w-auto">
                     <button 
-                        class="btn btn-xs {filter === 'images' ? 'btn-neutral' : 'btn-ghost'}"
+                        class="retro-btn py-1 px-3 text-xs {filter === 'images' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                         onclick={() => { filter = 'images'; loadS3Images(1); }}
                     >
                         Toutes ({pagination?.total_items ?? '...'})
                     </button>
                     <button 
-                        class="btn btn-xs {filter === 'orphans' ? 'btn-warning' : 'btn-ghost text-warning'}"
+                        class="retro-btn py-1 px-3 text-xs {filter === 'orphans' ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                         onclick={() => { filter = 'orphans'; loadS3Images(1); }}
                     >
-                        ⚠️ Orphelines (non liées)
+                        ⚠️ Orphelines
                     </button>
                     <button 
-                        class="btn btn-xs {filter === 'used' ? 'btn-neutral' : 'btn-ghost'}"
+                        class="retro-btn py-1 px-3 text-xs {filter === 'used' ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                         onclick={() => { filter = 'used'; loadS3Images(1); }}
                     >
-                        🔗 Déjà associées
+                        🔗 Associées
                     </button>
                 </div>
 
                 <div class="relative w-full sm:w-64">
                     <input 
                         type="text" 
-                        placeholder="Rechercher par nom..." 
+                        placeholder="Rechercher fichier..." 
                         bind:value={searchQuery}
                         onkeydown={(e) => e.key === 'Enter' && loadS3Images(1)}
-                        class="input input-xs input-bordered w-full pr-7"
+                        class="retro-input text-xs py-1.5 pr-6"
                     />
                     {#if searchQuery}
                         <button 
                             onclick={() => { searchQuery = ''; loadS3Images(1); }}
-                            class="absolute right-2 top-1 text-xs opacity-50 hover:opacity-100"
+                            class="absolute right-2 top-2 text-xs font-bold text-black hover:opacity-60"
                         >
                             ✕
                         </button>
@@ -148,17 +153,18 @@
                 </div>
             </div>
 
-            <!-- Image Grid -->
-            <div class="flex-1 overflow-y-auto py-4 min-h-[250px]">
+            <!-- Image Grid Content -->
+            <div class="flex-1 overflow-y-auto p-4 bg-[#F6F4EE] min-h-[300px]">
                 {#if isLoading}
-                    <div class="flex flex-col items-center justify-center h-48 gap-2">
-                        <span class="loading loading-spinner loading-md text-primary"></span>
-                        <span class="text-xs opacity-50">Chargement des images S3...</span>
+                    <div class="flex flex-col items-center justify-center h-48 gap-3">
+                        <span class="loading loading-spinner loading-lg text-black"></span>
+                        <span class="text-xs font-bold uppercase text-black">Scan du bucket S3...</span>
                     </div>
                 {:else if images.length === 0}
-                    <div class="text-center py-12 opacity-50">
-                        <div class="text-3xl mb-2">🔍</div>
-                        <p class="text-sm font-semibold">Aucune image trouvée</p>
+                    <div class="text-center py-16 border-2 border-dashed border-black/40 p-8 bg-white shadow-[3px_3px_0px_0px_#000]">
+                        <div class="text-3xl mb-2">💾</div>
+                        <p class="text-sm font-bold uppercase text-black">Aucune image trouvée</p>
+                        <p class="text-xs text-black/60 mt-1">Modifiez vos critères de recherche ou filtre.</p>
                     </div>
                 {:else}
                     <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
@@ -167,7 +173,7 @@
                             <div 
                                 role="button"
                                 tabindex="0"
-                                class="group relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all {isSelected ? 'border-primary shadow-md ring-2 ring-primary/30 scale-95' : 'border-base-200 hover:border-primary/50'}"
+                                class="group relative aspect-square border-2 border-black bg-white cursor-pointer transition-all duration-150 {isSelected ? 'ring-3 ring-black shadow-[4px_4px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 bg-[#99E7DC]' : 'shadow-[2px_2px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5'}"
                                 onclick={() => toggleSelect(img.key)}
                                 onkeydown={(e) => e.key === 'Enter' && toggleSelect(img.key)}
                             >
@@ -175,27 +181,27 @@
                                     src={img.url} 
                                     alt={img.key} 
                                     loading="lazy" 
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                                    class="w-full h-full object-cover p-0.5" 
                                 />
 
-                                <!-- Selection indicator -->
+                                <!-- Selection indicator checkbox -->
                                 <div class="absolute top-1.5 left-1.5 z-10">
-                                    <div class="w-5 h-5 rounded-md flex items-center justify-center text-xs transition-colors {isSelected ? 'bg-primary text-primary-content font-bold shadow' : 'bg-black/40 text-transparent hover:bg-black/60'}">
+                                    <div class="w-5 h-5 border-2 border-black flex items-center justify-center text-xs font-black {isSelected ? 'bg-black text-[#FFE600] shadow-[1px_1px_0px_0px_#000]' : 'bg-white text-transparent'}">
                                         ✓
                                     </div>
                                 </div>
 
-                                <!-- Status badge -->
+                                <!-- Status Badge -->
                                 {#if !img.is_used}
-                                    <div class="absolute bottom-1 right-1 z-10">
-                                        <span class="badge badge-warning text-[9px] px-1 py-0 shadow-xs">Orpheline</span>
+                                    <div class="absolute bottom-1 right-1 z-10 pointer-events-none">
+                                        <span class="retro-badge bg-[#FFF394] text-[9px] px-1 py-0 border border-black">Orpheline</span>
                                     </div>
                                 {/if}
 
-                                <!-- File info overlay -->
-                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1.5 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <p class="truncate font-medium">{img.key}</p>
-                                    <p class="opacity-75">{formatFileSize(img.size)}</p>
+                                <!-- File tooltip overlay -->
+                                <div class="absolute inset-x-0 bottom-0 bg-black/90 p-1 text-[9px] text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <p class="truncate font-mono">{img.key}</p>
+                                    <p class="opacity-70 font-mono">{formatFileSize(img.size)}</p>
                                 </div>
                             </div>
                         {/each}
@@ -203,23 +209,23 @@
                 {/if}
             </div>
 
-            <!-- Footer Pagination & Actions -->
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-base-200 mt-auto">
-                <div class="flex items-center gap-2">
+            <!-- Footer Toolbar -->
+            <div class="p-3 border-t-2 border-black bg-[#EDE9DF] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
                     {#if pagination && pagination.total_pages > 1}
-                        <div class="join border border-base-300">
+                        <div class="flex items-center gap-1">
                             <button 
-                                class="join-item btn btn-xs" 
+                                class="retro-btn py-0.5 px-2 text-xs bg-white" 
                                 disabled={pagination.current_page <= 1}
                                 onclick={() => loadS3Images((pagination?.current_page || 1) - 1)}
                             >
                                 «
                             </button>
-                            <button class="join-item btn btn-xs pointer-events-none text-[11px]">
+                            <span class="border border-black bg-white px-2 py-0.5 text-[11px] font-bold">
                                 {pagination.current_page} / {pagination.total_pages}
-                            </button>
+                            </span>
                             <button 
-                                class="join-item btn btn-xs" 
+                                class="retro-btn py-0.5 px-2 text-xs bg-white" 
                                 disabled={pagination.current_page >= pagination.total_pages}
                                 onclick={() => loadS3Images((pagination?.current_page || 1) + 1)}
                             >
@@ -228,33 +234,24 @@
                         </div>
                     {/if}
 
-                    <span class="text-xs opacity-60">
-                        {selectedKeys.length} sélectionnée(s)
+                    <span class="text-xs font-bold text-black">
+                        [ <span class="text-[#FFD2A6] bg-black px-1">{selectedKeys.length}</span> sélect. ]
                     </span>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <button onclick={onclose} class="btn btn-sm btn-ghost">Annuler</button>
+                    <button onclick={onclose} class="retro-btn py-1.5 px-4 text-xs bg-white">
+                        Annuler
+                    </button>
                     <button 
                         onclick={confirmSelection} 
-                        class="btn btn-sm btn-primary gap-1.5"
+                        class="retro-btn-primary py-1.5 px-5 text-xs font-black shadow-[3px_3px_0px_0px_#000]"
                         disabled={selectedKeys.length === 0}
                     >
-                        <span>Ajouter la sélection</span>
-                        {#if selectedKeys.length > 0}
-                            <span class="badge badge-sm badge-neutral">{selectedKeys.length}</span>
-                        {/if}
+                        <span>Insérer {selectedKeys.length} image(s)</span>
                     </button>
                 </div>
             </div>
         </div>
-        <div 
-            role="button"
-            tabindex="0"
-            class="modal-backdrop" 
-            onclick={onclose}
-            onkeydown={(e) => e.key === 'Escape' && onclose()}
-        ></div>
     </div>
 {/if}
-

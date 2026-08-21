@@ -108,15 +108,20 @@
                 files = data.data || [];
                 pagination = data.pagination || null;
             } else {
-                notify("Impossible de récupérer la liste des fichiers.", "error");
+                notify("Erreur lors du chargement des fichiers", "error");
             }
         } catch (err) {
-            console.error("Erreur chargement fichiers S3 :", err);
-            notify("Erreur de connexion au serveur.", "error");
+            console.error("Erreur API storage/files :", err);
+            notify("Impossible de joindre le serveur", "error");
         } finally {
             isLoading = false;
         }
     }
+
+    onMount(() => {
+        loadStats();
+        loadFiles(1);
+    });
 
     function handleFilterChange(filter: string) {
         selectedFilter = filter;
@@ -125,7 +130,8 @@
     }
 
     function handleSortChange(e: Event) {
-        selectedSort = (e.target as HTMLSelectElement).value;
+        const select = e.target as HTMLSelectElement;
+        selectedSort = select.value;
         loadFiles(1);
     }
 
@@ -149,113 +155,115 @@
         }
     }
 
-    async function copyURL(url: string) {
+    async function handleFileUpload(fileList: FileList) {
+        if (!fileList || fileList.length === 0) return;
+        const uploadFiles = Array.from(fileList);
+        isUploading = true;
+
         try {
-            await navigator.clipboard.writeText(url);
-            notify("Lien copié dans le presse-papiers ! ✨", "success");
-        } catch {
-            notify("Impossible de copier le lien.", "error");
+            let processedFiles = uploadFiles;
+            if (autoCompress) {
+                notify(`Optimisation de ${uploadFiles.length} fichier(s)...`, "info");
+                processedFiles = await Promise.all(
+                    uploadFiles.map(async (f) => {
+                        if (f.type.startsWith('image/')) {
+                            return await compressImageFile(f, {
+                                maxWidth: 1920,
+                                maxHeight: 1920,
+                                quality: 0.82,
+                                mimeType: 'image/webp'
+                            });
+                        }
+                        return f;
+                    })
+                );
+            }
+
+            const formData = new FormData();
+            processedFiles.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            notify(`Téléversement de ${processedFiles.length} fichier(s) vers S3...`, "info");
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/storage/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                notify(`${result.uploaded?.length || processedFiles.length} fichier(s) téléversé(s) avec succès !`, "success");
+                await loadStats();
+                await loadFiles(1);
+            } else {
+                const err = await res.json();
+                notify(`Erreur d'upload : ${err.error || 'Échec'}`, "error");
+            }
+        } catch (err) {
+            console.error("Erreur upload :", err);
+            notify("Erreur lors de l'envoi des fichiers", "error");
+        } finally {
+            isUploading = false;
         }
     }
 
     async function deleteSingleFile(file: S3FileItem) {
-        let confirmMsg = `Êtes-vous sûr de vouloir supprimer définitivement "${file.key}" de S3 ?`;
-        if (file.is_used) {
-            confirmMsg = `⚠️ ATTENTION : Ce fichier est lié à ${file.reference_type === 'antiquite' ? 'l\'objet' : 'l\'article'} "${file.reference_title}".\n\nSupprimer ce fichier supprimera également l'image sur le site. Continuer ?`;
-        }
+        const confirmMsg = file.is_used 
+            ? `⚠️ ATTENTION : Le fichier "${file.key}" est actuellement utilisé par "${file.reference_title}". Le supprimer cassera l'affichage sur la boutique. Confirmer ?`
+            : `Supprimer définitivement "${file.key}" de S3 ?`;
 
         if (!confirm(confirmMsg)) return;
 
         try {
             const res = await apiFetch(`${PUBLIC_API_URL}/api/storage/files?key=${encodeURIComponent(file.key)}`, {
-                method: "DELETE"
+                method: 'DELETE'
             });
 
             if (res.ok) {
-                notify(`"${file.key}" supprimé avec succès.`, "success");
-                if (previewFile?.key === file.key) {
-                    previewFile = null;
-                }
+                notify(`Fichier "${file.key}" supprimé avec succès.`, "success");
+                if (previewFile?.key === file.key) previewFile = null;
                 selectedKeys = selectedKeys.filter(k => k !== file.key);
-                loadFiles(pagination?.current_page || 1);
-                loadStats();
+                await loadStats();
+                await loadFiles(pagination?.current_page || 1);
             } else {
-                notify("Erreur lors de la suppression du fichier.", "error");
+                const err = await res.json();
+                notify(`Erreur lors de la suppression : ${err.error}`, "error");
             }
         } catch (err) {
             console.error("Erreur suppression :", err);
-            notify("Erreur de communication lors de la suppression.", "error");
+            notify("Erreur réseau lors de la suppression", "error");
         }
     }
 
     async function deleteSelectedBulk() {
         if (selectedKeys.length === 0) return;
 
-        const count = selectedKeys.length;
-        if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement ces ${count} fichier(s) de S3 ?`)) return;
+        const hasUsed = files.some(f => selectedKeys.includes(f.key) && f.is_used);
+        const confirmMsg = hasUsed
+            ? `⚠️ ATTENTION : Certains des ${selectedKeys.length} fichiers sélectionnés sont liés à des articles en ligne. Confirmer la suppression ?`
+            : `Confirmer la suppression définitive de ces ${selectedKeys.length} fichiers sur S3 ?`;
+
+        if (!confirm(confirmMsg)) return;
 
         try {
             const res = await apiFetch(`${PUBLIC_API_URL}/api/storage/bulk-delete`, {
-                method: "POST",
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ keys: selectedKeys })
             });
 
             if (res.ok) {
-                notify(`${count} fichier(s) supprimé(s) avec succès.`, "success");
+                notify(`${selectedKeys.length} fichier(s) supprimé(s) de S3.`, "success");
                 selectedKeys = [];
-                loadFiles(pagination?.current_page || 1);
-                loadStats();
+                await loadStats();
+                await loadFiles(pagination?.current_page || 1);
             } else {
-                notify("Erreur lors de la suppression groupée.", "error");
+                const err = await res.json();
+                notify(`Erreur suppression groupée : ${err.error}`, "error");
             }
         } catch (err) {
-            console.error("Erreur suppression groupée :", err);
-            notify("Erreur de connexion lors de la suppression.", "error");
-        }
-    }
-
-    async function handleFileUpload(filesToUpload: FileList | File[]) {
-        if (!filesToUpload || filesToUpload.length === 0) return;
-
-        isUploading = true;
-        const formData = new FormData();
-        const filesArray = Array.from(filesToUpload);
-
-        notify(`Préparation et upload de ${filesArray.length} fichier(s)...`, "info");
-
-        try {
-            for (const file of filesArray) {
-                if (autoCompress && file.type.startsWith('image/')) {
-                    const compressed = await compressImageFile(file, {
-                        maxWidth: 1600,
-                        maxHeight: 1600,
-                        quality: 0.8,
-                        mimeType: 'image/webp'
-                    });
-                    formData.append("files", compressed);
-                } else {
-                    formData.append("files", file);
-                }
-            }
-
-            const res = await apiFetch(`${PUBLIC_API_URL}/api/storage/upload`, {
-                method: "POST",
-                body: formData
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                notify(data.message || "Fichiers téléversés avec succès ! ✨", "success");
-                loadFiles(1);
-                loadStats();
-            } else {
-                notify("Erreur lors de l'upload des fichiers.", "error");
-            }
-        } catch (err) {
-            console.error("Erreur upload :", err);
-            notify("Erreur réseau lors de l'upload.", "error");
-        } finally {
-            isUploading = false;
+            console.error("Erreur bulk delete :", err);
+            notify("Erreur lors de la suppression groupée", "error");
         }
     }
 
@@ -267,85 +275,135 @@
         }
     }
 
-    onMount(() => {
-        loadStats();
-        loadFiles(1);
-    });
+    function copyURL(url: string) {
+        navigator.clipboard.writeText(url);
+        notify("Lien copié dans le presse-papier !", "info");
+    }
 </script>
 
-<div class="space-y-6">
-    <!-- Notification Toast -->
+<div class="flex flex-col gap-6 w-full font-mono">
+    <!-- Notification Toast Rétro -->
     {#if notification}
-        <div class="toast toast-top toast-end z-50">
-            <div class="alert {notification.type === 'error' ? 'alert-error' : notification.type === 'info' ? 'alert-info' : 'alert-success'} shadow-lg text-sm font-medium">
+        <div class="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div class="border-2 border-black p-3 text-xs font-bold uppercase shadow-[4px_4px_0px_0px_#000] {notification.type === 'error' ? 'bg-[#FFC2D1] text-black' : notification.type === 'info' ? 'bg-[#D4E2FD] text-black' : 'bg-[#99E7DC] text-black'}">
                 <span>{notification.text}</span>
             </div>
         </div>
     {/if}
 
-    <!-- Header & Stats -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <!-- Header Panel Rétro -->
+    <div class="retro-card-peach p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 class="text-3xl font-bold tracking-tight flex items-center gap-2">
-                <span>📁</span> Gestionnaire de Fichiers S3
+            <div class="flex items-center gap-2">
+                <span class="retro-badge bg-black text-white text-[10px]">S3 STORAGE</span>
+                <span class="text-xs font-bold tracking-widest text-black/70">AWS CLOUD REPOSITORY</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">
+                Gestionnaire de Fichiers S3
             </h1>
-            <p class="text-sm opacity-60 mt-1">Explorez, organisez et nettoyez les fichiers et images hébergés sur votre stockage AWS S3.</p>
+            <p class="text-xs text-black/80 mt-1 max-w-2xl">
+                Explorez, organisez, inspectez et purgez les médias hébergés sur votre bucket S3.
+            </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
             <button 
                 onclick={() => { loadStats(); loadFiles(pagination?.current_page || 1); }} 
-                class="btn btn-outline btn-sm gap-2"
+                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3"
                 disabled={isLoading}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 {isLoading ? 'animate-spin' : ''}"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-                Actualiser
+                <span class="{isLoading ? 'animate-spin' : ''}">🔄</span>
+                <span>Actualiser</span>
             </button>
         </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card bg-base-200/50 border border-base-300 p-4 rounded-2xl shadow-sm">
-            <div class="text-xs font-semibold uppercase tracking-wider opacity-60">Espace Total S3</div>
-            <div class="text-2xl font-bold mt-1 text-primary">{stats?.total_size_formatted || "..."}</div>
-            <div class="text-xs opacity-50 mt-1">Consommation bucket</div>
+    <!-- 4 Stats Cards (Inspirées des captures MotherDuck) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1: Espace Total S3 (Peach) -->
+        <div class="retro-card-peach p-5 flex flex-col justify-between relative group">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Stockage S3</span>
+                    <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Espace Total</h3>
+                </div>
+                <div class="retro-icon-box bg-white">
+                    💾
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
+                <div class="text-2xl font-black font-mono text-black">{stats?.total_size_formatted || "..."}</div>
+                <p class="text-[10px] text-black/60 mt-0.5 uppercase">Volume consommé</p>
+            </div>
         </div>
 
-        <div class="card bg-base-200/50 border border-base-300 p-4 rounded-2xl shadow-sm">
-            <div class="text-xs font-semibold uppercase tracking-wider opacity-60">Total Fichiers</div>
-            <div class="text-2xl font-bold mt-1">{stats?.total_files ?? "..."}</div>
-            <div class="text-xs opacity-50 mt-1">Tous types confondus</div>
+        <!-- Card 2: Total Fichiers (Lavender/Blue) -->
+        <div class="retro-card-blue p-5 flex flex-col justify-between relative group">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Indexation</span>
+                    <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Total Fichiers</h3>
+                </div>
+                <div class="retro-icon-box bg-white">
+                    📁
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
+                <div class="text-2xl font-black font-mono text-black">{stats?.total_files ?? "..."}</div>
+                <p class="text-[10px] text-black/60 mt-0.5 uppercase">Objets stockés</p>
+            </div>
         </div>
 
-        <div class="card bg-base-200/50 border border-base-300 p-4 rounded-2xl shadow-sm">
-            <div class="text-xs font-semibold uppercase tracking-wider opacity-60">Fichiers En Ligne</div>
-            <div class="text-2xl font-bold mt-1 text-success">{stats?.used_files ?? "..."}</div>
-            <div class="text-xs opacity-50 mt-1">Liés aux objets en boutique</div>
+        <!-- Card 3: Fichiers En Ligne (Mint) -->
+        <div class="retro-card-mint p-5 flex flex-col justify-between relative group">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Boutique</span>
+                    <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">En Boutique</h3>
+                </div>
+                <div class="retro-icon-box bg-white">
+                    🔗
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
+                <div class="text-2xl font-black font-mono text-black">{stats?.used_files ?? "..."}</div>
+                <p class="text-[10px] text-black/60 mt-0.5 uppercase">Actifs sur le site</p>
+            </div>
         </div>
 
-        <div class="card bg-base-200/50 border border-base-300 p-4 rounded-2xl shadow-sm">
-            <div class="flex justify-between items-start">
-                <div class="text-xs font-semibold uppercase tracking-wider opacity-60">Fichiers Orphelins</div>
+        <!-- Card 4: Fichiers Orphelins (Rose/Coral) -->
+        <div class="retro-card-rose p-5 flex flex-col justify-between relative group">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Maintenance</span>
+                    <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Orphelins</h3>
+                </div>
+                <div class="retro-icon-box bg-white">
+                    ⚠️
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000] flex items-center justify-between">
+                <div>
+                    <div class="text-2xl font-black font-mono text-black">{stats?.orphan_files ?? "..."}</div>
+                    <p class="text-[10px] text-black/60 mt-0.5 uppercase">Non référencés</p>
+                </div>
                 {#if stats && stats.orphan_files > 0}
                     <button 
                         onclick={() => handleFilterChange("orphans")}
-                        class="badge badge-warning badge-xs hover:scale-105 transition-transform cursor-pointer"
+                        class="retro-btn py-1 px-2 text-[10px] bg-[#FFE600] hover:bg-[#fff066]"
                     >
                         Filtrer
                     </button>
                 {/if}
             </div>
-            <div class="text-2xl font-bold mt-1 text-warning">{stats?.orphan_files ?? "..."}</div>
-            <div class="text-xs opacity-50 mt-1">Non référencés en base</div>
         </div>
     </div>
 
-    <!-- Zone Upload (Drag & Drop) -->
+    <!-- Zone Téléversement Rétro (Drag & Drop) -->
     <div 
         role="region"
-        aria-label="Zone d'upload de fichiers"
-        class="border-2 border-dashed rounded-2xl p-6 transition-all text-center relative {isDragging ? 'border-primary bg-primary/10 scale-[1.01]' : 'border-base-300 bg-base-200/30 hover:border-primary/50'}"
+        aria-label="Zone d'upload S3"
+        class="border-2 border-dashed border-black p-6 text-center transition-all bg-white shadow-[3px_3px_0px_0px_#000] {isDragging ? '!bg-[#D4E2FD] scale-[1.005]' : 'hover:bg-[#F6F4EE]'}"
         ondragover={(e) => { e.preventDefault(); isDragging = true; }}
         ondragleave={() => isDragging = false}
         ondrop={handleDrop}
@@ -363,88 +421,88 @@
         />
 
         <div class="flex flex-col items-center justify-center gap-3">
-            <div class="p-3 rounded-full bg-primary/10 text-primary">
+            <div class="w-12 h-12 border-2 border-black bg-[#FFE600] flex items-center justify-center text-xl shadow-[2px_2px_0px_0px_#000]">
                 {#if isUploading}
-                    <span class="loading loading-spinner loading-md"></span>
+                    <span class="loading loading-spinner loading-md text-black"></span>
                 {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" /></svg>
+                    📤
                 {/if}
             </div>
 
-            <div class="space-y-1">
-                <p class="font-bold text-sm">
-                    {isUploading ? "Téléversement et optimisation en cours..." : "Glissez-déposez des fichiers ici ou cliquez pour parcourir"}
+            <div>
+                <p class="font-black text-sm uppercase text-black">
+                    {isUploading ? "Traitement et téléversement S3 en cours..." : "Glissez-déposez des fichiers ici ou parcourez votre disque"}
                 </p>
-                <p class="text-xs opacity-50">Images (PNG, JPG, WebP), documents (PDF) supportés</p>
+                <p class="text-xs text-black/60 mt-0.5">Images (PNG, JPG, WebP), documents (PDF) supportés</p>
             </div>
 
-            <div class="flex items-center gap-4 mt-2">
-                <label for="storage-upload-input" class="btn btn-sm btn-primary gap-2 cursor-pointer" class:btn-disabled={isUploading}>
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-1">
+                <label for="storage-upload-input" class="retro-btn-primary text-xs py-1.5 px-4 cursor-pointer {isUploading ? 'opacity-50 pointer-events-none' : ''}">
                     Choisir des fichiers
                 </label>
 
-                <label class="label cursor-pointer gap-2 text-xs opacity-75">
-                    <input type="checkbox" bind:checked={autoCompress} class="checkbox checkbox-xs checkbox-primary" />
+                <label class="cursor-pointer flex items-center gap-2 text-xs font-bold text-black border border-black px-2 py-1 bg-[#EDE9DF]">
+                    <input type="checkbox" bind:checked={autoCompress} class="checkbox checkbox-xs border-2 border-black rounded-none bg-white checked:bg-[#99E7DC]" />
                     <span>Auto-compression WebP</span>
                 </label>
             </div>
         </div>
     </div>
 
-    <!-- Filters & Action Bar -->
-    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-base-200/40 p-4 rounded-2xl border border-base-300">
-        <!-- Filter Tabs -->
-        <div class="flex flex-wrap gap-1">
+    <!-- Barre de Filtres & Recherche -->
+    <div class="retro-card p-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+        <!-- Onglets Filtres -->
+        <div class="flex flex-wrap gap-1.5">
             <button 
-                class="btn btn-xs sm:btn-sm {selectedFilter === 'all' ? 'btn-neutral' : 'btn-ghost'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'all' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                 onclick={() => handleFilterChange('all')}
             >
                 Tous
             </button>
             <button 
-                class="btn btn-xs sm:btn-sm {selectedFilter === 'images' ? 'btn-neutral' : 'btn-ghost'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'images' ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                 onclick={() => handleFilterChange('images')}
             >
                 🖼️ Images
             </button>
             <button 
-                class="btn btn-xs sm:btn-sm {selectedFilter === 'antiquite' ? 'btn-neutral' : 'btn-ghost'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'antiquite' ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                 onclick={() => handleFilterChange('antiquite')}
             >
                 🏷️ Boutique
             </button>
             <button 
-                class="btn btn-xs sm:btn-sm {selectedFilter === 'orphans' ? 'btn-warning' : 'btn-ghost text-warning'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'orphans' ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
                 onclick={() => handleFilterChange('orphans')}
             >
                 ⚠️ Orphelins ({stats?.orphan_files ?? 0})
             </button>
         </div>
 
-        <!-- Search & Sort & View toggle -->
+        <!-- Recherche & Tri & Vue -->
         <div class="flex flex-wrap items-center gap-2">
-            <!-- Search -->
-            <div class="relative flex-1 md:w-64">
+            <!-- Champ recherche -->
+            <div class="relative flex-1 md:w-56">
                 <input 
                     type="text" 
-                    placeholder="Rechercher par nom..." 
+                    placeholder="Filtrer par nom..." 
                     bind:value={searchQuery}
                     onkeydown={(e) => e.key === 'Enter' && handleSearch()}
-                    class="input input-sm input-bordered w-full pr-8"
+                    class="retro-input text-xs py-1.5 pr-6"
                 />
                 {#if searchQuery}
                     <button 
                         onclick={() => { searchQuery = ""; handleSearch(); }}
-                        class="absolute right-2 top-1.5 opacity-50 hover:opacity-100 text-xs"
+                        class="absolute right-2 top-2 text-xs font-bold opacity-60 hover:opacity-100"
                     >
                         ✕
                     </button>
                 {/if}
             </div>
 
-            <!-- Sort -->
+            <!-- Sélecteur de tri -->
             <select 
-                class="select select-sm select-bordered" 
+                class="retro-select text-xs py-1.5 w-auto" 
                 value={selectedSort} 
                 onchange={handleSortChange}
             >
@@ -455,161 +513,125 @@
                 <option value="name_asc">🔤 Nom A-Z</option>
             </select>
 
-            <!-- View Toggle -->
-            <div class="join border border-base-300 rounded-lg">
+            <!-- Bascule Vue Grille / Tableau -->
+            <div class="flex items-center border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000]">
                 <button 
-                    class="join-item btn btn-sm btn-ghost {viewMode === 'grid' ? 'bg-base-300' : ''}" 
+                    class="p-1.5 text-xs font-bold {viewMode === 'grid' ? 'bg-[#FFE600]' : 'hover:bg-[#EDE9DF]'}" 
                     onclick={() => viewMode = 'grid'}
                     title="Vue Grille"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                    ⊞ Grille
                 </button>
+                <div class="w-0.5 h-6 bg-black"></div>
                 <button 
-                    class="join-item btn btn-sm btn-ghost {viewMode === 'table' ? 'bg-base-300' : ''}" 
+                    class="p-1.5 text-xs font-bold {viewMode === 'table' ? 'bg-[#FFE600]' : 'hover:bg-[#EDE9DF]'}" 
                     onclick={() => viewMode = 'table'}
                     title="Vue Tableau"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M3.75 4.5h16.5k" /></svg>
+                    ☰ Table
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Bulk Action Bar (When files are selected) -->
+    <!-- Barre d'Actions Groupées -->
     {#if selectedKeys.length > 0}
-        <div class="flex items-center justify-between bg-primary/10 border border-primary/20 px-4 py-3 rounded-xl animate-in fade-in duration-200">
-            <div class="flex items-center gap-2 text-sm font-semibold">
-                <span class="badge badge-primary badge-sm">{selectedKeys.length}</span>
-                <span>fichier(s) sélectionné(s)</span>
+        <div class="bg-[#FFE600] border-2 border-black px-4 py-3 shadow-[4px_4px_0px_0px_#000] flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs font-black uppercase text-black">
+                <span class="bg-black text-white px-2 py-0.5">{selectedKeys.length}</span>
+                <span>Fichier(s) sélectionné(s)</span>
             </div>
 
             <div class="flex items-center gap-2">
-                <button onclick={() => selectedKeys = []} class="btn btn-ghost btn-xs">
+                <button onclick={() => selectedKeys = []} class="retro-btn py-1 px-3 text-xs bg-white">
                     Désélectionner tout
                 </button>
-                <button onclick={deleteSelectedBulk} class="btn btn-error btn-xs gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-                    Supprimer ({selectedKeys.length})
+                <button onclick={deleteSelectedBulk} class="retro-btn-error py-1 px-3 text-xs font-black">
+                    🗑️ Supprimer ({selectedKeys.length})
                 </button>
             </div>
         </div>
     {/if}
 
-    <!-- Content Area (Grid / Table) -->
+    <!-- Zone de Contenu (Grille / Tableau) -->
     {#if isLoading}
-        <div class="flex flex-col items-center justify-center py-20 gap-3">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <p class="text-sm opacity-50">Chargement des fichiers S3...</p>
+        <div class="flex flex-col items-center justify-center py-20 gap-3 border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000]">
+            <span class="loading loading-spinner loading-lg text-black"></span>
+            <p class="text-xs font-bold uppercase text-black">Lecture des objets S3...</p>
         </div>
     {:else if files.length === 0}
-        <div class="card bg-base-200/50 border border-base-300 p-12 text-center rounded-2xl">
-            <div class="text-4xl mb-2">🔍</div>
-            <h3 class="text-lg font-bold">Aucun fichier trouvé</h3>
-            <p class="text-sm opacity-50 mt-1">Aucun fichier ne correspond à vos filtres ou recherche.</p>
+        <div class="retro-card p-12 text-center">
+            <div class="text-4xl mb-2">💾</div>
+            <h3 class="text-base font-black uppercase text-black">Aucun fichier trouvé</h3>
+            <p class="text-xs text-black/60 mt-1">Aucun fichier ne correspond à vos filtres actuels.</p>
             {#if selectedFilter !== 'all' || searchQuery}
                 <div class="mt-4">
-                    <button onclick={() => { searchQuery = ""; handleFilterChange("all"); }} class="btn btn-sm btn-outline">
+                    <button onclick={() => { searchQuery = ""; handleFilterChange("all"); }} class="retro-btn text-xs bg-white hover:bg-[#FFE600]">
                         Réinitialiser les filtres
                     </button>
                 </div>
             {/if}
         </div>
     {:else if viewMode === 'grid'}
-        <!-- Grid View -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <!-- Grille Rétro -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {#each files as file (file.key)}
-                <div class="group card bg-base-100 border border-base-200 hover:border-primary/40 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all relative flex flex-col">
-                    <!-- Checkbox overlay -->
-                    <div class="absolute top-2 left-2 z-20">
+                {@const isSelected = selectedKeys.includes(file.key)}
+                <div class="retro-card overflow-hidden flex flex-col relative group {isSelected ? '!bg-[#D4E2FD] ring-2 ring-black' : ''}">
+                    
+                    <!-- Checkbox coin haut gauche -->
+                    <div class="absolute top-1.5 left-1.5 z-20">
                         <input 
                             type="checkbox" 
-                            checked={selectedKeys.includes(file.key)}
+                            checked={isSelected}
                             onchange={() => toggleSelectKey(file.key)}
-                            class="checkbox checkbox-sm checkbox-primary bg-base-100/80 backdrop-blur-sm"
+                            class="checkbox checkbox-xs border-2 border-black rounded-none bg-white checked:bg-black checked:text-white"
                         />
                     </div>
 
-                    <!-- Status badge -->
-                    <div class="absolute top-2 right-2 z-20">
+                    <!-- Badge statut coin haut droit -->
+                    <div class="absolute top-1.5 right-1.5 z-20">
                         {#if file.is_used}
-                            <span class="badge badge-success badge-xs gap-1 shadow-sm" title={`Lié à l'objet : ${file.reference_title}`}>
-                                🔗 #{file.reference_id}
+                            <span class="retro-badge bg-[#99E7DC] text-[9px] px-1 py-0" title={`Lié à l'objet : ${file.reference_title}`}>
+                                #{file.reference_id}
                             </span>
                         {:else}
-                            <span class="badge badge-warning badge-xs shadow-sm" title="Non lié en base de données">
-                                Inutilisé
+                            <span class="retro-badge bg-[#FFC2D1] text-[9px] px-1 py-0" title="Non lié en base de données">
+                                Orphelin
                             </span>
                         {/if}
                     </div>
 
-                    <!-- Image / Preview Thumbnail -->
+                    <!-- Thumbnail cliquable -->
                     <div 
                         role="button"
                         tabindex="0"
-                        class="aspect-square bg-base-200 relative overflow-hidden flex items-center justify-center cursor-pointer"
+                        class="aspect-square bg-[#EDE9DF] border-b-2 border-black relative overflow-hidden flex items-center justify-center cursor-pointer"
                         onclick={() => previewFile = file}
                         onkeydown={(e) => e.key === 'Enter' && (previewFile = file)}
                     >
-                        {#if file.content_type.startsWith('image/')}
+                        {#if file.content_type?.startsWith('image/')}
                             <img 
                                 src={file.url} 
-                                alt={file.key}
+                                alt={file.key} 
                                 loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
                             />
                         {:else}
-                            <div class="flex flex-col items-center gap-1 opacity-50">
-                                <span class="text-3xl">📄</span>
-                                <span class="text-[10px] uppercase font-bold">{file.key.split('.').pop()}</span>
-                            </div>
+                            <div class="text-3xl">📄</div>
                         {/if}
-
-                        <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <span class="btn btn-circle btn-xs btn-neutral">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                            </span>
-                        </div>
                     </div>
 
-                    <!-- Meta & Actions -->
-                    <div class="p-3 flex-1 flex flex-col justify-between text-left gap-1">
-                        <div class="text-xs font-semibold truncate" title={file.key}>{file.key}</div>
-                        
-                        {#if file.reference_title}
-                            <div class="text-[11px] opacity-75 truncate text-primary font-medium" title={file.reference_title}>
-                                {file.reference_title}
-                            </div>
-                        {/if}
-
-                        <div class="flex items-center justify-between text-[10px] opacity-50 pt-1 border-t border-base-200 mt-1">
+                    <!-- Cartouche bas d'info -->
+                    <div class="p-2 bg-white flex flex-col justify-between flex-1 text-[10px]">
+                        <div class="truncate font-bold text-black" title={file.key}>{file.key}</div>
+                        <div class="flex items-center justify-between text-black/60 mt-1 pt-1 border-t border-black/20">
                             <span>{formatFileSize(file.size)}</span>
-                            <span>{file.key.split('.').pop()?.toUpperCase()}</span>
-                        </div>
-
-                        <!-- Mini action buttons -->
-                        <div class="flex items-center justify-end gap-1 mt-2">
                             <button 
-                                onclick={() => copyURL(file.url)}
-                                class="btn btn-ghost btn-xs btn-square"
-                                title="Copier le lien"
+                                onclick={() => previewFile = file}
+                                class="font-bold uppercase text-black hover:underline"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
-                            </button>
-                            <a 
-                                href={file.url} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                class="btn btn-ghost btn-xs btn-square"
-                                title="Ouvrir"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                            </a>
-                            <button 
-                                onclick={() => deleteSingleFile(file)}
-                                class="btn btn-ghost btn-xs btn-square text-error"
-                                title="Supprimer"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                                Voir ↗
                             </button>
                         </div>
                     </div>
@@ -617,94 +639,65 @@
             {/each}
         </div>
     {:else}
-        <!-- Table View -->
-        <div class="overflow-x-auto bg-base-100 border border-base-200 rounded-2xl shadow-sm">
-            <table class="table table-sm">
+        <!-- Tableau Rétro -->
+        <div class="retro-card overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse font-mono">
                 <thead>
-                    <tr>
-                        <th class="w-8">
+                    <tr class="bg-[#D4E2FD] border-b-2 border-black text-black">
+                        <th class="p-2.5 border-r border-black w-10 text-center">
                             <input 
                                 type="checkbox" 
-                                class="checkbox checkbox-xs checkbox-primary"
                                 checked={selectedKeys.length === files.length && files.length > 0}
                                 onchange={toggleSelectAll}
+                                class="checkbox checkbox-xs border-2 border-black rounded-none bg-white checked:bg-black checked:text-white"
                             />
                         </th>
-                        <th class="w-14">Aperçu</th>
-                        <th>Nom du fichier</th>
-                        <th>Statut DB</th>
-                        <th>Taille</th>
-                        <th>Modifié le</th>
-                        <th class="text-right">Actions</th>
+                        <th class="p-2.5 border-r border-black w-12 text-center">Aperçu</th>
+                        <th class="p-2.5 border-r border-black font-black uppercase">Clé S3 / Nom</th>
+                        <th class="p-2.5 border-r border-black font-black uppercase">Taille</th>
+                        <th class="p-2.5 border-r border-black font-black uppercase">Statut</th>
+                        <th class="p-2.5 border-r border-black font-black uppercase">Date</th>
+                        <th class="p-2.5 font-black uppercase text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {#each files as file (file.key)}
-                        <tr class="hover:bg-base-200/50 transition-colors">
-                            <td>
+                    {#each files as file, index (file.key)}
+                        {@const isSelected = selectedKeys.includes(file.key)}
+                        <tr class="border-b border-black {index % 2 === 0 ? 'bg-white' : 'bg-[#F6F4EE]'} {isSelected ? '!bg-[#FFE600]/30' : ''} hover:bg-[#FFE600]/20">
+                            <td class="p-2.5 border-r border-black text-center">
                                 <input 
                                     type="checkbox" 
-                                    class="checkbox checkbox-xs checkbox-primary"
-                                    checked={selectedKeys.includes(file.key)}
+                                    checked={isSelected}
                                     onchange={() => toggleSelectKey(file.key)}
+                                    class="checkbox checkbox-xs border-2 border-black rounded-none bg-white checked:bg-black checked:text-white"
                                 />
                             </td>
-                            <td>
-                                <div 
-                                    role="button"
-                                    tabindex="0"
-                                    class="w-10 h-10 rounded-lg overflow-hidden bg-base-200 flex items-center justify-center cursor-pointer"
-                                    onclick={() => previewFile = file}
-                                    onkeydown={(e) => e.key === 'Enter' && (previewFile = file)}
-                                >
-                                    {#if file.content_type.startsWith('image/')}
-                                        <img src={file.url} alt={file.key} class="w-full h-full object-cover" loading="lazy" />
-                                    {:else}
-                                        <span class="text-lg">📄</span>
-                                    {/if}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="font-medium text-xs max-w-xs truncate" title={file.key}>{file.key}</div>
-                                <div class="text-[10px] opacity-40">{file.content_type}</div>
-                            </td>
-                            <td>
-                                {#if file.is_used}
-                                    <a href={`/antiquites/${file.reference_id}`} class="badge badge-success badge-sm gap-1 hover:underline">
-                                        🔗 Objet #{file.reference_id} : {file.reference_title || 'Sans titre'}
-                                    </a>
+                            <td class="p-2.5 border-r border-black text-center">
+                                {#if file.content_type?.startsWith('image/')}
+                                    <img src={file.url} alt="" class="w-8 h-8 object-cover border border-black mx-auto" />
                                 {:else}
-                                    <span class="badge badge-warning badge-sm">⚠️ Inutilisé (Orphelin)</span>
+                                    <span class="text-base">📄</span>
                                 {/if}
                             </td>
-                            <td class="text-xs font-mono">{formatFileSize(file.size)}</td>
-                            <td class="text-xs opacity-60">{formatDate(file.last_modified)}</td>
-                            <td class="text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <button 
-                                        onclick={() => copyURL(file.url)}
-                                        class="btn btn-ghost btn-xs btn-square"
-                                        title="Copier l'URL"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
-                                    </button>
-                                    <a 
-                                        href={file.url} 
-                                        target="_blank" 
-                                        rel="noreferrer"
-                                        class="btn btn-ghost btn-xs btn-square"
-                                        title="Ouvrir le fichier"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                                    </a>
-                                    <button 
-                                        onclick={() => deleteSingleFile(file)}
-                                        class="btn btn-ghost btn-xs btn-square text-error"
-                                        title="Supprimer"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-                                    </button>
-                                </div>
+                            <td class="p-2.5 border-r border-black font-bold truncate max-w-xs text-black">
+                                {file.key}
+                            </td>
+                            <td class="p-2.5 border-r border-black font-mono">{formatFileSize(file.size)}</td>
+                            <td class="p-2.5 border-r border-black">
+                                {#if file.is_used}
+                                    <span class="retro-badge bg-[#99E7DC] text-[10px]">#{file.reference_id} {file.reference_title || 'En ligne'}</span>
+                                {:else}
+                                    <span class="retro-badge bg-[#FFC2D1] text-[10px]">Orphelin</span>
+                                {/if}
+                            </td>
+                            <td class="p-2.5 border-r border-black text-black/70 font-mono text-[11px]">{formatDate(file.last_modified)}</td>
+                            <td class="p-2.5 text-right space-x-1">
+                                <button onclick={() => previewFile = file} class="retro-btn py-0.5 px-2 text-[10px] bg-white hover:bg-[#99E7DC]">
+                                    Inspecter
+                                </button>
+                                <button onclick={() => deleteSingleFile(file)} class="retro-btn py-0.5 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fa96ab]">
+                                    ✕
+                                </button>
                             </td>
                         </tr>
                     {/each}
@@ -713,110 +706,105 @@
         </div>
     {/if}
 
-    <!-- Pagination -->
+    <!-- Pagination Rétro -->
     {#if pagination && pagination.total_pages > 1}
-        <div class="flex justify-center mt-6">
-            <div class="join border border-base-300">
+        <div class="flex justify-center mt-4 font-mono">
+            <div class="flex items-center gap-1 border-2 border-black bg-[#EDE9DF] p-1.5 shadow-[3px_3px_0px_0px_#000]">
                 <button 
-                    class="join-item btn btn-sm"
+                    class="retro-btn py-1 px-3 text-xs bg-white"
                     disabled={pagination.current_page <= 1}
                     onclick={() => loadFiles((pagination?.current_page || 1) - 1)}
                 >
-                    «
+                    « Précédent
                 </button>
-                <button class="join-item btn btn-sm pointer-events-none">
-                    Page {pagination.current_page} sur {pagination.total_pages} ({pagination.total_items} fichiers)
-                </button>
+                <div class="border border-black bg-white px-3 py-1 text-xs font-bold">
+                    Page {pagination.current_page} / {pagination.total_pages} ({pagination.total_items} fichiers)
+                </div>
                 <button 
-                    class="join-item btn btn-sm"
+                    class="retro-btn py-1 px-3 text-xs bg-white"
                     disabled={pagination.current_page >= pagination.total_pages}
                     onclick={() => loadFiles((pagination?.current_page || 1) + 1)}
                 >
-                    »
+                    Suivant »
                 </button>
             </div>
         </div>
     {/if}
 
-    <!-- Preview Modal -->
+    <!-- Preview / Inspector Modal Rétro -->
     {#if previewFile}
-        <div class="modal modal-open">
-            <div class="modal-box max-w-3xl p-6 relative">
-                <button 
-                    onclick={() => previewFile = null}
-                    class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3"
-                >
-                    ✕
-                </button>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 font-mono">
+            <div class="w-full max-w-2xl bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col overflow-hidden">
+                
+                <!-- Window Titlebar -->
+                <div class="bg-[#FFE600] border-b-2 border-black px-4 py-2 flex items-center justify-between">
+                    <span class="font-black text-xs uppercase text-black">
+                        🗔 S3 FILE INSPECTOR // {previewFile.key}
+                    </span>
+                    <button onclick={() => previewFile = null} class="w-6 h-6 border border-black bg-white hover:bg-[#FFC2D1] flex items-center justify-center font-bold text-xs">
+                        ✕
+                    </button>
+                </div>
 
-                <h3 class="font-bold text-lg mb-4 truncate">{previewFile.key}</h3>
-
-                <div class="space-y-4">
-                    <div class="aspect-video sm:aspect-auto sm:max-h-96 rounded-xl overflow-hidden bg-base-300 flex items-center justify-center">
-                        {#if previewFile.content_type.startsWith('image/')}
-                            <img src={previewFile.url} alt={previewFile.key} class="max-h-96 object-contain" />
+                <!-- Window Body -->
+                <div class="p-6 space-y-4 bg-white">
+                    <div class="max-h-80 border-2 border-black bg-[#F6F4EE] flex items-center justify-center p-2 shadow-[2px_2px_0px_0px_#000]">
+                        {#if previewFile.content_type?.startsWith('image/')}
+                            <img src={previewFile.url} alt={previewFile.key} class="max-h-72 object-contain" />
                         {:else}
-                            <div class="p-12 text-center">
-                                <div class="text-6xl mb-2">📄</div>
-                                <p class="text-sm font-semibold">{previewFile.content_type}</p>
+                            <div class="p-10 text-center">
+                                <div class="text-5xl mb-2">📄</div>
+                                <p class="text-xs font-bold font-mono">{previewFile.content_type}</p>
                             </div>
                         {/if}
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-base-200/50 p-4 rounded-xl text-xs">
+                    <!-- Metadata Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#EDE9DF] border-2 border-black p-3 text-xs">
                         <div>
-                            <span class="opacity-50 block">Taille</span>
-                            <span class="font-bold">{formatFileSize(previewFile.size)}</span>
+                            <span class="text-[10px] text-black/60 block uppercase font-bold">Poids</span>
+                            <span class="font-black">{formatFileSize(previewFile.size)}</span>
                         </div>
                         <div>
-                            <span class="opacity-50 block">Type MIME</span>
-                            <span class="font-bold">{previewFile.content_type}</span>
+                            <span class="text-[10px] text-black/60 block uppercase font-bold">Type MIME</span>
+                            <span class="font-black truncate block">{previewFile.content_type}</span>
                         </div>
                         <div>
-                            <span class="opacity-50 block">Date de modification</span>
-                            <span class="font-bold">{formatDate(previewFile.last_modified)}</span>
+                            <span class="text-[10px] text-black/60 block uppercase font-bold">Modifié</span>
+                            <span class="font-black truncate block">{formatDate(previewFile.last_modified)}</span>
                         </div>
                         <div>
-                            <span class="opacity-50 block">Statut DB</span>
+                            <span class="text-[10px] text-black/60 block uppercase font-bold">Statut</span>
                             {#if previewFile.is_used}
-                                <span class="badge badge-success badge-xs mt-0.5">En ligne</span>
+                                <span class="retro-badge bg-[#99E7DC] text-[9px]">En ligne</span>
                             {:else}
-                                <span class="badge badge-warning badge-xs mt-0.5">Orphelin</span>
+                                <span class="retro-badge bg-[#FFC2D1] text-[9px]">Orphelin</span>
                             {/if}
                         </div>
                     </div>
 
                     {#if previewFile.reference_title}
-                        <div class="alert alert-info text-xs py-2">
-                            <span>Lié à : <strong>{previewFile.reference_title}</strong> (Objet #{previewFile.reference_id})</span>
+                        <div class="border-2 border-black bg-[#D4E2FD] p-2.5 text-xs text-black shadow-[2px_2px_0px_0px_#000]">
+                            <span>🔗 Rattaché à : <strong>{previewFile.reference_title}</strong> (ID #{previewFile.reference_id})</span>
                         </div>
                     {/if}
 
                     <div class="flex flex-wrap justify-between items-center gap-3 pt-2">
                         <div class="flex gap-2">
-                            <button onclick={() => copyURL(previewFile?.url || '')} class="btn btn-sm btn-outline gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
-                                Copier le lien
+                            <button onclick={() => copyURL(previewFile?.url || '')} class="retro-btn text-xs bg-white hover:bg-[#FFE600]">
+                                📋 Copier URL
                             </button>
-                            <a href={previewFile.url} target="_blank" rel="noreferrer" class="btn btn-sm btn-outline gap-2">
-                                Ouvrir dans un onglet ↗
+                            <a href={previewFile.url} target="_blank" rel="noreferrer" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD]">
+                                Ouvrir ↗
                             </a>
                         </div>
 
-                        <button onclick={() => previewFile && deleteSingleFile(previewFile)} class="btn btn-sm btn-error gap-2">
-                            Supprimer de S3
+                        <button onclick={() => previewFile && deleteSingleFile(previewFile)} class="retro-btn-error text-xs font-black">
+                            🗑️ Supprimer de S3
                         </button>
                     </div>
                 </div>
             </div>
-            <div 
-                role="button"
-                tabindex="0"
-                class="modal-backdrop" 
-                onclick={() => previewFile = null}
-                onkeydown={(e) => e.key === 'Escape' && (previewFile = null)}
-            ></div>
         </div>
     {/if}
 </div>
-

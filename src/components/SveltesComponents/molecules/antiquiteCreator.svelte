@@ -134,113 +134,151 @@
     }
 </script>
 
-<div class="space-y-6 max-w-4xl mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="space-y-4">
-            <DataModifier bind:data_string={name} type={1} type_name='Nom'/>
-            <div class="relative">
-                <DataModifier bind:data_string={description} type={2} type_name='Description'/>
-                <button 
-                    onclick={enhanceDescription} 
-                    disabled={isEnhancing}
-                    class="btn btn-xs btn-outline btn-secondary absolute top-0 right-0 gap-1 border-none hover:bg-secondary/10"
-                >
-                    {#if isEnhancing}
-                        <span class="loading loading-spinner loading-xs"></span>
-                    {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>
-                    {/if}
-                    Améliorer
-                </button>
+<div class="space-y-6 max-w-4xl mx-auto font-mono">
+    <!-- Header Rétro -->
+    <div class="retro-card-mint p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="retro-badge bg-black text-white text-[10px]">NEW ENTRY</span>
+                <span class="text-xs font-bold text-black/70">CATALOGUE REGISTRATION</span>
             </div>
+            <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">
+                Créer une Nouvelle Antiquité
+            </h1>
+            <p class="text-xs text-black/80 mt-0.5">Remplissez les détails pour enregistrer la pièce dans la base.</p>
         </div>
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <DataModifier bind:data_number={year} type={3} type_name='Année'/>
-                <DataModifier bind:data_number={status} type={4} type_name="Statut"/>
-            </div>
-            <DataModifier bind:data_number={price} type={3} type_name='Prix'/>
-            <DataModifier bind:data_string={category} type={5} type_name='Catégorie'/>
-            
-            <fieldset class="fieldset">
-                <legend class="fieldset-legend font-semibold">Sous-catégorie</legend>
-                <select bind:value={subcategory_id} class="select select-bordered w-full rounded-md">
-                    <option value={null}>Aucune sous-catégorie</option>
-                    {#each subcategories as sub}
-                        <option value={sub.id}>{sub.name}</option>
-                    {/each}
-                </select>
-            </fieldset>
-
-            <DataModifier bind:data_string={size} type={8} type_name='Taille'/>
-            
-            <DataModifier bind:data_bool={nouveaute} type={6} type_name="Nouveauté"/>
+        <div class="retro-icon-box bg-white">
+            ✍️
         </div>
     </div>
 
-    <div class="divider">Médias et Images</div>
-    
-    <div class="bg-base-200/30 p-6 rounded-2xl border border-base-200">
-        <ImagesContainer 
-            mode="antiquites"
-            bind:images={images} 
-            bind:new_Files={newFiles} 
-            bind:s3_Keys={s3Keys}
-        />
-    </div>
-
-    <div class="divider">eBay (Optionnel)</div>
-    
-    <div class="collapse collapse-arrow bg-base-200/30 border border-base-200 rounded-2xl">
-        <input type="checkbox" class="peer" /> 
-        <div class="collapse-title text-base font-bold flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            Personnaliser les informations eBay
-        </div>
-        <div class="collapse-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <div class="space-y-4">
-                    <fieldset class="fieldset">
-                        <legend class="fieldset-legend font-semibold">Titre de l'objet sur eBay</legend>
-                        <input type="text" placeholder="Par défaut : {name || 'Nom de l\'objet'}" bind:value={ebayTitle} class="input input-bordered w-full rounded-md" />
-                        <span class="text-xs opacity-50">Si vide, le nom principal sera envoyé à eBay.</span>
-                    </fieldset>
-                    
-                    <fieldset class="fieldset">
-                        <legend class="fieldset-legend font-semibold">Description sur eBay</legend>
-                        <textarea placeholder="Par défaut : {description || 'Description de l\'objet'}" bind:value={ebayDescription} class="textarea textarea-bordered h-28 w-full rounded-md"></textarea>
-                        <span class="text-xs opacity-50">Si vide, la description principale sera envoyée à eBay.</span>
-                    </fieldset>
-                </div>
+    <!-- Formulaire Principal -->
+    <div class="retro-card p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Colonne 1 : Nom & Description -->
+            <div class="space-y-4">
+                <DataModifier bind:data_string={name} type={1} type_name='Nom de la pièce'/>
                 
-                <div class="space-y-4">
-                    <fieldset class="fieldset">
-                        <legend class="fieldset-legend font-semibold">Prix sur eBay (EUR)</legend>
-                        <input type="number" step="0.01" placeholder="Par défaut : {price || '0'}" bind:value={ebayPrice} class="input input-bordered w-full rounded-md" />
-                        <span class="text-xs opacity-50">Si à 0 ou vide, le prix standard sera envoyé.</span>
-                    </fieldset>
-                    
-                    <fieldset class="fieldset">
-                        <legend class="fieldset-legend font-semibold">ID Catégorie eBay</legend>
-                        <input type="text" placeholder="Par défaut : 119168" bind:value={ebayCategoryID} class="input input-bordered w-full rounded-md" />
-                        <span class="text-xs opacity-50">Saisissez l'ID de catégorie eBay (ex: 119168 pour Architecture/Matériaux).</span>
-                    </fieldset>
+                <div class="relative flex flex-col gap-1">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-bold uppercase tracking-wider text-black">Description</label>
+                        <button 
+                            onclick={enhanceDescription} 
+                            disabled={isEnhancing}
+                            class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066]"
+                        >
+                            {#if isEnhancing}
+                                <span class="loading loading-spinner loading-xs"></span>
+                            {:else}
+                                🪄 Améliorer IA
+                            {/if}
+                        </button>
+                    </div>
+                    <textarea 
+                        class="retro-input h-48 resize-y" 
+                        placeholder="Description détaillée de l'objet, époque, matière, état..." 
+                        bind:value={description}
+                    ></textarea>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-base-200">
-        <button onclick={() => window.location.href = '/'} disabled={isCreating} class="btn btn-ghost">Annuler</button>
-        <button onclick={() => createAntiquity()} disabled={isCreating} class="btn btn-primary px-10 shadow-lg shadow-primary/20">
-            {#if isCreating}
-                <span class="loading loading-spinner loading-sm mr-2"></span>
-            {:else}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-            {/if}
-            Créer l'objet
-        </button>
+            <!-- Colonne 2 : Données Techniques -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <DataModifier bind:data_number={year} type={3} type_name='Année (Époque)'/>
+                    <DataModifier bind:data_number={status} type={4} type_name="Statut boutique"/>
+                </div>
+
+                <DataModifier bind:data_number={price} type={3} type_name='Prix de vente (€)'/>
+                
+                <DataModifier bind:data_string={category} type={5} type_name='Catégorie Principale'/>
+                
+                <div class="flex flex-col gap-1 w-full">
+                    <label class="text-xs font-bold uppercase tracking-wider text-black">Sous-catégorie</label>
+                    <select bind:value={subcategory_id} class="retro-select">
+                        <option value={null}>Aucune sous-catégorie</option>
+                        {#each subcategories as sub}
+                            <option value={sub.id}>{sub.name}</option>
+                        {/each}
+                    </select>
+                </div>
+
+                <DataModifier bind:data_string={size} type={8} type_name='Gabarit / Taille Livraison'/>
+                
+                <DataModifier bind:data_bool={nouveaute} type={6} type_name="Mettre en Nouveauté"/>
+            </div>
+        </div>
+
+        <!-- Section Médias -->
+        <div class="border-t-2 border-black pt-6">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="retro-badge bg-[#FFD2A6] text-xs">PHOTOS</span>
+                <h3 class="text-sm font-black uppercase tracking-wider text-black">Galerie & Visuels</h3>
+            </div>
+            
+            <div class="p-4 bg-[#EDE9DF] border-2 border-black shadow-[3px_3px_0px_0px_#000]">
+                <ImagesContainer 
+                    mode="antiquites"
+                    bind:images={images} 
+                    bind:new_Files={newFiles} 
+                    bind:s3_Keys={s3Keys}
+                />
+            </div>
+        </div>
+
+        <!-- Section eBay Optionnelle -->
+        <div class="border-t-2 border-black pt-6">
+            <details class="group border-2 border-black bg-[#F6F4EE] shadow-[3px_3px_0px_0px_#000]">
+                <summary class="p-4 cursor-pointer font-black text-xs uppercase flex items-center justify-between bg-[#FFF394] select-none">
+                    <div class="flex items-center gap-2">
+                        <span>📦</span>
+                        <span>Personnalisation des informations eBay (Optionnel)</span>
+                    </div>
+                    <span class="font-bold text-sm group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                
+                <div class="p-4 space-y-4 border-t-2 border-black bg-white">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold uppercase text-black block mb-1">Titre eBay</label>
+                                <input type="text" placeholder={name || "Titre sur eBay..."} bind:value={ebayTitle} class="retro-input text-xs" />
+                                <span class="text-[10px] text-black/60">Si vide, le nom principal sera utilisé.</span>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold uppercase text-black block mb-1">Description eBay</label>
+                                <textarea placeholder={description || "Description sur eBay..."} bind:value={ebayDescription} class="retro-input text-xs h-24"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold uppercase text-black block mb-1">Prix Spécifique eBay (€)</label>
+                                <input type="number" step="0.01" placeholder={price.toString()} bind:value={ebayPrice} class="retro-input text-xs" />
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold uppercase text-black block mb-1">ID Catégorie eBay</label>
+                                <input type="text" placeholder="119168" bind:value={ebayCategoryID} class="retro-input text-xs" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- Boutons d'Action -->
+        <div class="flex flex-wrap justify-end gap-3 pt-6 border-t-2 border-black">
+            <button onclick={() => window.location.href = '/'} disabled={isCreating} class="retro-btn py-2 px-5 text-xs bg-white hover:bg-[#FFC2D1]">
+                Annuler
+            </button>
+            <button onclick={createAntiquity} disabled={isCreating} class="retro-btn-primary py-2 px-8 text-xs font-black shadow-[4px_4px_0px_0px_#000]">
+                {#if isCreating}
+                    <span class="loading loading-spinner loading-xs mr-2"></span>
+                    Création en cours...
+                {:else}
+                    ✨ Enregistrer l'objet
+                {/if}
+            </button>
+        </div>
     </div>
 </div>
