@@ -2,7 +2,7 @@
     import ImageComponent from '../atoms/ImageComponent.svelte';
     import S3ImagePickerModal from '../atoms/S3ImagePickerModal.svelte';
     import type { Vehicule, Image, Antiquite } from '../../../type';
-    import { compressImageFile } from '../../../lib/imageCompressor';
+    import { compressImageFile, rotateImage } from '../../../lib/imageCompressor';
     
     interface Props {
         vehicule?: Vehicule;
@@ -18,6 +18,7 @@
     let isDraggingOver = $state(false);
     let isCompressing = $state(false);
     let isS3PickerOpen = $state(false);
+    let rotatingIndex = $state<number | null>(null);
     
     const fileMap = new Map<number, File>();
 
@@ -38,6 +39,37 @@
         }
         gallery = gallery.filter((_, index) => index !== indexToDelete);
         syncGallery();
+    }
+
+    async function rotateImageAt(index: number) {
+        const targetImage = gallery[index];
+        if (!targetImage || rotatingIndex !== null) return;
+
+        rotatingIndex = index;
+        try {
+            const existingFile = fileMap.get(targetImage.id);
+            const source = existingFile || targetImage.url;
+
+            const rotatedFile = await rotateImage(source, 90);
+            const newUrl = URL.createObjectURL(rotatedFile);
+
+            fileMap.set(targetImage.id, rotatedFile);
+
+            const updatedGallery = [...gallery];
+            updatedGallery[index] = {
+                ...targetImage,
+                url: newUrl,
+                s3_key: undefined
+            };
+
+            gallery = updatedGallery;
+            syncGallery();
+        } catch (err) {
+            console.error("Erreur lors de la rotation de l'image :", err);
+            alert("Impossible de faire pivoter cette image.");
+        } finally {
+            rotatingIndex = null;
+        }
     }
 
     function handleDragStart(event: DragEvent, imageId: number) {
@@ -129,6 +161,8 @@
             <ImageComponent
                 src={image.url} 
                 alt={antiquite?.name || "Objet"} 
+                isRotating={rotatingIndex === index}
+                onrotate={() => rotateImageAt(index)}
                 ondelete={() => deleteImage(index)}
             />
 
