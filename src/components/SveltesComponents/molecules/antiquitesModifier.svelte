@@ -58,6 +58,7 @@
     
     let isEnhancing = $state(false);
     let newFiles = $state<File[]>([]); 
+    let s3Keys = $state<string[]>([]); 
 
     let qrCodeDataUrl = $state("");
 
@@ -158,11 +159,15 @@
         formData.append("ebay_category_id", ebayCategoryID);
 
         const existingIds = images
-            .filter(img => !img.url.startsWith('blob:'))
+            .filter(img => !img.url.startsWith('blob:') && !img.s3_key)
             .map(img => img.id)
             .join(',');
         
         formData.append("existing_ids", existingIds);
+
+        if (s3Keys.length > 0) {
+            formData.append("new_s3_keys", s3Keys.join(','));
+        }
 
         newFiles.forEach(file => {
             formData.append("new_images", file);  
@@ -352,6 +357,7 @@
             antiquite={antiquite} 
             bind:images={images} 
             bind:new_Files={newFiles} 
+            bind:s3_Keys={s3Keys}
             mode={"antiquites"}
         />
     </div>
