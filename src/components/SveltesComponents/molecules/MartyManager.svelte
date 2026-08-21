@@ -527,6 +527,32 @@
         </div>
     </div>
 
+    <!-- Alerte Service Injoignable / Aide au Démarrage -->
+    {#if isServiceOnline === false}
+        <div class="retro-card-rose p-5 border-3 border-black shadow-[4px_4px_0px_0px_#000] space-y-3 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 font-black text-sm uppercase text-black">
+                    <span class="text-xl">⚠️</span>
+                    <span>Service Scrapper Marty Injoignable ({scrapperUrl})</span>
+                </div>
+                <button 
+                    onclick={() => { checkServiceHealth(); loadProspects(); }}
+                    class="retro-btn py-1 px-3 bg-white hover:bg-[#FFE600] text-xs font-black shadow-[2px_2px_0px_0px_#000]"
+                >
+                    🔄 Réessayer
+                </button>
+            </div>
+
+            <div class="bg-white p-3 border-2 border-black space-y-2 text-xs text-black/80">
+                <p class="font-bold text-black">Pour connecter le portail à la base de Marty :</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong>En local :</strong> Assurez-vous d'avoir démarré le serveur avec <code class="bg-[#EDE9DF] px-1.5 py-0.5 border border-black font-mono font-bold">bun run index.ts</code> dans le dossier <code class="font-bold">Scrapper-Prospects</code>.</li>
+                    <li><strong>Sur Railway / Distant :</strong> Cliquez sur <button onclick={() => showAdvancedConfig = true} class="underline font-bold text-black hover:text-[#D1495B]">⚙️ Options</button> ci-dessous et entrez l'URL publique de votre déploiement Marty (ex: <code class="bg-[#EDE9DF] px-1 font-mono">https://scrapper-prospects.up.railway.app</code>).</li>
+                </ul>
+            </div>
+        </div>
+    {/if}
+
     <!-- Zone de Saisie des Mots-Clés et Lancement -->
     <div class="retro-card p-6 sm:p-8 space-y-6">
         <div class="flex items-center justify-between border-b-2 border-black pb-3">

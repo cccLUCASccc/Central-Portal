@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-export const ALL: APIRoute = async ({ request, url }) => {
+const handler: APIRoute = async ({ request, url }) => {
     const action = url.searchParams.get("action") || "health";
     const q = url.searchParams.get("q") || "";
     const type = url.searchParams.get("type") || "";
@@ -18,7 +18,10 @@ export const ALL: APIRoute = async ({ request, url }) => {
         if (action === "list") {
             const limit = url.searchParams.get("limit") || "";
             const targetUrl = `${scrapperBaseUrl}/prospects?type=${encodeURIComponent(type)}${limit ? `&limit=${encodeURIComponent(limit)}` : ''}`;
-            const res = await fetch(targetUrl, { method: "GET" });
+            const res = await fetch(targetUrl, { 
+                method: "GET",
+                signal: AbortSignal.timeout(6000)
+            });
 
             if (!res.ok) {
                 const text = await res.text();
@@ -45,7 +48,10 @@ export const ALL: APIRoute = async ({ request, url }) => {
             }
 
             const targetUrl = `${scrapperBaseUrl}/prospects?id=${encodeURIComponent(id)}`;
-            const res = await fetch(targetUrl, { method: "DELETE" });
+            const res = await fetch(targetUrl, { 
+                method: "DELETE",
+                signal: AbortSignal.timeout(6000)
+            });
 
             if (!res.ok) {
                 const text = await res.text();
@@ -136,7 +142,7 @@ export const ALL: APIRoute = async ({ request, url }) => {
         });
     } catch (err: any) {
         return new Response(JSON.stringify({ 
-            error: "Impossible de contacter le service de scraping Marty.",
+            error: `Impossible de contacter le service de scraping Marty (${scrapperBaseUrl}).`,
             details: err?.message || String(err),
             scrapperBaseUrl
         }), {
@@ -145,4 +151,10 @@ export const ALL: APIRoute = async ({ request, url }) => {
         });
     }
 };
+
+export const GET: APIRoute = handler;
+export const POST: APIRoute = handler;
+export const DELETE: APIRoute = handler;
+export const ALL: APIRoute = handler;
+
 
