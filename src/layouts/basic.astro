@@ -6,6 +6,12 @@ import TerminalBoot from "../components/SveltesComponents/atoms/TerminalBoot.sve
 const auth = Astro.locals.auth();
 const token = await auth.getToken();
 const userId = auth.userId;
+
+const pathname = Astro.url.pathname;
+const isDaisyBrocante = pathname.startsWith('/antiquites') || 
+                        pathname.startsWith('/subcategories') || 
+                        pathname.startsWith('/ebay') || 
+                        pathname.startsWith('/Livraison');
 ---
 
 <!doctype html>
@@ -33,10 +39,12 @@ const userId = auth.userId;
           <div class="w-full bg-[#FFC2D1] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
             <div class="flex items-center gap-3">
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
-              {Astro.url.pathname === '/' ? (
+              {pathname === '/' ? (
                 <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — HUB MULTI-PROJETS</span>
-              ) : (
+              ) : isDaisyBrocante ? (
                 <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
+              ) : (
+                <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — SERVICE GLOBAL</span>
               )}
             </div>
             <div class="hidden md:flex items-center gap-4 text-[11px] font-mono">
@@ -74,25 +82,39 @@ const userId = auth.userId;
 
             <!-- Desktop Nav Buttons -->
             <nav class="hidden lg:flex items-center gap-2 font-mono">
-              <a href="/" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD] {Astro.url.pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+              <!-- Bouton Cross-Projet : Hub Projets -->
+              <a href="/" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD] {pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 🗂️ Hub Projets
               </a>
 
+              {isDaisyBrocante && (
+                <>
+                  <div class="h-5 w-px bg-black/30 mx-1"></div>
+                  
+                  <span class="retro-badge bg-[#FFD2A6] text-black text-[10px] py-1 border border-black shadow-[1px_1px_0px_0px_#000] font-black">
+                    🌼 DAISY BROCANTE
+                  </span>
+
+                  <!-- Boutons Spécifiques Daisy Brocante -->
+                  <a href="/antiquites" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    📋 Inventaire
+                  </a>
+                  <a href="/subcategories" class="retro-btn text-xs bg-white hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    🏷️ Sous-catégories
+                  </a>
+                  <a href="/ebay" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    📦 eBay
+                  </a>
+                  <a href="/Livraison" class="retro-btn text-xs bg-white hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    🚚 Livraisons
+                  </a>
+                </>
+              )}
+
               <div class="h-5 w-px bg-black/30 mx-1"></div>
 
-              <a href="/antiquites" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                📋 Inventaire
-              </a>
-              <a href="/subcategories" class="retro-btn text-xs bg-white hover:bg-[#FFD2A6] {Astro.url.pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                🏷️ Sous-catégories
-              </a>
-              <a href="/ebay" class="retro-btn text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                📦 eBay
-              </a>
-              <a href="/Livraison" class="retro-btn text-xs bg-white hover:bg-[#FFC2D1] {Astro.url.pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                🚚 Livraisons
-              </a>
-              <a href="/storage" class="retro-btn text-xs bg-white hover:bg-[#99E7DC] {Astro.url.pathname.startsWith('/storage') ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+              <!-- Bouton Cross-Projet : Fichiers S3 -->
+              <a href="/storage" class="retro-btn text-xs bg-white hover:bg-[#99E7DC] {pathname.startsWith('/storage') ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 📁 Fichiers S3
               </a>
             </nav>
@@ -119,7 +141,7 @@ const userId = auth.userId;
         <footer class="bg-[#EDE9DF] border-t-2 border-black py-3 px-6 text-black font-mono text-xs flex flex-col sm:flex-row items-center justify-between gap-2 shadow-[0_-2px_0px_0px_#000]">
           <div class="flex items-center gap-3">
             <button 
-              type="button"
+              type="button" 
               onclick="window.replayBoot && window.replayBoot()"
               class="retro-badge bg-[#99E7DC] hover:bg-[#7ce0d3] cursor-pointer transition-transform active:scale-95"
               title="Cliquer pour relancer le terminal de démarrage"
@@ -146,25 +168,35 @@ const userId = auth.userId;
             </div>
 
             <nav class="flex flex-col gap-2.5">
-              <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#D4E2FD] {Astro.url.pathname === '/' ? '!bg-[#D4E2FD]' : ''}">
+              <!-- Cross-projet -->
+              <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#D4E2FD] {pathname === '/' ? '!bg-[#D4E2FD]' : ''}">
                 🗂️ Hub des Projets
               </a>
 
-              <div class="text-[10px] font-black uppercase text-black/50 px-1 pt-2">Projet Daisy Brocante</div>
+              {isDaisyBrocante && (
+                <>
+                  <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
+                    <span>🌼</span> Projet Daisy Brocante
+                  </div>
 
-              <a href="/antiquites" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/antiquites') ? '!bg-[#FFF394]' : ''}">
-                📋 Inventaire
-              </a>
-              <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {Astro.url.pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
-                🏷️ Sous-catégories
-              </a>
-              <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {Astro.url.pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
-                📦 eBay (Annonces)
-              </a>
-              <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFC2D1] {Astro.url.pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1]' : ''}">
-                🚚 Livraisons
-              </a>
-              <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#99E7DC] {Astro.url.pathname.startsWith('/storage') ? '!bg-[#99E7DC]' : ''}">
+                  <a href="/antiquites" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394]' : ''}">
+                    📋 Inventaire
+                  </a>
+                  <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
+                    🏷️ Sous-catégories
+                  </a>
+                  <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
+                    📦 eBay (Annonces)
+                  </a>
+                  <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1]' : ''}">
+                    🚚 Livraisons
+                  </a>
+                </>
+              )}
+
+              <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2">Services Globaux</div>
+
+              <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#99E7DC] {pathname.startsWith('/storage') ? '!bg-[#99E7DC]' : ''}">
                 📁 Fichiers S3
               </a>
             </nav>
