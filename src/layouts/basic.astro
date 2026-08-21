@@ -21,7 +21,7 @@ const userId = auth.userId;
 
   <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFC2D1] selection:text-black">
     <Show when="signed-in">
-      <TerminalBoot client:load />
+      <TerminalBoot client:load mode="portal" />
     </Show>
 
     <div class="drawer">

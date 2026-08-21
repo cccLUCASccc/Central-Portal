@@ -1,6 +1,7 @@
 ---
 import "../../styles/global.css";
 import { SignIn } from "@clerk/astro/components";
+import TerminalBoot from "../../components/SveltesComponents/atoms/TerminalBoot.svelte";
 
 const auth = Astro.locals.auth();
 const userId = auth.userId;
@@ -23,6 +24,7 @@ if (userId) {
   </head>
 
   <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFC2D1] selection:text-black">
+    <TerminalBoot client:load mode="signIn" targetUrl="/" />
     <!-- Retro Top Banner -->
     <div class="w-full bg-[#FFC2D1] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
       <div class="flex items-center gap-3">
