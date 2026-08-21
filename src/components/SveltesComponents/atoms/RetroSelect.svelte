@@ -45,7 +45,7 @@
     });
 </script>
 
-<div class="flex flex-col gap-1 w-full font-mono relative" bind:this={selectContainer}>
+<div class="flex flex-col gap-1 w-full font-mono relative {isOpen ? 'z-[100]' : 'z-10'}" bind:this={selectContainer}>
     {#if label}
         <span class="text-xs font-bold uppercase tracking-wider text-black">{label}</span>
     {/if}
@@ -64,9 +64,9 @@
         </span>
     </button>
 
-    <!-- Custom Retro Dropdown Menu -->
+    <!-- Custom Retro Dropdown Menu (Z-index garanti au-dessus de la table) -->
     {#if isOpen}
-        <div class="absolute top-full left-0 right-0 z-50 mt-1 border-2 border-black bg-white shadow-[5px_5px_0px_0px_#000] max-h-60 overflow-y-auto font-mono text-xs animate-in fade-in duration-100">
+        <div class="absolute top-full left-0 right-0 z-[100] mt-1 border-2 border-black bg-white shadow-[6px_6px_0px_0px_#000] max-h-60 overflow-y-auto font-mono text-xs animate-in fade-in duration-100">
             {#each options as opt}
                 {@const isSelected = opt.value === value}
                 <button
