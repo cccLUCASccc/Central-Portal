@@ -1,6 +1,7 @@
 <script lang="ts">
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
+    import RetroSelect from "../atoms/RetroSelect.svelte";
     import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
     import QRCode from 'qrcode';
@@ -49,6 +50,11 @@
             subcategory_id = null;
         }
     });
+
+    let subcatOptions = $derived([
+        { value: null, label: "Aucune sous-catégorie" },
+        ...subcategories.map(s => ({ value: s.id, label: s.name }))
+    ]);
     
     let ebayTitle = $state(antiquite.ebay_title ?? "");
     let ebayDescription = $state(antiquite.ebay_description ?? "");
@@ -348,15 +354,11 @@
                 
                 <DataModifier bind:data_string={category} type={5} type_name='Catégorie Principale'/>
                 
-                <div class="flex flex-col gap-1 w-full">
-                    <label class="text-xs font-bold uppercase tracking-wider text-black">Sous-catégorie</label>
-                    <select bind:value={subcategory_id} class="retro-select">
-                        <option value={null}>Aucune sous-catégorie</option>
-                        {#each subcategories as sub}
-                            <option value={sub.id}>{sub.name}</option>
-                        {/each}
-                    </select>
-                </div>
+                <RetroSelect
+                    label="Sous-catégorie"
+                    options={subcatOptions}
+                    bind:value={subcategory_id}
+                />
 
                 <DataModifier bind:data_string={size} type={8} type_name='Gabarit / Taille Livraison'/>
                 

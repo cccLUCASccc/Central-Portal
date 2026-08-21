@@ -1,6 +1,7 @@
 <script lang="ts">
     import { apiFetch } from "../../../lib/api";
     import { onMount } from "svelte";
+    import RetroSelect from "../atoms/RetroSelect.svelte";
     import type { Subcategory } from "../../../type";
 
     let { apiUrl }: { apiUrl: string } = $props();
@@ -17,6 +18,8 @@
         "Art de la table",
         "Curiosités & Divers"
     ];
+
+    const categoryOptions = categories.map(cat => ({ value: cat, label: cat }));
 
     async function loadSubcategories() {
         isLoading = true;
@@ -101,14 +104,11 @@
                 />
             </div>
 
-            <div class="space-y-1">
-                <label class="text-xs font-bold uppercase tracking-wider text-black">Galerie parente</label>
-                <select bind:value={category} class="retro-select">
-                    {#each categories as cat}
-                        <option value={cat}>{cat}</option>
-                    {/each}
-                </select>
-            </div>
+            <RetroSelect
+                label="Galerie parente"
+                options={categoryOptions}
+                bind:value={category}
+            />
 
             <button type="submit" disabled={isCreating} class="retro-btn-primary w-full py-2.5 mt-2 font-black shadow-[3px_3px_0px_0px_#000]">
                 {#if isCreating}

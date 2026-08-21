@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, untrack } from "svelte";
     import BulkAntiquitesImporter from "../atoms/BulkAntiquitesImporter.svelte";
     import CustomTable from "../atoms/CustomTable.svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
@@ -8,22 +8,24 @@
     import type { Antiquite, Pagination } from "../../../type";
     import { apiFetch } from "../../../lib/api";
 
-    onMount(() => {
-        filterStore.initFromUrl();
-    });
-
     interface Props {
         apiUrl: string;
         antiquites : Antiquite[];
         pagination ?: Pagination;
     }
 
-    let { apiUrl, antiquites: initialAntiquites, pagination: initialPagination }:Props = $props();
+    let { apiUrl, antiquites: initialAntiquites, pagination: initialPagination }: Props = $props();
 
     let currentAntiquites = $state(initialAntiquites);
     let currentPagination = $state(initialPagination);
     let isLoading = $state(false);
     let is_visible : boolean = $state(false);
+    let isMounted = $state(false);
+
+    onMount(() => {
+        filterStore.initFromUrl();
+        setTimeout(() => { isMounted = true; }, 50);
+    });
 
     async function fetchData(page = 1) {
         if (typeof window === 'undefined') return;
@@ -55,12 +57,22 @@
         }
     }
 
+    $effect(() => {
+        // Track changes to filters
+        const _cat = filterStore.category_filter;
+        const _stat = filterStore.status_filter;
+        const _price = filterStore.price_filter;
+        const _nouv = filterStore.nouveaute_filter;
+
+        if (isMounted) {
+            untrack(() => {
+                fetchData(1);
+            });
+        }
+    });
+
     function handlePageChange(page: number) {
         fetchData(page);
-    }
-
-    function handleFilterChange() {
-        fetchData(1);
     }
 
     function resetFilters() {
@@ -100,18 +112,18 @@
         </div>
     </div>
 
-    <!-- Barre de Filtres Rétro -->
+    <!-- Barre de Filtres Rétro avec Dropdowns Stylisés -->
     <div class="retro-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-        <div onchange={handleFilterChange}>
+        <div>
             <DataModifier type={5} type_name="Catégorie" mode="filter" bind:data_string={filterStore.category_filter} />
         </div>
-        <div onfocusout={handleFilterChange}>
+        <div>
             <DataModifier type={3} type_name="Prix Max (€)" mode="filter" bind:data_number={filterStore.price_filter} />
         </div>
-        <div onchange={handleFilterChange}>
+        <div>
             <DataModifier type={4} type_name="Statut" mode="filter" bind:data_number={filterStore.status_filter} />
         </div>
-        <div onchange={handleFilterChange}>
+        <div>
             <DataModifier type={7} type_name="Filtre Nouveauté" mode="filter" bind:data_bool={filterStore.nouveaute_filter} />
         </div>
         <div>

@@ -36,41 +36,6 @@
   --noise: 0;
 }
 
-@plugin "daisyui/theme" {
-  name: "dracula";
-  default: false;
-  prefersdark: false;
-  color-scheme: "dark";
-  --color-base-100: #141417;
-  --color-base-200: #1E1E24;
-  --color-base-300: #2C2C34;
-  --color-base-content: #F6F4EE;
-  --color-primary: #99E7DC;
-  --color-primary-content: #000000;
-  --color-secondary: #D4E2FD;
-  --color-secondary-content: #000000;
-  --color-accent: #FFD2A6;
-  --color-accent-content: #000000;
-  --color-neutral: #FFFFFF;
-  --color-neutral-content: #000000;
-  --color-info: #D4E2FD;
-  --color-info-content: #000000;
-  --color-success: #99E7DC;
-  --color-success-content: #000000;
-  --color-warning: #FFF394;
-  --color-warning-content: #000000;
-  --color-error: #FFC2D1;
-  --color-error-content: #000000;
-  --radius-selector: 0px;
-  --radius-field: 0px;
-  --radius-box: 0px;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 2px;
-  --depth: 0;
-  --noise: 0;
-}
-
 /* ==========================================================================
    RETRO COMPUTER & NEO-BRUTALIST UTILITIES
    ========================================================================== */
@@ -247,6 +212,7 @@
     padding: 0.5rem 0.75rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.875rem;
+    font-weight: 600;
     border-radius: 0px;
     box-shadow: 2px 2px 0px 0px #000000;
     width: 100%;
@@ -255,24 +221,50 @@
   .retro-input:focus {
     outline: none;
     box-shadow: 4px 4px 0px 0px #000000;
+    background-color: #FFFFFF;
   }
 
+  /* Dropdowns / Selects Rétro avec Flèche Carrée et Style Ouvert */
   .retro-select {
     border: 2px solid #000000;
     background-color: #FFFFFF;
     color: #000000;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.875rem;
+    font-weight: 700;
     border-radius: 0px;
     box-shadow: 2px 2px 0px 0px #000000;
     width: 100%;
     cursor: pointer;
-    transition: box-shadow 0.15s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='black'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 1.1rem 1.1rem;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .retro-select:hover {
+    background-color: #F6F4EE;
+    box-shadow: 3px 3px 0px 0px #000000;
   }
   .retro-select:focus {
     outline: none;
     box-shadow: 4px 4px 0px 0px #000000;
+    background-color: #FFFFFF;
+  }
+  .retro-select option {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 700;
+    padding: 0.75rem 0.5rem;
+  }
+  .retro-select optgroup {
+    background-color: #EDE9DF;
+    color: #000000;
+    font-weight: 900;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
   /* Badges & Tags */
@@ -297,7 +289,7 @@
   .retro-badge-yellow { background-color: #FFF394; }
   .retro-badge-rose { background-color: #FFC2D1; }
 
-  /* Mini Icon Badge (top right of cards) */
+  /* Mini Icon Badge */
   .retro-icon-box {
     width: 2rem;
     height: 2rem;
@@ -311,12 +303,95 @@
   }
 }
 
-/* Animations de transition */
-@keyframes retroGlitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-1px, 1px); }
-  40% { transform: translate(-1px, -1px); }
-  60% { transform: translate(1px, 1px); }
-  80% { transform: translate(1px, -1px); }
-  100% { transform: translate(0); }
+/* ==========================================================================
+   CLERK USERBUTTON & MODAL RETRO STYLING
+   ========================================================================== */
+
+.cl-userButtonBox,
+.cl-userButtonTrigger {
+  border-radius: 0px !important;
+}
+
+.cl-userButtonAvatarBox {
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.cl-userButtonAvatarBox:hover {
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px) !important;
+}
+
+.cl-userButtonPopoverCard,
+.cl-popoverCard,
+.cl-card {
+  border: 3px solid #000000 !important;
+  border-radius: 0px !important;
+  background-color: #EDE9DF !important;
+  color: #000000 !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.cl-userPreview {
+  border-bottom: 2px solid #000000 !important;
+  background-color: #FFD2A6 !important;
+  padding: 1rem !important;
+}
+
+.cl-userPreviewMainIdentifier {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 900 !important;
+  color: #000000 !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+}
+
+.cl-userPreviewSecondaryIdentifier {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  color: #000000 !important;
+  opacity: 0.7 !important;
+  font-size: 0.75rem !important;
+}
+
+.cl-userButtonPopoverActionButton,
+.cl-userButtonPopoverCustomItemButton {
+  border-radius: 0px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  padding: 0.65rem 1rem !important;
+  border-bottom: 1px solid #000000 !important;
+  transition: background-color 0.15s ease !important;
+}
+.cl-userButtonPopoverActionButton:hover,
+.cl-userButtonPopoverCustomItemButton:hover {
+  background-color: #FFE600 !important;
+  color: #000000 !important;
+}
+
+.cl-userButtonPopoverActionButtonIcon,
+.cl-userButtonPopoverActionButtonIconBox {
+  color: #000000 !important;
+}
+
+.cl-userButtonPopoverFooter {
+  background-color: #FFFFFF !important;
+  border-top: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.cl-modalBackdrop {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: none !important;
+}
+
+.cl-modalContent {
+  border: 3px solid #000000 !important;
+  border-radius: 0px !important;
+  box-shadow: 8px 8px 0px 0px #000000 !important;
+  background-color: #F6F4EE !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 }

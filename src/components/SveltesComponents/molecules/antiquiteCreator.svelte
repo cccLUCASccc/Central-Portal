@@ -4,6 +4,7 @@
     import { untrack } from "svelte";
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
+    import RetroSelect from "../atoms/RetroSelect.svelte";
 
     let name = $state("");
     let description = $state("");
@@ -40,6 +41,11 @@
             subcategory_id = null;
         }
     });
+
+    let subcatOptions = $derived([
+        { value: null, label: "Aucune sous-catégorie" },
+        ...subcategories.map(s => ({ value: s.id, label: s.name }))
+    ]);
     
     let ebayTitle = $state("");
     let ebayDescription = $state("");
@@ -139,8 +145,8 @@
     <div class="retro-card-mint p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <span class="retro-badge bg-black text-white text-[10px]">NEW ENTRY</span>
-                <span class="text-xs font-bold text-black/70">CATALOGUE REGISTRATION</span>
+                <span class="retro-badge bg-black text-white text-[10px]">NOUVELLE ENTRÉE</span>
+                <span class="text-xs font-bold text-black/70">ENREGISTREMENT CATALOGUE</span>
             </div>
             <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">
                 Créer une Nouvelle Antiquité
@@ -193,15 +199,11 @@
                 
                 <DataModifier bind:data_string={category} type={5} type_name='Catégorie Principale'/>
                 
-                <div class="flex flex-col gap-1 w-full">
-                    <label class="text-xs font-bold uppercase tracking-wider text-black">Sous-catégorie</label>
-                    <select bind:value={subcategory_id} class="retro-select">
-                        <option value={null}>Aucune sous-catégorie</option>
-                        {#each subcategories as sub}
-                            <option value={sub.id}>{sub.name}</option>
-                        {/each}
-                    </select>
-                </div>
+                <RetroSelect
+                    label="Sous-catégorie"
+                    options={subcatOptions}
+                    bind:value={subcategory_id}
+                />
 
                 <DataModifier bind:data_string={size} type={8} type_name='Gabarit / Taille Livraison'/>
                 

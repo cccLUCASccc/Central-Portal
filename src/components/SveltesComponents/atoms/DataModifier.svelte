@@ -1,5 +1,7 @@
 <script lang="ts">
     import { filterStore } from "../../../store.svelte";
+    import RetroSelect from "./RetroSelect.svelte";
+
     interface Props {
         data_string?: string | null;
         data_number?: number | null;
@@ -10,6 +12,41 @@
     }
 
     let { data_string = $bindable(), data_number = $bindable(), data_bool = $bindable(), type, type_name, mode }: Props = $props();
+
+    const statusOptions = [
+        { value: null, label: "Tous les statuts" },
+        { value: 0, label: "🟢 Actif" },
+        { value: 1, label: "⚪ Inactif" },
+        { value: 2, label: "🔴 Vendu" }
+    ];
+
+    const categoryOptionsFilter = [
+        { value: "", label: "Toutes les catégories" },
+        { value: "Mobilier", label: "🪑 Mobilier" },
+        { value: "Objets d'art & Décoration", label: "🏺 Objets d'art & Décoration" },
+        { value: "Art de la table", label: "🍽️ Art de la table" },
+        { value: "Curiosités & Divers", label: "🔮 Curiosités & Divers" }
+    ];
+
+    const categoryOptionsForm = [
+        { value: "Mobilier", label: "🪑 Mobilier" },
+        { value: "Objets d'art & Décoration", label: "🏺 Objets d'art & Décoration" },
+        { value: "Art de la table", label: "🍽️ Art de la table" },
+        { value: "Curiosités & Divers", label: "🔮 Curiosités & Divers" }
+    ];
+
+    const nouveauteOptions = [
+        { value: null, label: "Tout le catalogue" },
+        { value: true, label: "⭐ Nouveautés uniquement" },
+        { value: false, label: "Catalogues standards" }
+    ];
+
+    const sizeOptions = [
+        { value: "S", label: "Petit (S) - Colis standard" },
+        { value: "M", label: "Moyen (M) - Colis moyen" },
+        { value: "L", label: "Grand (L) - Pièce volumineuse" },
+        { value: "XL", label: "Très Grand (XL) - Transporteur" }
+    ];
 </script>
 
 {#if type === 1}
@@ -59,47 +96,30 @@
 </div>
 
 {:else if type === 4}
-<div class="flex flex-col gap-1 w-full font-mono">
-    <label class="text-xs font-bold uppercase tracking-wider text-black">{type_name}</label>
-    <select 
-        bind:value={data_number} 
-        class="retro-select"
-        onchange={(e) => {
-            if (mode === 'filter') {
-                const target = e.currentTarget as HTMLSelectElement;
-                filterStore.setStatus_filter(target.value !== "" ? Number(target.value) : null);
-            }
-        }}
-    >
-        <option value={null}>Tous les statuts</option>
-        <option value={0}>🟢 Actif</option>
-        <option value={1}>⚪ Inactif</option>
-        <option value={2}>🔴 Vendu</option>
-    </select>
-</div>
+<!-- Statut Dropdown Customisé -->
+<RetroSelect 
+    label={type_name}
+    options={statusOptions}
+    bind:value={data_number}
+    onchange={(val) => {
+        if (mode === 'filter') {
+            filterStore.setStatus_filter(val !== null && val !== undefined ? Number(val) : null);
+        }
+    }}
+/>
 
 {:else if type === 5}
-<div class="flex flex-col gap-1 w-full font-mono">
-    <label class="text-xs font-bold uppercase tracking-wider text-black">{type_name}</label>
-    <select 
-        bind:value={data_string} 
-        class="retro-select"
-        onchange={(e) => {
-            if (mode === 'filter') {
-                const target = e.currentTarget as HTMLSelectElement;
-                filterStore.setCategory_filter(target.value || null);
-            }
-        }}
-    >
-        {#if mode === 'filter'}
-            <option value={""}>Toutes les catégories</option>
-        {/if}
-        <option value={"Mobilier"}>🪑 Mobilier</option>
-        <option value={"Objets d'art & Décoration"}>🏺 Objets d'art & Décoration</option>
-        <option value={"Art de la table"}>🍽️ Art de la table</option>
-        <option value={"Curiosités & Divers"}>🔮 Curiosités & Divers</option>
-    </select>
-</div>
+<!-- Catégorie Dropdown Customisé -->
+<RetroSelect 
+    label={type_name}
+    options={mode === 'filter' ? categoryOptionsFilter : categoryOptionsForm}
+    bind:value={data_string}
+    onchange={(val) => {
+        if (mode === 'filter') {
+            filterStore.setCategory_filter(val || null);
+        }
+    }}
+/>
 
 {:else if type === 6}
 <div class="flex items-center justify-between p-3.5 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] font-mono">
@@ -115,36 +135,23 @@
 </div>
 
 {:else if type === 7}
-<div class="flex flex-col gap-1 w-full font-mono">
-    <label class="text-xs font-bold uppercase tracking-wider text-black">{type_name}</label>
-    <select 
-        class="retro-select"
-        onchange={(e) => {
-            const target = e.currentTarget as HTMLSelectElement;
-            const val = target.value === "true" ? true : target.value === "false" ? false : null;
-            if (mode === 'filter') {
-                filterStore.setNouveaute_filter(val);
-            }
-            data_bool = val as any;
-        }}
-    >
-        <option value="">Tout le catalogue</option>
-        <option value="true">⭐ Nouveautés uniquement</option>
-        <option value="false">Catalogues standards</option>
-    </select>
-</div>
+<!-- Nouveauté Dropdown Customisé -->
+<RetroSelect 
+    label={type_name}
+    options={nouveauteOptions}
+    bind:value={data_bool}
+    onchange={(val) => {
+        if (mode === 'filter') {
+            filterStore.setNouveaute_filter(val);
+        }
+    }}
+/>
 
 {:else if type === 8}
-<div class="flex flex-col gap-1 w-full font-mono">
-    <label class="text-xs font-bold uppercase tracking-wider text-black">{type_name}</label>
-    <select 
-        bind:value={data_string} 
-        class="retro-select"
-    >
-        <option value={"S"}>Petit (S) - Colis standard</option>
-        <option value={"M"}>Moyen (M) - Colis moyen</option>
-        <option value={"L"}>Grand (L) - Pièce volumineuse</option>
-        <option value={"XL"}>Très Grand (XL) - Transporteur Meuble</option>
-    </select>
-</div>
+<!-- Taille Dropdown Customisé -->
+<RetroSelect 
+    label={type_name}
+    options={sizeOptions}
+    bind:value={data_string}
+/>
 {/if}

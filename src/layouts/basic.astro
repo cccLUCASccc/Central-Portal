@@ -1,7 +1,6 @@
 ---
 import "../styles/global.css";
 import { Show, UserButton } from "@clerk/astro/components";
-import ThemeController from "../components/SveltesComponents/atoms/ThemeController.svelte";
 
 const auth = Astro.locals.auth();
 const token = await auth.getToken();
@@ -16,32 +15,23 @@ const userId = auth.userId;
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>Central.SYS // Daisy Brocante</title>
-    <script is:inline>
-      const theme = (() => {
-        if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
-          return localStorage.getItem("theme");
-        }
-        return "corporate";
-      })();
-      document.documentElement.setAttribute("data-theme", theme);
-    </script>
+    <title>Gestionnaire // Daisy Brocante</title>
   </head>
 
-  <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFE600] selection:text-black">
+  <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFC2D1] selection:text-black">
     <div class="drawer">
       <input id="my-drawer" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content flex flex-col min-h-screen">
         
         <Show when="signed-in">
-          <!-- Retro Top Yellow Ticker / Announcement Banner -->
-          <div class="w-full bg-[#FFE600] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
+          <!-- Retro Top Rose Ticker / Announcement Banner -->
+          <div class="w-full bg-[#FFC2D1] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
             <div class="flex items-center gap-3">
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
-              <span>⚡ DAISY BROCANTE // CENTRAL.SYS V2.4 — OS INVENTORY PORTAL</span>
+              <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — OS INVENTORY PORTAL</span>
             </div>
             <div class="hidden md:flex items-center gap-4 text-[11px] font-mono">
-              <span class="border border-black px-1.5 py-0.5 bg-white shadow-[1px_1px_0px_0px_#000]">SERVER: ONLINE</span>
+              <span class="border border-black px-1.5 py-0.5 bg-white shadow-[1px_1px_0px_0px_#000]">SERVEUR: EN LIGNE</span>
               <span class="border border-black px-1.5 py-0.5 bg-[#99E7DC] shadow-[1px_1px_0px_0px_#000]">STORAGE: AWS S3</span>
             </div>
           </div>
@@ -54,13 +44,13 @@ const userId = auth.userId;
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-5 h-5 stroke-current stroke-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
               </label>
 
-              <!-- Logo & System Badge -->
-              <a href="/" class="flex items-center gap-2 group">
-                <div class="w-8 h-8 bg-[#FFE600] border-2 border-black flex items-center justify-center font-mono font-black text-sm shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
-                  🦆
+              <!-- Logo & System Badge (Sans canard) -->
+              <a href="/" class="flex items-center gap-2.5 group">
+                <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
+                  G
                 </div>
                 <div class="flex flex-col">
-                  <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">CENTRAL<span class="text-[#FFD2A6]">.SYS</span></span>
+                  <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span></span>
                   <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">Daisy Brocante</span>
                 </div>
               </a>
@@ -85,10 +75,8 @@ const userId = auth.userId;
               </a>
             </nav>
 
-            <!-- Actions Right -->
+            <!-- Actions Right (Clerk UserButton) -->
             <div class="flex items-center gap-2">
-              <ThemeController client:load />
-              <div class="h-6 w-0.5 bg-black mx-1 hidden sm:block"></div>
               <div class="border-2 border-black p-0.5 bg-white shadow-[2px_2px_0px_0px_#000]">
                 <UserButton />
               </div>
@@ -109,11 +97,11 @@ const userId = auth.userId;
         <footer class="bg-[#EDE9DF] border-t-2 border-black py-3 px-6 text-black font-mono text-xs flex flex-col sm:flex-row items-center justify-between gap-2 shadow-[0_-2px_0px_0px_#000]">
           <div class="flex items-center gap-3">
             <span class="retro-badge bg-[#99E7DC]">SYS_OK</span>
-            <span class="text-black/70">Central.SYS Terminal © 2026</span>
+            <span class="text-black/70">Gestionnaire.SYS Terminal © 2026</span>
           </div>
           <div class="flex items-center gap-4 text-black/60 text-[11px]">
             <span>ENV: PRODUCTION</span>
-            <span>BUILD: 2.4.0-RETRO</span>
+            <span>DAISY BROCANTE</span>
           </div>
         </footer>
       </div>
@@ -123,8 +111,8 @@ const userId = auth.userId;
         <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay bg-black/60"></label>
         <div class="w-72 min-h-full bg-[#EDE9DF] border-r-2 border-black p-6 flex flex-col justify-between text-black font-mono">
           <div>
-            <div class="p-3 bg-[#FFE600] border-2 border-black shadow-[3px_3px_0px_0px_#000] mb-6 flex items-center justify-between">
-              <span class="font-black font-mono text-sm uppercase">Menu Système</span>
+            <div class="p-3 bg-[#FFC2D1] border-2 border-black shadow-[3px_3px_0px_0px_#000] mb-6 flex items-center justify-between">
+              <span class="font-black font-mono text-sm uppercase">Menu Gestionnaire</span>
               <label for="my-drawer" class="cursor-pointer font-bold px-1.5 border border-black bg-white">✕</label>
             </div>
 
@@ -148,8 +136,8 @@ const userId = auth.userId;
           </div>
 
           <div class="p-3 bg-white border-2 border-black text-[10px] text-black/70 shadow-[2px_2px_0px_0px_#000]">
-            <p class="font-bold uppercase text-black mb-1">Station Central.SYS</p>
-            <p>Connecté avec Clerk Auth</p>
+            <p class="font-bold uppercase text-black mb-1">Station Gestionnaire.SYS</p>
+            <p>Daisy Brocante Central</p>
           </div>
         </div>
       </div>
