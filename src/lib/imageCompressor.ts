@@ -89,6 +89,114 @@ export async function compressImageFile(
 }
 
 /**
+ * Fait pivoter une image (File ou URL) d'un angle donné (par défaut 90° dans le sens horaire)
+ * et retourne un nouveau fichier File compressé en WebP/JPEG.
+ */
+export async function rotateImage(
+    source: File | string,
+    degrees: number = 90,
+    options: CompressOptions = {}
+): Promise<File> {
+    const {
+        maxWidth = 1600,
+        maxHeight = 1600,
+        quality = 0.85,
+        mimeType = 'image/webp'
+    } = options;
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+
+        let url: string;
+        let originalName = 'image.webp';
+
+        if (typeof source === 'string') {
+            url = source;
+            const segments = source.split('/');
+            originalName = segments[segments.length - 1].split('?')[0] || 'image.webp';
+        } else {
+            url = URL.createObjectURL(source);
+            originalName = source.name;
+        }
+
+        img.onload = () => {
+            if (typeof source !== 'string') {
+                URL.revokeObjectURL(url);
+            }
+
+            const isPerpendicular = Math.abs(degrees % 180) === 90;
+            const srcW = img.naturalWidth || img.width;
+            const srcH = img.naturalHeight || img.height;
+
+            // Dimensions cibles après rotation
+            let targetW = isPerpendicular ? srcH : srcW;
+            let targetH = isPerpendicular ? srcW : srcH;
+
+            // Réduction si dépassement des bornes max
+            if (targetW > maxWidth || targetH > maxHeight) {
+                const ratio = Math.min(maxWidth / targetW, maxHeight / targetH);
+                targetW = Math.round(targetW * ratio);
+                targetH = Math.round(targetH * ratio);
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Canvas 2D context not available'));
+                return;
+            }
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Déplacement vers le centre, rotation et rendu
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((degrees * Math.PI) / 180);
+
+            const drawW = isPerpendicular ? targetH : targetW;
+            const drawH = isPerpendicular ? targetW : targetH;
+
+            ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        reject(new Error('Blob conversion failed'));
+                        return;
+                    }
+
+                    const extension = mimeType === 'image/webp' ? '.webp' : '.jpg';
+                    const baseName = originalName.replace(/\.[^/.]+$/, '');
+                    const newFileName = `${baseName}_rotated${extension}`;
+
+                    const newFile = new File([blob], newFileName, {
+                        type: blob.type || mimeType,
+                        lastModified: Date.now()
+                    });
+
+                    resolve(newFile);
+                },
+                mimeType,
+                quality
+            );
+        };
+
+        img.onerror = (err) => {
+            if (typeof source !== 'string') {
+                URL.revokeObjectURL(url);
+            }
+            reject(err);
+        };
+
+        img.src = url;
+    });
+}
+
+/**
  * Compresse une liste de fichiers images en parallèle.
  */
 export async function compressImages(
@@ -116,4 +224,3 @@ function loadImage(file: File): Promise<HTMLImageElement> {
         img.src = url;
     });
 }
-
