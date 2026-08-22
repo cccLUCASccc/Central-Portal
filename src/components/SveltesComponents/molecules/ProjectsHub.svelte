@@ -121,6 +121,9 @@
                         <a href="/ebay" class="retro-badge bg-[#99E7DC] hover:bg-white text-black transition-colors cursor-pointer" title="Synchronisation eBay">
                             📦 eBay Sync
                         </a>
+                        <a href="/shops" class="retro-badge bg-[#FFD2A6] hover:bg-white text-black transition-colors cursor-pointer" title="Modération des boutiques">
+                            🏪 Boutiques
+                        </a>
                         <a href="/Livraison" class="retro-badge bg-[#FFC2D1] hover:bg-white text-black transition-colors cursor-pointer" title="Gestion des livraisons">
                             🚚 Livraisons
                         </a>
