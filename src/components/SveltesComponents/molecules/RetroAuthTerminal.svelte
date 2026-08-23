@@ -376,17 +376,10 @@
                 throw new Error("Service d'authentification indisponible.");
             }
 
-            const payload: any = {
+            const payload = {
                 strategy: secondFactorStrategy,
                 code: secondFactorCode.trim(),
             };
-
-            if (pendingSecondFactor?.phoneNumberId) {
-                payload.phoneNumberId = pendingSecondFactor.phoneNumberId;
-            }
-            if (pendingSecondFactor?.emailAddressId) {
-                payload.emailAddressId = pendingSecondFactor.emailAddressId;
-            }
 
             let resultAttempt;
             if (isFirstFactorCode) {
