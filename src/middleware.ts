@@ -16,6 +16,6 @@ export const onRequest = clerkMiddleware((auth, context) => {
 
   // Si l'utilisateur n'est pas connecté et que la route n'est pas publique
   if (!userId && !isPublicRoute(context.request)) {
-    return auth().redirectToSignIn();
+    return auth().redirectToSignIn({ returnBackUrl: context.url.href });
   }
 });

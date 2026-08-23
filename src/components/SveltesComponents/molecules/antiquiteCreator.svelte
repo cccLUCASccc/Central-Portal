@@ -127,7 +127,7 @@
 
             if (response.ok) {
                 alert("Objet créé avec succès ! ✨");
-                window.location.href = "/"; 
+                window.location.href = "/antiquites"; 
             } else {
                 alert("Erreur lors de la création de l'objet.");
             }

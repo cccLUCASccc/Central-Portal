@@ -13,6 +13,19 @@
     let showPassword = $state(false);
     let isLoading = $state(false);
     let errorMessage = $state("");
+    let successMessage = $state("");
+    
+    // États 2FA / Code de validation
+    let needsSecondFactor = $state(false);
+    let isFirstFactorCode = $state(false);
+    let secondFactorCode = $state("");
+    let secondFactorStrategy = $state("email_code");
+    let availableFactors = $state<any[]>([]);
+    let pendingSignInAttempt = $state<any>(null);
+    let pendingSecondFactor = $state<any>(null);
+    let isResending = $state(false);
+    let safeIdentifier = $state("");
+    let resendCountdown = $state(0);
     
     // Phases : 'login' | 'closing' | 'terminal'
     let phase = $state<"login" | "closing" | "terminal">("login");
@@ -77,13 +90,155 @@
         }, 300);
     }
 
+    function getResolvedTargetUrl(): string {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const redirectParam = params.get("redirect_url");
+            if (redirectParam) {
+                try {
+                    const url = new URL(redirectParam, window.location.origin);
+                    if (url.origin === window.location.origin) {
+                        return url.pathname + url.search + url.hash;
+                    }
+                } catch (_) {
+                    if (redirectParam.startsWith("/")) {
+                        return redirectParam;
+                    }
+                }
+            }
+        }
+        return targetUrl || "/";
+    }
+
     function redirectToPortal() {
-        window.location.replace(targetUrl);
+        window.location.replace(getResolvedTargetUrl());
+    }
+
+    async function getClerkInstance(timeoutMs = 8000): Promise<any> {
+        if (typeof window === "undefined") return null;
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            const clerk = (window as any).Clerk;
+            if (clerk) {
+                if (!clerk.loaded && typeof clerk.load === "function") {
+                    try {
+                        await clerk.load();
+                    } catch (e) {
+                        console.warn("Clerk.load() error:", e);
+                    }
+                }
+                if (clerk.loaded) {
+                    return clerk;
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, 80));
+        }
+        return (window as any).Clerk || null;
+    }
+
+    async function switchSecondFactorStrategy(factor: any, attemptObj?: any) {
+        const attempt = attemptObj || pendingSignInAttempt;
+        if (!attempt) return;
+
+        pendingSecondFactor = factor;
+        secondFactorStrategy = factor.strategy;
+        safeIdentifier = factor.safeIdentifier || "";
+        secondFactorCode = "";
+        errorMessage = "";
+        successMessage = "";
+
+        // Si la stratégie requiert un envoi de code (email_code ou phone_code)
+        if (factor.strategy === "email_code" || factor.strategy === "phone_code") {
+            isLoading = true;
+            try {
+                const prepPayload: any = { strategy: factor.strategy };
+                if (factor.emailAddressId) prepPayload.emailAddressId = factor.emailAddressId;
+                if (factor.phoneNumberId) prepPayload.phoneNumberId = factor.phoneNumberId;
+
+                console.log("Envoi du code 2FA avec prepareSecondFactor:", prepPayload);
+                await attempt.prepareSecondFactor(prepPayload);
+                startResendTimer();
+                successMessage = factor.strategy === "email_code"
+                    ? `Code envoyé par e-mail à ${safeIdentifier || "votre adresse"}.`
+                    : `Code envoyé par SMS à ${safeIdentifier || "votre numéro"}.`;
+            } catch (err: any) {
+                console.error("Erreur prepareSecondFactor:", err);
+                errorMessage = err.errors?.[0]?.longMessage || err.message || "Erreur lors de l'envoi du code.";
+            } finally {
+                isLoading = false;
+            }
+        }
+    }
+
+    async function setupSecondFactor(attempt: any) {
+        pendingSignInAttempt = attempt;
+        availableFactors = attempt.supportedSecondFactors || [];
+        isFirstFactorCode = false;
+
+        // Stratégie préférée : email_code, puis totp, puis phone_code
+        const emailFactor = availableFactors.find((f: any) => f.strategy === "email_code");
+        const totpFactor = availableFactors.find((f: any) => f.strategy === "totp");
+        const phoneFactor = availableFactors.find((f: any) => f.strategy === "phone_code");
+
+        const selected = emailFactor || totpFactor || phoneFactor || availableFactors[0];
+
+        if (!selected) {
+            throw new Error("Aucune méthode de validation supplémentaire trouvée.");
+        }
+
+        needsSecondFactor = true;
+        await switchSecondFactorStrategy(selected, attempt);
+    }
+
+    function startResendTimer() {
+        resendCountdown = 30;
+        const timer = setInterval(() => {
+            resendCountdown--;
+            if (resendCountdown <= 0) {
+                clearInterval(timer);
+            }
+        }, 1000);
+    }
+
+    async function resendCode() {
+        if (!pendingSignInAttempt || !pendingSecondFactor || resendCountdown > 0) return;
+        if (pendingSecondFactor.strategy !== "email_code" && pendingSecondFactor.strategy !== "phone_code") return;
+
+        isResending = true;
+        errorMessage = "";
+        successMessage = "";
+
+        try {
+            const prepPayload: any = { strategy: pendingSecondFactor.strategy };
+            if (pendingSecondFactor.emailAddressId) prepPayload.emailAddressId = pendingSecondFactor.emailAddressId;
+            if (pendingSecondFactor.phoneNumberId) prepPayload.phoneNumberId = pendingSecondFactor.phoneNumberId;
+
+            if (isFirstFactorCode) {
+                await pendingSignInAttempt.prepareFirstFactor(prepPayload);
+            } else {
+                await pendingSignInAttempt.prepareSecondFactor(prepPayload);
+            }
+
+            startResendTimer();
+            successMessage = "Nouveau code envoyé avec succès !";
+        } catch (err: any) {
+            console.error("Erreur renvoi code:", err);
+            errorMessage = err.errors?.[0]?.longMessage || err.message || "Impossible de renvoyer le code.";
+        } finally {
+            isResending = false;
+        }
     }
 
     async function handleLogin(e: SubmitEvent) {
         e.preventDefault();
         errorMessage = "";
+        successMessage = "";
+        needsSecondFactor = false;
+        isFirstFactorCode = false;
+        secondFactorCode = "";
+        pendingSignInAttempt = null;
+        pendingSecondFactor = null;
+        availableFactors = [];
         
         if (!identifier.trim() || !password) {
             errorMessage = "Veuillez renseigner votre identifiant et mot de passe.";
@@ -93,28 +248,83 @@
         isLoading = true;
 
         try {
-            const clerk = (window as any).Clerk;
+            const clerk = await getClerkInstance();
             if (!clerk) {
-                throw new Error("Service d'authentification en cours d'initialisation. Réessayez dans un instant.");
+                throw new Error("Service d'authentification indisponible. Veuillez rafraîchir la page.");
             }
 
-            if (!clerk.loaded) {
+            if (!clerk.loaded && typeof clerk.load === "function") {
                 await clerk.load();
             }
 
-            const signInAttempt = await clerk.client.signIn.create({
+            // Tentative initiale de connexion avec identifiant
+            let signInAttempt = await clerk.client.signIn.create({
                 identifier: identifier.trim(),
                 password: password,
             });
 
+            // 1. Connexion réussie immédiatement
             if (signInAttempt.status === "complete") {
                 await clerk.setActive({ session: signInAttempt.createdSessionId });
                 triggerMorphToTerminal();
-            } else {
-                console.warn("Statut Clerk non complété:", signInAttempt);
-                errorMessage = `Authentification incomplète : statut ${signInAttempt.status}.`;
-                isLoading = false;
+                return;
             }
+
+            // 2. Si Clerk requiert une tentative de premier facteur (password ou email_code)
+            if (signInAttempt.status === "needs_first_factor") {
+                const factors = signInAttempt.supportedFirstFactors || [];
+                const passwordFactor = factors.find((f: any) => f.strategy === "password");
+                const emailCodeFactor = factors.find((f: any) => f.strategy === "email_code");
+
+                if (password && passwordFactor) {
+                    const factorAttempt = await signInAttempt.attemptFirstFactor({
+                        strategy: "password",
+                        password: password,
+                    });
+
+                    if (factorAttempt.status === "complete") {
+                        await clerk.setActive({ session: factorAttempt.createdSessionId });
+                        triggerMorphToTerminal();
+                        return;
+                    } else if (factorAttempt.status === "needs_second_factor" || factorAttempt.status === "needs_client_trust") {
+                        await setupSecondFactor(factorAttempt);
+                        return;
+                    } else {
+                        errorMessage = `Statut après mot de passe : ${factorAttempt.status}.`;
+                        isLoading = false;
+                        return;
+                    }
+                } else if (emailCodeFactor) {
+                    // Stratégie premier facteur par email_code
+                    isFirstFactorCode = true;
+                    pendingSignInAttempt = signInAttempt;
+                    pendingSecondFactor = emailCodeFactor;
+                    secondFactorStrategy = "email_code";
+                    safeIdentifier = emailCodeFactor.safeIdentifier || identifier.trim();
+
+                    const prepPayload: any = { strategy: "email_code" };
+                    if (emailCodeFactor.emailAddressId) prepPayload.emailAddressId = emailCodeFactor.emailAddressId;
+
+                    await signInAttempt.prepareFirstFactor(prepPayload);
+                    startResendTimer();
+                    needsSecondFactor = true;
+                    successMessage = `Code envoyé par e-mail à ${safeIdentifier}.`;
+                    isLoading = false;
+                    return;
+                } else {
+                    throw new Error("L'authentification par mot de passe n'est pas disponible pour ce compte.");
+                }
+            }
+
+            // 3. Si validation en 2 étapes requise (2FA / TOTP / Device Trust)
+            if (signInAttempt.status === "needs_second_factor" || signInAttempt.status === "needs_client_trust") {
+                await setupSecondFactor(signInAttempt);
+                return;
+            }
+
+            console.warn("Statut Clerk non complété:", signInAttempt);
+            errorMessage = `Authentification incomplète : statut ${signInAttempt.status}.`;
+            isLoading = false;
         } catch (err: any) {
             console.error("Erreur de connexion:", err);
             isLoading = false;
@@ -124,6 +334,16 @@
                     errorMessage = "Identifiant ou adresse e-mail introuvable.";
                 } else if (firstErr.code === "form_password_incorrect") {
                     errorMessage = "Mot de passe incorrect. Veuillez réessayer.";
+                } else if (firstErr.code === "session_exists") {
+                    try {
+                        const clerk = (window as any).Clerk;
+                        if (clerk?.session) {
+                            triggerMorphToTerminal();
+                            return;
+                        }
+                    } catch (_) {}
+                    errorMessage = "Une session est déjà active. Redirection...";
+                    setTimeout(() => redirectToPortal(), 600);
                 } else {
                     errorMessage = firstErr.longMessage || firstErr.message || "Erreur de connexion.";
                 }
@@ -133,19 +353,106 @@
         }
     }
 
+    async function handleSecondFactor(e: SubmitEvent) {
+        e.preventDefault();
+        errorMessage = "";
+        successMessage = "";
+
+        if (!pendingSignInAttempt) {
+            errorMessage = "Session d'authentification invalide. Relancez la connexion.";
+            return;
+        }
+
+        if (!secondFactorCode.trim()) {
+            errorMessage = "Veuillez saisir le code de validation reçu.";
+            return;
+        }
+
+        isLoading = true;
+
+        try {
+            const clerk = await getClerkInstance();
+            if (!clerk || !clerk.loaded) {
+                throw new Error("Service d'authentification indisponible.");
+            }
+
+            const payload = {
+                strategy: secondFactorStrategy,
+                code: secondFactorCode.trim(),
+            };
+
+            let resultAttempt;
+            if (isFirstFactorCode) {
+                resultAttempt = await pendingSignInAttempt.attemptFirstFactor(payload);
+            } else {
+                resultAttempt = await pendingSignInAttempt.attemptSecondFactor(payload);
+            }
+
+            if (resultAttempt.status === "complete") {
+                await clerk.setActive({ session: resultAttempt.createdSessionId });
+                triggerMorphToTerminal();
+                return;
+            } else if (resultAttempt.status === "needs_second_factor" || resultAttempt.status === "needs_client_trust") {
+                isFirstFactorCode = false;
+                await setupSecondFactor(resultAttempt);
+                return;
+            }
+
+            errorMessage = `Validation incomplète : statut ${resultAttempt.status}.`;
+            isLoading = false;
+        } catch (err: any) {
+            console.error("Erreur validation code:", err);
+            isLoading = false;
+
+            if (err.errors && err.errors.length > 0) {
+                const firstErr = err.errors[0];
+                if (firstErr.code === "form_code_incorrect") {
+                    errorMessage = "Code de validation incorrect. Veuillez vérifier.";
+                } else {
+                    errorMessage = firstErr.longMessage || firstErr.message || "Code de validation invalide.";
+                }
+            } else {
+                errorMessage = err.message || "Erreur lors de la validation du code.";
+            }
+        }
+    }
+
+    function resetSecondFactor() {
+        needsSecondFactor = false;
+        isFirstFactorCode = false;
+        secondFactorCode = "";
+        pendingSignInAttempt = null;
+        pendingSecondFactor = null;
+        availableFactors = [];
+        errorMessage = "";
+        successMessage = "";
+        resendCountdown = 0;
+    }
+
     onMount(() => {
+        let isMounted = true;
+
         // Détection de session active Clerk
-        const checkInterval = setInterval(() => {
-            const clerk = (window as any).Clerk;
-            if (clerk && clerk.loaded) {
-                clearInterval(checkInterval);
+        (async () => {
+            try {
+                const clerk = await getClerkInstance(5000);
+                if (!isMounted || !clerk) return;
+
+                if (clerk.session && clerk.user && phase === "login") {
+                    triggerMorphToTerminal();
+                    return;
+                }
+
                 clerk.addListener((payload: any) => {
+                    if (!isMounted) return;
                     if (payload.session && payload.user && phase === "login") {
                         triggerMorphToTerminal();
                     }
                 });
+            } catch (e) {
+                console.debug("Initial Clerk check:", e);
             }
-        }, 100);
+        })();
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (phase === "terminal" && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) {
@@ -155,7 +462,7 @@
 
         window.addEventListener("keydown", handleKeyDown);
         return () => {
-            clearInterval(checkInterval);
+            isMounted = false;
             window.removeEventListener("keydown", handleKeyDown);
         };
     });
@@ -195,7 +502,9 @@
             <div class="bg-[#2B2D42] text-white px-3.5 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold mb-3">
                 <div class="flex items-center gap-2.5">
                     <span class="text-[#99E7DC] font-black">▶</span>
-                    <span class="tracking-wider uppercase">LOGIN_PROMPT.EXE — SESSION CONSOLE</span>
+                    <span class="tracking-wider uppercase">
+                        {needsSecondFactor ? "SECURITY_CHECK.EXE — 2FA / OTP" : "LOGIN_PROMPT.EXE — SESSION CONSOLE"}
+                    </span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-3.5 h-3.5 bg-[#FFC2D1] border border-black inline-block shadow-[1px_1px_0px_0px_#000]"></span>
@@ -209,13 +518,21 @@
                 
                 <div class="mb-6 text-center sm:text-left">
                     <div class="inline-block bg-[#FFD2A6] px-2 py-0.5 border border-black text-[10px] font-mono font-bold uppercase mb-1 shadow-[1px_1px_0px_0px_#000]">
-                        ACCÈS ADMINISTRATEUR
+                        {needsSecondFactor ? "VALIDATION DE SÉCURITÉ" : "ACCÈS ADMINISTRATEUR"}
                     </div>
                     <h2 class="font-mono font-black text-xl uppercase text-black tracking-tight">
-                        Connexion au portail
+                        {needsSecondFactor ? "Code de vérification" : "Connexion au portail"}
                     </h2>
                     <p class="font-mono text-xs text-black/60 font-semibold mt-1">
-                        Saisissez vos identifiants pour démarrer le terminal Gestionnaire.SYS.
+                        {#if !needsSecondFactor}
+                            Saisissez vos identifiants pour démarrer le terminal Gestionnaire.SYS.
+                        {:else if secondFactorStrategy === 'email_code'}
+                            Un code à 6 chiffres a été envoyé à {safeIdentifier ? safeIdentifier : "votre adresse email"}.
+                        {:else if secondFactorStrategy === 'phone_code'}
+                            Un code à 6 chiffres a été envoyé par SMS au {safeIdentifier ? safeIdentifier : "votre numéro"}.
+                        {:else}
+                            Saisissez le code généré par votre application d'authentification (Google Authenticator, etc.).
+                        {/if}
                     </p>
                 </div>
 
@@ -226,61 +543,159 @@
                     </div>
                 {/if}
 
-                <form onsubmit={handleLogin} class="space-y-4 font-mono">
-                    <div>
-                        <label for="identifier" class="block text-xs font-black uppercase text-black mb-1.5 tracking-wider">
-                            Identifiant / Adresse E-mail
-                        </label>
-                        <input
-                            id="identifier"
-                            type="text"
-                            bind:value={identifier}
-                            placeholder="admin@daisybrocante.fr"
-                            required
-                            disabled={isLoading}
-                            class="retro-input text-sm py-2.5"
-                        />
+                {#if successMessage}
+                    <div class="mb-5 p-3.5 bg-[#99E7DC] border-2 border-black font-mono text-xs font-bold shadow-[2px_2px_0px_0px_#000] flex items-center gap-2.5">
+                        <span class="text-base">⚡</span>
+                        <span>{successMessage}</span>
                     </div>
+                {/if}
 
-                    <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label for="password" class="text-xs font-black uppercase text-black tracking-wider">
-                                Mot de passe
+                {#if !needsSecondFactor}
+                    <form onsubmit={handleLogin} class="space-y-4 font-mono">
+                        <div>
+                            <label for="identifier" class="block text-xs font-black uppercase text-black mb-1.5 tracking-wider">
+                                Identifiant / Adresse E-mail
                             </label>
+                            <input
+                                id="identifier"
+                                type="text"
+                                bind:value={identifier}
+                                placeholder="admin@daisybrocante.fr"
+                                required
+                                disabled={isLoading}
+                                class="retro-input text-sm py-2.5"
+                            />
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="password" class="text-xs font-black uppercase text-black tracking-wider">
+                                    Mot de passe
+                                </label>
+                                <button
+                                    type="button"
+                                    onclick={() => showPassword = !showPassword}
+                                    class="text-[11px] text-black/70 hover:text-black font-bold uppercase underline cursor-pointer"
+                                >
+                                    {showPassword ? "Masquer" : "Afficher"}
+                                </button>
+                            </div>
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                bind:value={password}
+                                placeholder="••••••••••••"
+                                required
+                                disabled={isLoading}
+                                class="retro-input text-sm py-2.5"
+                            />
+                        </div>
+
+                        <div class="pt-3">
                             <button
-                                type="button"
-                                onclick={() => showPassword = !showPassword}
-                                class="text-[11px] text-black/70 hover:text-black font-bold uppercase underline cursor-pointer"
+                                type="submit"
+                                disabled={isLoading}
+                                class="w-full retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
                             >
-                                {showPassword ? "Masquer" : "Afficher"}
+                                {#if isLoading}
+                                    <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                    <span>VÉRIFICATION DES DROITS...</span>
+                                {:else}
+                                    <span>⚡ SE CONNECTER AU SYSTÈME</span>
+                                {/if}
                             </button>
                         </div>
-                        <input
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            bind:value={password}
-                            placeholder="••••••••••••"
-                            required
-                            disabled={isLoading}
-                            class="retro-input text-sm py-2.5"
-                        />
-                    </div>
+                    </form>
+                {:else}
+                    <form onsubmit={handleSecondFactor} class="space-y-4 font-mono">
+                        
+                        <!-- Sélecteur de méthode si plusieurs sont disponibles -->
+                        {#if availableFactors.length > 1}
+                            <div class="p-2.5 bg-[#EDE9DF] border-2 border-black space-y-1.5 shadow-[2px_2px_0px_0px_#000]">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-black/70 block">Méthode de réception :</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    {#each availableFactors as factor}
+                                        <button
+                                            type="button"
+                                            disabled={isLoading}
+                                            onclick={() => switchSecondFactorStrategy(factor)}
+                                            class="retro-btn btn-xs text-[10px] {secondFactorStrategy === factor.strategy ? '!bg-[#99E7DC] font-black shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                                        >
+                                            {#if factor.strategy === 'email_code'}
+                                                ✉️ Email ({factor.safeIdentifier || 'par défaut'})
+                                            {:else if factor.strategy === 'totp'}
+                                                📱 Authenticator App
+                                            {:else if factor.strategy === 'phone_code'}
+                                                💬 SMS ({factor.safeIdentifier || 'par défaut'})
+                                            {:else}
+                                                🔑 {factor.strategy}
+                                            {/if}
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
 
-                    <div class="pt-3">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            class="w-full retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
-                        >
-                            {#if isLoading}
-                                <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-                                <span>VÉRIFICATION DES DROITS...</span>
-                            {:else}
-                                <span>⚡ SE CONNECTER AU SYSTÈME</span>
-                            {/if}
-                        </button>
-                    </div>
-                </form>
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="otp" class="text-xs font-black uppercase text-black tracking-wider">
+                                    Code de vérification {secondFactorStrategy === 'email_code' ? '(reçu par email)' : secondFactorStrategy === 'phone_code' ? '(reçu par SMS)' : '(Authenticator)'}
+                                </label>
+                                {#if secondFactorStrategy === 'email_code' || secondFactorStrategy === 'phone_code'}
+                                    <button
+                                        type="button"
+                                        onclick={resendCode}
+                                        disabled={isLoading || isResending || resendCountdown > 0}
+                                        class="text-[11px] font-bold text-black/80 hover:text-black underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {#if isResending}
+                                            Envoi en cours...
+                                        {:else if resendCountdown > 0}
+                                            Renvoyer ({resendCountdown}s)
+                                        {:else}
+                                            🔄 Renvoyer le code
+                                        {/if}
+                                    </button>
+                                {/if}
+                            </div>
+                            <input
+                                id="otp"
+                                type="text"
+                                inputmode="numeric"
+                                autocomplete="one-time-code"
+                                bind:value={secondFactorCode}
+                                placeholder="123456"
+                                required
+                                disabled={isLoading}
+                                class="retro-input text-base tracking-[0.25em] font-bold text-center py-3"
+                            />
+                        </div>
+
+                        <div class="pt-3 flex gap-2.5">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                class="flex-1 retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
+                            >
+                                {#if isLoading}
+                                    <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                    <span>VALIDATION...</span>
+                                {:else}
+                                    <span>✅ VALIDER LE CODE</span>
+                                {/if}
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick={resetSecondFactor}
+                                disabled={isLoading}
+                                class="retro-btn py-3.5 px-4 text-xs bg-white hover:bg-[#FFC2D1] shadow-[2px_2px_0px_0px_#000]"
+                            >
+                                « Retour
+                            </button>
+                        </div>
+                    </form>
+                {/if}
 
             </div>
 
