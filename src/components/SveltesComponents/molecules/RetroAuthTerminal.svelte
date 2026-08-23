@@ -13,6 +13,11 @@
     let showPassword = $state(false);
     let isLoading = $state(false);
     let errorMessage = $state("");
+    let needsSecondFactor = $state(false);
+    let secondFactorCode = $state("");
+    let secondFactorStrategy = $state("totp");
+    let pendingSignInAttempt = $state<any>(null);
+    let pendingSecondFactor = $state<any>(null);
     
     // Phases : 'login' | 'closing' | 'terminal'
     let phase = $state<"login" | "closing" | "terminal">("login");
@@ -84,6 +89,10 @@
     async function handleLogin(e: SubmitEvent) {
         e.preventDefault();
         errorMessage = "";
+        needsSecondFactor = false;
+        secondFactorCode = "";
+        pendingSignInAttempt = null;
+        pendingSecondFactor = null;
         
         if (!identifier.trim() || !password) {
             errorMessage = "Veuillez renseigner votre identifiant et mot de passe.";
@@ -110,6 +119,16 @@
             if (signInAttempt.status === "complete") {
                 await clerk.setActive({ session: signInAttempt.createdSessionId });
                 triggerMorphToTerminal();
+            } else if (signInAttempt.status === "needs_second_factor") {
+                const factors = signInAttempt.supportedSecondFactors || [];
+                const preferred = factors.find((f: any) => f.strategy === "totp") || factors[0] || null;
+
+                secondFactorStrategy = preferred?.strategy || "totp";
+                pendingSecondFactor = preferred;
+                pendingSignInAttempt = signInAttempt;
+                needsSecondFactor = true;
+                errorMessage = "Validation en 2 etapes requise. Entrez le code de verification.";
+                isLoading = false;
             } else {
                 console.warn("Statut Clerk non complété:", signInAttempt);
                 errorMessage = `Authentification incomplète : statut ${signInAttempt.status}.`;
@@ -131,6 +150,71 @@
                 errorMessage = err.message || "Impossible de se connecter au serveur.";
             }
         }
+    }
+
+    async function handleSecondFactor(e: SubmitEvent) {
+        e.preventDefault();
+        errorMessage = "";
+
+        if (!pendingSignInAttempt) {
+            errorMessage = "Session d'authentification invalide. Relancez la connexion.";
+            return;
+        }
+
+        if (!secondFactorCode.trim()) {
+            errorMessage = "Veuillez saisir le code de verification.";
+            return;
+        }
+
+        isLoading = true;
+
+        try {
+            const clerk = (window as any).Clerk;
+            if (!clerk || !clerk.loaded) {
+                throw new Error("Service d'authentification indisponible.");
+            }
+
+            const payload: any = {
+                strategy: secondFactorStrategy,
+                code: secondFactorCode.trim(),
+            };
+
+            if (pendingSecondFactor?.phoneNumberId) {
+                payload.phoneNumberId = pendingSecondFactor.phoneNumberId;
+            }
+            if (pendingSecondFactor?.emailAddressId) {
+                payload.emailAddressId = pendingSecondFactor.emailAddressId;
+            }
+
+            const secondFactorAttempt = await pendingSignInAttempt.attemptSecondFactor(payload);
+
+            if (secondFactorAttempt.status === "complete") {
+                await clerk.setActive({ session: secondFactorAttempt.createdSessionId });
+                triggerMorphToTerminal();
+                return;
+            }
+
+            errorMessage = `Validation du second facteur incomplète : statut ${secondFactorAttempt.status}.`;
+            isLoading = false;
+        } catch (err: any) {
+            console.error("Erreur second facteur:", err);
+            isLoading = false;
+
+            if (err.errors && err.errors.length > 0) {
+                const firstErr = err.errors[0];
+                errorMessage = firstErr.longMessage || firstErr.message || "Code de verification invalide.";
+            } else {
+                errorMessage = err.message || "Erreur lors de la verification du second facteur.";
+            }
+        }
+    }
+
+    function resetSecondFactor() {
+        needsSecondFactor = false;
+        secondFactorCode = "";
+        pendingSignInAttempt = null;
+        pendingSecondFactor = null;
+        errorMessage = "";
     }
 
     onMount(() => {
@@ -226,61 +310,109 @@
                     </div>
                 {/if}
 
-                <form onsubmit={handleLogin} class="space-y-4 font-mono">
-                    <div>
-                        <label for="identifier" class="block text-xs font-black uppercase text-black mb-1.5 tracking-wider">
-                            Identifiant / Adresse E-mail
-                        </label>
-                        <input
-                            id="identifier"
-                            type="text"
-                            bind:value={identifier}
-                            placeholder="admin@daisybrocante.fr"
-                            required
-                            disabled={isLoading}
-                            class="retro-input text-sm py-2.5"
-                        />
-                    </div>
-
-                    <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label for="password" class="text-xs font-black uppercase text-black tracking-wider">
-                                Mot de passe
+                {#if !needsSecondFactor}
+                    <form onsubmit={handleLogin} class="space-y-4 font-mono">
+                        <div>
+                            <label for="identifier" class="block text-xs font-black uppercase text-black mb-1.5 tracking-wider">
+                                Identifiant / Adresse E-mail
                             </label>
+                            <input
+                                id="identifier"
+                                type="text"
+                                bind:value={identifier}
+                                placeholder="admin@daisybrocante.fr"
+                                required
+                                disabled={isLoading}
+                                class="retro-input text-sm py-2.5"
+                            />
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="password" class="text-xs font-black uppercase text-black tracking-wider">
+                                    Mot de passe
+                                </label>
+                                <button
+                                    type="button"
+                                    onclick={() => showPassword = !showPassword}
+                                    class="text-[11px] text-black/70 hover:text-black font-bold uppercase underline cursor-pointer"
+                                >
+                                    {showPassword ? "Masquer" : "Afficher"}
+                                </button>
+                            </div>
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                bind:value={password}
+                                placeholder="••••••••••••"
+                                required
+                                disabled={isLoading}
+                                class="retro-input text-sm py-2.5"
+                            />
+                        </div>
+
+                        <div class="pt-3">
                             <button
-                                type="button"
-                                onclick={() => showPassword = !showPassword}
-                                class="text-[11px] text-black/70 hover:text-black font-bold uppercase underline cursor-pointer"
+                                type="submit"
+                                disabled={isLoading}
+                                class="w-full retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
                             >
-                                {showPassword ? "Masquer" : "Afficher"}
+                                {#if isLoading}
+                                    <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                    <span>VÉRIFICATION DES DROITS...</span>
+                                {:else}
+                                    <span>⚡ SE CONNECTER AU SYSTÈME</span>
+                                {/if}
                             </button>
                         </div>
-                        <input
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            bind:value={password}
-                            placeholder="••••••••••••"
-                            required
-                            disabled={isLoading}
-                            class="retro-input text-sm py-2.5"
-                        />
-                    </div>
+                    </form>
+                {:else}
+                    <form onsubmit={handleSecondFactor} class="space-y-4 font-mono">
+                        <div class="p-3 border-2 border-black bg-[#D4E2FD] text-xs font-bold shadow-[2px_2px_0px_0px_#000]">
+                            Deuxieme facteur requis ({secondFactorStrategy}).
+                        </div>
 
-                    <div class="pt-3">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            class="w-full retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
-                        >
-                            {#if isLoading}
-                                <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-                                <span>VÉRIFICATION DES DROITS...</span>
-                            {:else}
-                                <span>⚡ SE CONNECTER AU SYSTÈME</span>
-                            {/if}
-                        </button>
-                    </div>
-                </form>
+                        <div>
+                            <label for="otp" class="block text-xs font-black uppercase text-black mb-1.5 tracking-wider">
+                                Code de verification
+                            </label>
+                            <input
+                                id="otp"
+                                type="text"
+                                inputmode="numeric"
+                                bind:value={secondFactorCode}
+                                placeholder="123456"
+                                required
+                                disabled={isLoading}
+                                class="retro-input text-sm py-2.5"
+                            />
+                        </div>
+
+                        <div class="pt-3 flex gap-2.5">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                class="flex-1 retro-btn retro-btn-primary py-3 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
+                            >
+                                {#if isLoading}
+                                    <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                    <span>VALIDATION...</span>
+                                {:else}
+                                    <span>✅ VALIDER LE CODE</span>
+                                {/if}
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick={resetSecondFactor}
+                                disabled={isLoading}
+                                class="retro-btn py-3 px-4 text-xs bg-white hover:bg-[#FFC2D1]"
+                            >
+                                Retour
+                            </button>
+                        </div>
+                    </form>
+                {/if}
 
             </div>
 
