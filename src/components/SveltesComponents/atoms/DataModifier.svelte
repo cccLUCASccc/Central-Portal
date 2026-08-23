@@ -47,6 +47,14 @@
         { value: "L", label: "Grand (L) - Pièce volumineuse" },
         { value: "XL", label: "Très Grand (XL) - Transporteur" }
     ];
+
+    const epoqueOptions = [
+        { value: "vintage", label: "⏳ Vintage" },
+        { value: "art-deco", label: "🏛️ Art Déco" },
+        { value: "art-nouveau", label: "🌿 Art Nouveau" },
+        { value: "avant 1850", label: "📜 Avant 1850" },
+        { value: "contemporain", label: "✨ Contemporain" }
+    ];
 </script>
 
 {#if type === 1}
@@ -152,6 +160,14 @@
 <RetroSelect 
     label={type_name}
     options={sizeOptions}
+    bind:value={data_string}
+/>
+
+{:else if type === 9}
+<!-- Époque Dropdown Customisé -->
+<RetroSelect 
+    label={type_name || "Époque"}
+    options={epoqueOptions}
     bind:value={data_string}
 />
 {/if}

@@ -8,8 +8,9 @@
 
     let name = $state("");
     let description = $state("");
-    let year = $state<number>(new Date().getFullYear());
+    let year = $state("vintage");
     let price = $state<number>(0);
+    let quantity = $state<number>(1);
     let status = $state<number>(0);
     let category = $state("Mobilier");
     let subcategories = $state<Subcategory[]>([]);
@@ -100,6 +101,7 @@
         formData.append("name", name);
         formData.append("description", description);
         formData.append("price", price.toString());
+        formData.append("quantity", (quantity !== null && quantity !== undefined ? quantity : 1).toString());
         formData.append("year", year.toString());
         formData.append("status", status.toString());
         formData.append("category", category);
@@ -191,11 +193,14 @@
             <!-- Colonne 2 : Données Techniques -->
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
-                    <DataModifier bind:data_number={year} type={3} type_name='Année (Époque)'/>
+                    <DataModifier bind:data_string={year} type={9} type_name='Époque'/>
                     <DataModifier bind:data_number={status} type={4} type_name="Statut boutique"/>
                 </div>
 
-                <DataModifier bind:data_number={price} type={3} type_name='Prix de vente (€)'/>
+                <div class="grid grid-cols-2 gap-3">
+                    <DataModifier bind:data_number={price} type={3} type_name='Prix de vente (€)'/>
+                    <DataModifier bind:data_number={quantity} type={3} type_name='Quantité en stock'/>
+                </div>
                 
                 <DataModifier bind:data_string={category} type={5} type_name='Catégorie Principale'/>
                 

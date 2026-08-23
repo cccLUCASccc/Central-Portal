@@ -366,7 +366,11 @@
                         <span class="retro-badge bg-[#FFE600] text-[9px] px-1 py-0">NOUVEAU</span>
                       {/if}
                     </div>
-                    <div class="text-[10px] text-black/60 font-mono">ID: #{antiquite.id}</div>
+                    <div class="text-[10px] text-black/60 font-mono">
+                      <span>ID: #{antiquite.id}</span>
+                      <span class="mx-1">•</span>
+                      <span class="font-bold {antiquite.quantity !== undefined && antiquite.quantity <= 0 ? 'text-red-600' : 'text-black/80'}">Stock: {antiquite.quantity ?? 1}</span>
+                    </div>
                   </div>
                 </div>
               </td>

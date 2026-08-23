@@ -30,10 +30,11 @@ export interface Antiquite {
     images: Image[];
     price : number;
     nouveaute ?: boolean;
-    year : number;
+    year : string;
     category: string;
     tags ?: string;
     status : number;
+    quantity ?: number;
     size: string;
     images_urls ?: string;
     ebay_title?: string;
