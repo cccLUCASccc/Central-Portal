@@ -90,28 +90,35 @@
         }, 300);
     }
 
+    function sanitizeRedirectUrl(urlStr: string | null | undefined): string {
+        if (!urlStr) return "/";
+        try {
+            if (urlStr.startsWith("/") && !urlStr.startsWith("//")) {
+                return urlStr;
+            }
+            const parsed = new URL(urlStr, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+            const result = parsed.pathname + parsed.search + parsed.hash;
+            return (result && !result.startsWith("//")) ? result : "/";
+        } catch (_) {
+            return "/";
+        }
+    }
+
     function getResolvedTargetUrl(): string {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             const redirectParam = params.get("redirect_url");
             if (redirectParam) {
-                try {
-                    const url = new URL(redirectParam, window.location.origin);
-                    if (url.origin === window.location.origin) {
-                        return url.pathname + url.search + url.hash;
-                    }
-                } catch (_) {
-                    if (redirectParam.startsWith("/")) {
-                        return redirectParam;
-                    }
-                }
+                const cleaned = sanitizeRedirectUrl(redirectParam);
+                if (cleaned && cleaned !== "/") return cleaned;
             }
         }
-        return targetUrl || "/";
+        return sanitizeRedirectUrl(targetUrl);
     }
 
     function redirectToPortal() {
-        window.location.replace(getResolvedTargetUrl());
+        const dest = getResolvedTargetUrl();
+        window.location.replace(dest);
     }
 
     async function getClerkInstance(timeoutMs = 8000): Promise<any> {

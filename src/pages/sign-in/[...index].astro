@@ -10,7 +10,22 @@ if (userId) {
   return Astro.redirect("/");
 }
 
-const redirectUrl = Astro.url.searchParams.get("redirect_url") || "/";
+const rawRedirect = Astro.url.searchParams.get("redirect_url") || "/";
+let redirectUrl = "/";
+
+try {
+  if (rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
+    redirectUrl = rawRedirect;
+  } else {
+    const parsed = new URL(rawRedirect, "http://localhost");
+    redirectUrl = parsed.pathname + parsed.search + parsed.hash;
+  }
+} catch (_) {
+  redirectUrl = "/";
+}
+if (!redirectUrl || redirectUrl.startsWith("//")) {
+  redirectUrl = "/";
+}
 ---
 
 <!doctype html>
