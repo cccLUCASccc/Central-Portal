@@ -82,8 +82,50 @@
         }, 300);
     }
 
+    function getResolvedTargetUrl(): string {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const redirectParam = params.get("redirect_url");
+            if (redirectParam) {
+                try {
+                    const url = new URL(redirectParam, window.location.origin);
+                    if (url.origin === window.location.origin) {
+                        return url.pathname + url.search + url.hash;
+                    }
+                } catch (_) {
+                    if (redirectParam.startsWith("/")) {
+                        return redirectParam;
+                    }
+                }
+            }
+        }
+        return targetUrl || "/";
+    }
+
     function redirectToPortal() {
-        window.location.replace(targetUrl);
+        window.location.replace(getResolvedTargetUrl());
+    }
+
+    async function getClerkInstance(timeoutMs = 8000): Promise<any> {
+        if (typeof window === "undefined") return null;
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            const clerk = (window as any).Clerk;
+            if (clerk) {
+                if (!clerk.loaded && typeof clerk.load === "function") {
+                    try {
+                        await clerk.load();
+                    } catch (e) {
+                        console.warn("Clerk.load() error:", e);
+                    }
+                }
+                if (clerk.loaded) {
+                    return clerk;
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, 80));
+        }
+        return (window as any).Clerk || null;
     }
 
     async function handleLogin(e: SubmitEvent) {
@@ -102,24 +144,51 @@
         isLoading = true;
 
         try {
-            const clerk = (window as any).Clerk;
+            const clerk = await getClerkInstance();
             if (!clerk) {
-                throw new Error("Service d'authentification en cours d'initialisation. Réessayez dans un instant.");
+                throw new Error("Service d'authentification indisponible. Veuillez rafraîchir la page.");
             }
 
-            if (!clerk.loaded) {
+            if (!clerk.loaded && typeof clerk.load === "function") {
                 await clerk.load();
             }
 
-            const signInAttempt = await clerk.client.signIn.create({
+            // Tentative initiale de connexion
+            let signInAttempt = await clerk.client.signIn.create({
                 identifier: identifier.trim(),
                 password: password,
             });
 
+            // 1. Connexion réussie immédiatement
             if (signInAttempt.status === "complete") {
                 await clerk.setActive({ session: signInAttempt.createdSessionId });
                 triggerMorphToTerminal();
-            } else if (signInAttempt.status === "needs_second_factor") {
+                return;
+            }
+
+            // 2. Si Clerk requiert une tentative de premier facteur (password strategy)
+            if (signInAttempt.status === "needs_first_factor") {
+                const factors = signInAttempt.supportedFirstFactors || [];
+                const passwordFactor = factors.find((f: any) => f.strategy === "password");
+
+                if (passwordFactor) {
+                    signInAttempt = await signInAttempt.attemptFirstFactor({
+                        strategy: "password",
+                        password: password,
+                    });
+
+                    if (signInAttempt.status === "complete") {
+                        await clerk.setActive({ session: signInAttempt.createdSessionId });
+                        triggerMorphToTerminal();
+                        return;
+                    }
+                } else {
+                    throw new Error("L'authentification par mot de passe n'est pas disponible pour ce compte.");
+                }
+            }
+
+            // 3. Si validation en 2 étapes requise (2FA / TOTP)
+            if (signInAttempt.status === "needs_second_factor") {
                 const factors = signInAttempt.supportedSecondFactors || [];
                 const preferred = factors.find((f: any) => f.strategy === "totp") || factors[0] || null;
 
@@ -127,13 +196,13 @@
                 pendingSecondFactor = preferred;
                 pendingSignInAttempt = signInAttempt;
                 needsSecondFactor = true;
-                errorMessage = "Validation en 2 etapes requise. Entrez le code de verification.";
                 isLoading = false;
-            } else {
-                console.warn("Statut Clerk non complété:", signInAttempt);
-                errorMessage = `Authentification incomplète : statut ${signInAttempt.status}.`;
-                isLoading = false;
+                return;
             }
+
+            console.warn("Statut Clerk non complété:", signInAttempt);
+            errorMessage = `Authentification incomplète : statut ${signInAttempt.status}.`;
+            isLoading = false;
         } catch (err: any) {
             console.error("Erreur de connexion:", err);
             isLoading = false;
@@ -143,6 +212,16 @@
                     errorMessage = "Identifiant ou adresse e-mail introuvable.";
                 } else if (firstErr.code === "form_password_incorrect") {
                     errorMessage = "Mot de passe incorrect. Veuillez réessayer.";
+                } else if (firstErr.code === "session_exists") {
+                    try {
+                        const clerk = (window as any).Clerk;
+                        if (clerk?.session) {
+                            triggerMorphToTerminal();
+                            return;
+                        }
+                    } catch (_) {}
+                    errorMessage = "Une session est déjà active. Redirection...";
+                    setTimeout(() => redirectToPortal(), 600);
                 } else {
                     errorMessage = firstErr.longMessage || firstErr.message || "Erreur de connexion.";
                 }
@@ -162,14 +241,14 @@
         }
 
         if (!secondFactorCode.trim()) {
-            errorMessage = "Veuillez saisir le code de verification.";
+            errorMessage = "Veuillez saisir le code de validation.";
             return;
         }
 
         isLoading = true;
 
         try {
-            const clerk = (window as any).Clerk;
+            const clerk = await getClerkInstance();
             if (!clerk || !clerk.loaded) {
                 throw new Error("Service d'authentification indisponible.");
             }
@@ -202,9 +281,13 @@
 
             if (err.errors && err.errors.length > 0) {
                 const firstErr = err.errors[0];
-                errorMessage = firstErr.longMessage || firstErr.message || "Code de verification invalide.";
+                if (firstErr.code === "form_code_incorrect") {
+                    errorMessage = "Code de validation incorrect. Veuillez vérifier.";
+                } else {
+                    errorMessage = firstErr.longMessage || firstErr.message || "Code de validation invalide.";
+                }
             } else {
-                errorMessage = err.message || "Erreur lors de la verification du second facteur.";
+                errorMessage = err.message || "Erreur lors de la validation du second facteur.";
             }
         }
     }
@@ -218,18 +301,29 @@
     }
 
     onMount(() => {
+        let isMounted = true;
+
         // Détection de session active Clerk
-        const checkInterval = setInterval(() => {
-            const clerk = (window as any).Clerk;
-            if (clerk && clerk.loaded) {
-                clearInterval(checkInterval);
+        (async () => {
+            try {
+                const clerk = await getClerkInstance(5000);
+                if (!isMounted || !clerk) return;
+
+                if (clerk.session && clerk.user && phase === "login") {
+                    triggerMorphToTerminal();
+                    return;
+                }
+
                 clerk.addListener((payload: any) => {
+                    if (!isMounted) return;
                     if (payload.session && payload.user && phase === "login") {
                         triggerMorphToTerminal();
                     }
                 });
+            } catch (e) {
+                console.debug("Initial Clerk check:", e);
             }
-        }, 100);
+        })();
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (phase === "terminal" && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) {
@@ -239,7 +333,7 @@
 
         window.addEventListener("keydown", handleKeyDown);
         return () => {
-            clearInterval(checkInterval);
+            isMounted = false;
             window.removeEventListener("keydown", handleKeyDown);
         };
     });

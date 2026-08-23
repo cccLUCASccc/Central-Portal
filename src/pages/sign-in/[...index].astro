@@ -9,6 +9,8 @@ const userId = auth.userId;
 if (userId) {
   return Astro.redirect("/");
 }
+
+const redirectUrl = Astro.url.searchParams.get("redirect_url") || "/";
 ---
 
 <!doctype html>
@@ -38,7 +40,7 @@ if (userId) {
     <!-- Main Container -->
     <main class="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[#F6F4EE] relative">
       <div class="w-full max-w-xl md:max-w-2xl mx-auto">
-        <RetroAuthTerminal client:load targetUrl="/" />
+        <RetroAuthTerminal client:load targetUrl={redirectUrl} />
       </div>
     </main>
 
