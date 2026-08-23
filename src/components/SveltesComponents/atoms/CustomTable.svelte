@@ -18,6 +18,36 @@
   let isSubcatModalOpen = $state(false);
   let selectedSubcatId = $state<number | null>(null);
   let isUpdating = $state(false);
+  let updatingQuantityId = $state<number | null>(null);
+
+  async function updateQuantity(antiquiteId: number, newQty: number) {
+    if (newQty < 0) return;
+    updatingQuantityId = antiquiteId;
+    const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+    
+    try {
+      const formData = new FormData();
+      formData.append("quantity", newQty.toString());
+      
+      const res = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${antiquiteId}`, {
+        method: "PATCH",
+        body: formData
+      });
+      
+      if (res.ok) {
+        current_antiquites = current_antiquites.map(item => 
+          item.id === antiquiteId ? { ...item, quantity: newQty } : item
+        );
+      } else {
+        alert("Erreur lors de la mise à jour de la quantité.");
+      }
+    } catch (err) {
+      console.error("Erreur mise à jour quantité:", err);
+      alert("Erreur de connexion lors de la mise à jour.");
+    } finally {
+      updatingQuantityId = null;
+    }
+  }
 
   onMount(async () => {
     const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
@@ -320,7 +350,7 @@
               />
             </th>
             <th class="p-3 border-r border-black font-black uppercase">Article</th>
-            <th class="p-3 border-r border-black font-black uppercase">Description</th>
+            <th class="p-3 border-r border-black font-black uppercase text-center w-36">Quantité</th>
             <th class="p-3 border-r border-black font-black uppercase text-right">Prix</th>
             <th class="p-3 border-r border-black font-black uppercase text-center">Taille</th>
             <th class="p-3 border-r border-black font-black uppercase text-center">Catégorie</th>
@@ -368,17 +398,48 @@
                     </div>
                     <div class="text-[10px] text-black/60 font-mono">
                       <span>ID: #{antiquite.id}</span>
-                      <span class="mx-1">•</span>
-                      <span class="font-bold {antiquite.quantity !== undefined && antiquite.quantity <= 0 ? 'text-red-600' : 'text-black/80'}">Stock: {antiquite.quantity ?? 1}</span>
                     </div>
                   </div>
                 </div>
               </td>
               
-              <td class="p-3 border-r border-black max-w-xs">
-                <p class="text-xs text-black/70 line-clamp-2 leading-tight">
-                  {antiquite.description}
-                </p>
+              <td class="p-3 border-r border-black text-center" onclick={(e) => e.stopPropagation()}>
+                <div class="inline-flex items-center border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000]">
+                  <button
+                    type="button"
+                    onclick={() => updateQuantity(antiquite.id, Math.max(0, (antiquite.quantity ?? 1) - 1))}
+                    disabled={updatingQuantityId === antiquite.id || (antiquite.quantity ?? 1) <= 0}
+                    class="w-7 h-7 flex items-center justify-center font-bold text-xs bg-[#EDE9DF] hover:bg-[#FFC2D1] border-r-2 border-black disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Diminuer la quantité"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    value={antiquite.quantity ?? 1}
+                    disabled={updatingQuantityId === antiquite.id}
+                    onchange={(e) => {
+                      const val = parseInt((e.target as HTMLInputElement).value, 10);
+                      if (!isNaN(val) && val >= 0) {
+                        updateQuantity(antiquite.id, val);
+                      }
+                    }}
+                    class="w-12 h-7 text-center text-xs font-black text-black bg-white focus:outline-none focus:bg-[#FFF394]"
+                  />
+                  <button
+                    type="button"
+                    onclick={() => updateQuantity(antiquite.id, (antiquite.quantity ?? 1) + 1)}
+                    disabled={updatingQuantityId === antiquite.id}
+                    class="w-7 h-7 flex items-center justify-center font-bold text-xs bg-[#EDE9DF] hover:bg-[#99E7DC] border-l-2 border-black disabled:opacity-40 cursor-pointer transition-colors"
+                    title="Augmenter la quantité"
+                  >
+                    +
+                  </button>
+                </div>
+                {#if updatingQuantityId === antiquite.id}
+                  <div class="text-[9px] text-black/60 font-bold animate-pulse mt-0.5">MAJ...</div>
+                {/if}
               </td>
               
               <td class="p-3 border-r border-black text-right font-black text-sm whitespace-nowrap text-black">
