@@ -22,6 +22,9 @@
         approval_status: string;
         rejection_reason: string;
         is_active: boolean;
+        history: string;
+        hours: string;
+        links: string;
         created_at: string;
         active_items_count?: number;
         sold_items_count?: number;
@@ -35,6 +38,44 @@
 
     // Modal de rejet
     let rejectingShop = $state<Shop | null>(null);
+    let editingShop = $state<Shop | null>(null);
+
+    async function handleEditShopSubmit(e: Event) {
+        e.preventDefault();
+        if (!editingShop) return;
+        isProcessing = true;
+        try {
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/shops/${editingShop.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editingShop.name,
+                    description: editingShop.description,
+                    history: editingShop.history,
+                    hours: editingShop.hours,
+                    links: editingShop.links,
+                    city: editingShop.city,
+                    iban: editingShop.iban,
+                    bic: editingShop.bic,
+                    account_holder: editingShop.account_holder,
+                    tax_number: editingShop.tax_number,
+                    type_abonnement: editingShop.type_abonnement,
+                    abonnement_actif: editingShop.abonnement_actif
+                })
+            });
+            if (res.ok) {
+                editingShop = null;
+                await fetchShops();
+            } else {
+                const err = await res.json();
+                alert(err.error || "Erreur lors de la modification");
+            }
+        } catch(e) {
+            alert("Erreur lors de la modification");
+        } finally {
+            isProcessing = false;
+        }
+    }
     let rejectionReason = $state("");
     let isProcessing = $state(false);
 
@@ -358,6 +399,12 @@
 
                         <!-- Actions Rapides de Modération -->
                         <div class="flex items-center gap-2 flex-wrap self-end lg:self-center">
+                            <button 
+                                onclick={() => editingShop = JSON.parse(JSON.stringify(s))}
+                                class="retro-btn bg-[#FFD166] hover:bg-[#F0C055] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000]"
+                            >
+                                ✏️ Modifier
+                            </button>
                             <button 
                                 onclick={() => viewShopItems(s)}
                                 class="retro-btn bg-[#BFD7FE] hover:bg-[#A3C4FD] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000]"
