@@ -30,7 +30,7 @@
 
     let shops = $state<Shop[]>([]);
     let isLoading = $state(true);
-    let activeFilter = $state<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+    let activeFilter = $state<'pending' | 'approved' | 'rejected' | 'all' | 'pending_items'>('pending');
     let searchQuery = $state("");
 
     // Modal de rejet
@@ -188,6 +188,8 @@
                 if (s.approval_status !== 'approved' || !s.is_approved) return false;
             } else if (activeFilter === 'rejected') {
                 if (s.approval_status !== 'rejected' && s.approval_status !== 'suspended' && s.is_active) return false;
+            } else if (activeFilter === 'pending_items') {
+                if (!s.pending_items_count || s.pending_items_count <= 0) return false;
             }
 
             // Filtre par recherche
@@ -207,6 +209,7 @@
     let pendingCount = $derived(shops.filter(s => s.approval_status === 'pending' || !s.is_approved).length);
     let approvedCount = $derived(shops.filter(s => s.approval_status === 'approved' && s.is_approved).length);
     let rejectedCount = $derived(shops.filter(s => s.approval_status === 'rejected' || s.approval_status === 'suspended').length);
+    let pendingItemsShopsCount = $derived(shops.filter(s => s.pending_items_count && s.pending_items_count > 0).length);
 </script>
 
 <div class="space-y-6 font-mono">
@@ -249,6 +252,12 @@
                 class="retro-btn text-xs font-black {activeFilter === 'pending' ? 'bg-[#FFD166] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
             >
                 ⏳ En Attente ({pendingCount})
+            </button>
+            <button 
+                onclick={() => activeFilter = 'pending_items'}
+                class="retro-btn text-xs font-black {activeFilter === 'pending_items' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+            >
+                🔴 Objets à vérifier ({pendingItemsShopsCount})
             </button>
             <button 
                 onclick={() => activeFilter = 'approved'}
@@ -300,7 +309,17 @@
                     
                     <!-- Ligne 1 : En-tête Boutique & Statuts -->
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-2 border-black pb-4">
-                        <div class="flex items-center gap-4">
+                        <div class="flex flex-col items-start gap-3">
+                            {#if s.pending_items_count && s.pending_items_count > 0}
+                                <div class="bg-[#FFAEC1] border-2 border-black shadow-[2px_2px_0px_0px_#000] px-2 py-1 text-[10px] font-black uppercase text-black flex items-center gap-2">
+                                    <span class="relative flex h-2 w-2">
+                                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                      <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                    </span>
+                                    {s.pending_items_count} objet{s.pending_items_count > 1 ? 's' : ''} en attente
+                                </div>
+                            {/if}
+                            <div class="flex items-center gap-4">
                             <div class="w-16 h-16 border-2 border-black bg-[#EDE9DF] overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_#000]">
                                 {#if s.avatar_url}
                                     <img src={s.avatar_url} alt={s.name} class="w-full h-full object-cover" />
@@ -334,6 +353,7 @@
                                     Slug: <code class="bg-[#F6F4EE] px-1 border border-black/20">{s.slug}</code> • Ville : <strong>{s.city || 'Non renseignée'}</strong>
                                 </p>
                             </div>
+                        </div>
                         </div>
 
                         <!-- Actions Rapides de Modération -->
