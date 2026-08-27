@@ -28,7 +28,7 @@
         <div class="space-y-2">
             <div class="flex items-center gap-2.5 flex-wrap">
                 <span class="retro-badge bg-black text-white text-xs px-2.5 py-0.5">HUB CENTRAL // MULTI-PROJETS</span>
-                <span class="retro-badge bg-[#99E7DC] text-black text-xs font-black">● 2 PROJETS ACTIFS</span>
+                <span class="retro-badge bg-[#86E2D5] text-black text-xs font-black">● 2 PROJETS ACTIFS</span>
                 <span class="retro-badge bg-white text-black text-xs">V3.2-STABLE</span>
             </div>
             <h1 class="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
@@ -59,7 +59,7 @@
     <!-- Section Title -->
     <div class="flex items-center justify-between border-b-2 border-black pb-2">
         <div class="flex items-center gap-2">
-            <span class="w-3 h-3 bg-[#FFC2D1] border border-black inline-block"></span>
+            <span class="w-3 h-3 bg-[#FFAEC1] border border-black inline-block"></span>
             <h2 class="text-lg font-black uppercase tracking-wider text-black">
                 Projets Disponibles & Stations
             </h2>
@@ -76,10 +76,10 @@
             <!-- Window Titlebar -->
             <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
                 <div class="flex items-center gap-2">
-                    <span class="text-[#99E7DC] font-black">▶</span>
+                    <span class="text-[#86E2D5] font-black">▶</span>
                     <span class="tracking-wider uppercase">PROJET_01.SYS</span>
                 </div>
-                <span class="retro-badge bg-[#99E7DC] text-black text-[10px] py-0 font-black">
+                <span class="retro-badge bg-[#86E2D5] text-black text-[10px] py-0 font-black">
                     ● EN LIGNE
                 </span>
             </div>
@@ -89,7 +89,7 @@
                 
                 <!-- Project Icon & Title -->
                 <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 bg-[#FFD2A6] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFE600] transition-colors">
+                    <div class="w-14 h-14 bg-[#FFD2A6] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFD166] transition-colors">
                         🌼
                     </div>
                     <div class="space-y-1">
@@ -112,19 +112,22 @@
                 <div class="space-y-2 pt-2 border-t border-black/10">
                     <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
                     <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <a href="/antiquites" class="retro-badge bg-[#D4E2FD] hover:bg-white text-black transition-colors cursor-pointer" title="Voir l'inventaire">
+                        <a href="/antiquites" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer" title="Voir l'inventaire">
                             📋 Inventaire
                         </a>
-                        <a href="/subcategories" class="retro-badge bg-[#FFE600] hover:bg-white text-black transition-colors cursor-pointer" title="Gérer les catégories">
+                        <a href="/subcategories" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer" title="Gérer les catégories">
                             🏷️ Sous-catégories
                         </a>
-                        <a href="/ebay" class="retro-badge bg-[#99E7DC] hover:bg-white text-black transition-colors cursor-pointer" title="Synchronisation eBay">
+                        <a href="/shops" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer" title="Gérer les vendeurs">
+                            🏬 Boutiques
+                        </a>
+                        <a href="/ebay" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer" title="Synchronisation eBay">
                             📦 eBay Sync
                         </a>
                         <a href="/shops" class="retro-badge bg-[#FFD2A6] hover:bg-white text-black transition-colors cursor-pointer" title="Modération des boutiques">
                             🏪 Boutiques
                         </a>
-                        <a href="/Livraison" class="retro-badge bg-[#FFC2D1] hover:bg-white text-black transition-colors cursor-pointer" title="Gestion des livraisons">
+                        <a href="/Livraison" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer" title="Gestion des livraisons">
                             🚚 Livraisons
                         </a>
                         <a href="/storage" class="retro-badge bg-[#EDE9DF] hover:bg-white text-black transition-colors cursor-pointer" title="Stockage S3">
@@ -155,10 +158,10 @@
             <!-- Window Titlebar -->
             <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
                 <div class="flex items-center gap-2">
-                    <span class="text-[#FFE600] font-black">▶</span>
+                    <span class="text-[#FFD166] font-black">▶</span>
                     <span class="tracking-wider uppercase">PROJET_02.SYS</span>
                 </div>
-                <span class="retro-badge bg-[#FFE600] text-black text-[10px] py-0 font-black">
+                <span class="retro-badge bg-[#FFD166] text-black text-[10px] py-0 font-black">
                     ● PROSPECTION
                 </span>
             </div>
@@ -168,7 +171,7 @@
                 
                 <!-- Project Icon & Title -->
                 <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 bg-[#99E7DC] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFE600] transition-colors">
+                    <div class="w-14 h-14 bg-[#86E2D5] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFD166] transition-colors">
                         🕵️
                     </div>
                     <div class="space-y-1">
@@ -191,13 +194,13 @@
                 <div class="space-y-2 pt-2 border-t border-black/10">
                     <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
                     <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <a href="/marty" class="retro-badge bg-[#FFE600] hover:bg-white text-black transition-colors cursor-pointer" title="Lancer le scraping">
+                        <a href="/marty" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer" title="Lancer le scraping">
                             ⚡ Scrapper de Leads
                         </a>
-                        <a href="/marty" class="retro-badge bg-[#D4E2FD] hover:bg-white text-black transition-colors cursor-pointer" title="Voir les prospects">
+                        <a href="/marty" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer" title="Voir les prospects">
                             📋 Table des Emails
                         </a>
-                        <a href="/marty" class="retro-badge bg-[#99E7DC] hover:bg-white text-black transition-colors cursor-pointer" title="Télécharger CSV">
+                        <a href="/marty" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer" title="Télécharger CSV">
                             📥 Export CSV
                         </a>
                     </div>
@@ -225,7 +228,7 @@
             
             <div class="bg-[#2B2D42]/70 text-white px-4 py-2 border-b-2 border-black/30 flex items-center justify-between font-mono text-xs font-bold">
                 <span class="tracking-wider uppercase text-white/70">PROJET_03.SYS</span>
-                <span class="retro-badge bg-[#D4E2FD] text-black text-[10px] py-0 font-black">
+                <span class="retro-badge bg-[#BFD7FE] text-black text-[10px] py-0 font-black">
                     LIBRE
                 </span>
             </div>
@@ -251,7 +254,7 @@
                 <button 
                     type="button" 
                     onclick={() => openSlotModal("Projet #03")}
-                    class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#99E7DC] font-black border border-black shadow-[2px_2px_0px_0px_#000] cursor-pointer"
+                    class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#86E2D5] font-black border border-black shadow-[2px_2px_0px_0px_#000] cursor-pointer"
                 >
                     + CONNECTER UN SERVICE
                 </button>
@@ -289,7 +292,7 @@
                 <button 
                     type="button"
                     onclick={closeModal}
-                    class="w-4 h-4 bg-[#FFC2D1] border border-black hover:bg-white text-black text-[9px] flex items-center justify-center font-black cursor-pointer shadow-[1px_1px_0px_0px_#000]"
+                    class="w-4 h-4 bg-[#FFAEC1] border border-black hover:bg-white text-black text-[9px] flex items-center justify-center font-black cursor-pointer shadow-[1px_1px_0px_0px_#000]"
                 >
                     ✕
                 </button>
@@ -309,7 +312,7 @@
                     <button 
                         type="button"
                         onclick={closeModal}
-                        class="retro-btn text-xs py-1.5 px-4 bg-[#FFC2D1] font-black"
+                        class="retro-btn text-xs py-1.5 px-4 bg-[#FFAEC1] font-black"
                     >
                         COMPRIS »
                     </button>

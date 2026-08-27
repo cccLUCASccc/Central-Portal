@@ -26,7 +26,7 @@ const isMarty = pathname.startsWith('/marty');
     <title>{isMarty ? "Marty // Scrapper Leads" : "Gestionnaire // Daisy Brocante"}</title>
   </head>
 
-  <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFC2D1] selection:text-black">
+  <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFAEC1] selection:text-black">
     <Show when="signed-in">
       <TerminalBoot client:load initialActive={false} />
     </Show>
@@ -37,7 +37,7 @@ const isMarty = pathname.startsWith('/marty');
         
         <Show when="signed-in">
           <!-- Retro Top Rose Ticker / Announcement Banner -->
-          <div class="w-full bg-[#FFC2D1] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
+          <div class="w-full bg-[#FFAEC1] border-b-2 border-black py-1.5 px-4 text-xs font-black uppercase tracking-wider text-black flex items-center justify-between overflow-x-auto whitespace-nowrap z-50">
             <div class="flex items-center gap-3">
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
               {pathname === '/' ? (
@@ -59,7 +59,7 @@ const isMarty = pathname.startsWith('/marty');
               >
                 <span>🖥️</span> SERVEUR: EN LIGNE
               </button>
-              <span class="border border-black px-1.5 py-0.5 bg-[#99E7DC] shadow-[1px_1px_0px_0px_#000]">STORAGE: AWS S3</span>
+              <span class="border border-black px-1.5 py-0.5 bg-[#86E2D5] shadow-[1px_1px_0px_0px_#000]">STORAGE: AWS S3</span>
             </div>
           </div>
 
@@ -73,11 +73,11 @@ const isMarty = pathname.startsWith('/marty');
 
               <!-- Logo & System Badge -->
               <a href="/" class="flex items-center gap-2.5 group flex-shrink-0" title="Retour au Hub des Projets">
-                <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#99E7DC] transition-colors">
+                <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#86E2D5] transition-colors">
                   {isMarty ? 'M' : 'G'}
                 </div>
                 <div class="flex flex-col">
-                  <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFC2D1]">.SYS</span></span>
+                  <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFAEC1]">.SYS</span></span>
                   <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">
                     {isDaisyBrocante ? "Daisy Brocante" : isMarty ? "Marty // Lead Scrapper" : "Portail Multi-Projets"}
                   </span>
@@ -88,7 +88,7 @@ const isMarty = pathname.startsWith('/marty');
             <!-- Desktop Nav Buttons -->
             <nav class="hidden lg:flex items-center gap-1.5 font-mono flex-shrink-0">
               <!-- Bouton Cross-Projet : Hub Projets -->
-              <a href="/" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#D4E2FD] {pathname === '/' ? '!bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+              <a href="/" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 🗂️ Hub Projets
               </a>
 
@@ -103,10 +103,13 @@ const isMarty = pathname.startsWith('/marty');
                   <a href="/subcategories" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     🏷️ Sous-catégories
                   </a>
+                  <a href="/shops" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    🏬 Boutiques
+                  </a>
                   <a href="/ebay" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     📦 eBay
                   </a>
-                  <a href="/Livraison" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                  <a href="/Livraison" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     🚚 Livraisons
                   </a>
                 </>
@@ -117,7 +120,7 @@ const isMarty = pathname.startsWith('/marty');
                   <div class="h-5 w-px bg-black/30 mx-0.5"></div>
 
                   <!-- Boutons Spécifiques Marty -->
-                  <a href="/marty" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFE600] {pathname.startsWith('/marty') ? '!bg-[#FFE600] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 font-black' : ''}">
+                  <a href="/marty" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD166] {pathname.startsWith('/marty') ? '!bg-[#FFD166] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 font-black' : ''}">
                     ⚡ Scrapper & Leads
                   </a>
                 </>
@@ -126,7 +129,7 @@ const isMarty = pathname.startsWith('/marty');
               <div class="h-5 w-px bg-black/30 mx-0.5"></div>
 
               <!-- Bouton Cross-Projet : Fichiers S3 -->
-              <a href="/storage" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#99E7DC] {pathname.startsWith('/storage') ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+              <a href="/storage" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                 📁 Fichiers S3
               </a>
             </nav>
@@ -156,7 +159,7 @@ const isMarty = pathname.startsWith('/marty');
             <button 
               type="button" 
               onclick="window.replayBoot && window.replayBoot()"
-              class="retro-badge bg-[#99E7DC] hover:bg-[#7ce0d3] cursor-pointer transition-transform active:scale-95"
+              class="retro-badge bg-[#86E2D5] hover:bg-[#65C4B5] cursor-pointer transition-transform active:scale-95"
               title="Cliquer pour relancer le terminal de démarrage"
             >
               ⚡ SYS_OK
@@ -175,14 +178,14 @@ const isMarty = pathname.startsWith('/marty');
         <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay bg-black/60"></label>
         <div class="w-72 min-h-full bg-[#EDE9DF] border-r-2 border-black p-6 flex flex-col justify-between text-black font-mono">
           <div>
-            <div class="p-3 bg-[#FFC2D1] border-2 border-black shadow-[3px_3px_0px_0px_#000] mb-6 flex items-center justify-between">
+            <div class="p-3 bg-[#FFAEC1] border-2 border-black shadow-[3px_3px_0px_0px_#000] mb-6 flex items-center justify-between">
               <span class="font-black font-mono text-sm uppercase">Menu Gestionnaire</span>
               <label for="my-drawer" class="cursor-pointer font-bold px-1.5 border border-black bg-white">✕</label>
             </div>
 
             <nav class="flex flex-col gap-2.5">
               <!-- Cross-projet -->
-              <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#D4E2FD] {pathname === '/' ? '!bg-[#D4E2FD]' : ''}">
+              <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE]' : ''}">
                 🗂️ Hub des Projets
               </a>
 
@@ -198,10 +201,13 @@ const isMarty = pathname.startsWith('/marty');
                   <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
                     🏷️ Sous-catégories
                   </a>
+                  <a href="/shops" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5]' : ''}">
+                    🏬 Boutiques
+                  </a>
                   <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
                     📦 eBay (Annonces)
                   </a>
-                  <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFC2D1] {pathname.startsWith('/Livraison') ? '!bg-[#FFC2D1]' : ''}">
+                  <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1]' : ''}">
                     🚚 Livraisons
                   </a>
                 </>
@@ -213,7 +219,7 @@ const isMarty = pathname.startsWith('/marty');
                     <span>🕵️</span> Projet Marty (Lead Gen)
                   </div>
 
-                  <a href="/marty" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFE600] {pathname.startsWith('/marty') ? '!bg-[#FFE600] font-black' : ''}">
+                  <a href="/marty" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD166] {pathname.startsWith('/marty') ? '!bg-[#FFD166] font-black' : ''}">
                     ⚡ Scrapper & Leads
                   </a>
                 </>
@@ -221,7 +227,7 @@ const isMarty = pathname.startsWith('/marty');
 
               <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2">Services Globaux</div>
 
-              <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#99E7DC] {pathname.startsWith('/storage') ? '!bg-[#99E7DC]' : ''}">
+              <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5]' : ''}">
                 📁 Fichiers S3
               </a>
             </nav>

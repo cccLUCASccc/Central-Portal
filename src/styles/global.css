@@ -10,21 +10,21 @@
   --color-base-200: #EDE9DF;
   --color-base-300: #DDD7C9;
   --color-base-content: #000000;
-  --color-primary: #99E7DC;
+  --color-primary: #86E2D5;
   --color-primary-content: #000000;
-  --color-secondary: #D4E2FD;
+  --color-secondary: #BFD7FE;
   --color-secondary-content: #000000;
   --color-accent: #FFD2A6;
   --color-accent-content: #000000;
   --color-neutral: #000000;
   --color-neutral-content: #FFFFFF;
-  --color-info: #D4E2FD;
+  --color-info: #BFD7FE;
   --color-info-content: #000000;
-  --color-success: #99E7DC;
+  --color-success: #86E2D5;
   --color-success-content: #000000;
-  --color-warning: #FFF394;
+  --color-warning: #FFD166;
   --color-warning-content: #000000;
-  --color-error: #FFC2D1;
+  --color-error: #FFAEC1;
   --color-error-content: #000000;
   --radius-selector: 0px;
   --radius-field: 0px;
@@ -84,7 +84,7 @@
 
   .retro-card-blue {
     border: 2px solid #000000;
-    background-color: #D4E2FD;
+    background-color: #BFD7FE;
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
@@ -97,7 +97,7 @@
 
   .retro-card-mint {
     border: 2px solid #000000;
-    background-color: #99E7DC;
+    background-color: #86E2D5;
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
@@ -110,7 +110,7 @@
 
   .retro-card-yellow {
     border: 2px solid #000000;
-    background-color: #FFF394;
+    background-color: #FFD166;
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
@@ -123,7 +123,7 @@
 
   .retro-card-rose {
     border: 2px solid #000000;
-    background-color: #FFC2D1;
+    background-color: #FFAEC1;
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
@@ -170,14 +170,14 @@
   }
 
   .retro-btn-primary {
-    background-color: #99E7DC;
+    background-color: #86E2D5;
   }
   .retro-btn-primary:hover {
     background-color: #7ce0d3;
   }
 
   .retro-btn-secondary {
-    background-color: #D4E2FD;
+    background-color: #BFD7FE;
   }
   .retro-btn-secondary:hover {
     background-color: #b5cffe;
@@ -191,14 +191,14 @@
   }
 
   .retro-btn-warning {
-    background-color: #FFF394;
+    background-color: #FFD166;
   }
   .retro-btn-warning:hover {
     background-color: #fceb6c;
   }
 
   .retro-btn-error {
-    background-color: #FFC2D1;
+    background-color: #FFAEC1;
   }
   .retro-btn-error:hover {
     background-color: #fc9eb4;
@@ -283,11 +283,11 @@
     box-shadow: 1.5px 1.5px 0px 0px #000000;
     border-radius: 0px;
   }
-  .retro-badge-mint { background-color: #99E7DC; }
-  .retro-badge-blue { background-color: #D4E2FD; }
+  .retro-badge-mint { background-color: #86E2D5; }
+  .retro-badge-blue { background-color: #BFD7FE; }
   .retro-badge-peach { background-color: #FFD2A6; }
-  .retro-badge-yellow { background-color: #FFF394; }
-  .retro-badge-rose { background-color: #FFC2D1; }
+  .retro-badge-yellow { background-color: #FFD166; }
+  .retro-badge-rose { background-color: #FFAEC1; }
 
   /* Mini Icon Badge */
   .retro-icon-box {
@@ -515,7 +515,7 @@
 .cl-formButtonPrimary {
   border: 2px solid #000000 !important;
   border-radius: 0px !important;
-  background-color: #99E7DC !important;
+  background-color: #86E2D5 !important;
   color: #000000 !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
   font-weight: 900 !important;
@@ -603,7 +603,7 @@
 .cl-alert {
   border: 2px solid #000000 !important;
   border-radius: 0px !important;
-  background-color: #FFC2D1 !important;
+  background-color: #FFAEC1 !important;
   color: #000000 !important;
   box-shadow: 2px 2px 0px 0px #000000 !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
@@ -622,7 +622,7 @@
   font-weight: 700 !important;
   font-size: 0.75rem !important;
   color: #000000 !important;
-  background-color: #FFC2D1 !important;
+  background-color: #FFAEC1 !important;
   border: 1px solid #000000 !important;
   padding: 0.2rem 0.4rem !important;
   display: inline-block !important;
@@ -644,7 +644,7 @@
 .cl-badge {
   border: 1.5px solid #000000 !important;
   border-radius: 0px !important;
-  background-color: #FFF394 !important;
+  background-color: #FFD166 !important;
   color: #000000 !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
   font-weight: 800 !important;

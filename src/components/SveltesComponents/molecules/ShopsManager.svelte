@@ -157,8 +157,8 @@
     <div class="retro-card-yellow p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-3 border-black shadow-[6px_6px_0px_0px_#000]">
         <div class="space-y-2">
             <div class="flex items-center gap-2 flex-wrap">
-                <a href="/" class="retro-badge bg-black text-white text-xs hover:bg-[#FFC2D1] hover:text-black transition-colors">« RETOUR AU HUB</a>
-                <span class="retro-badge bg-[#99E7DC] text-black text-xs font-black">MARKETPLACE // VENDEURS</span>
+                <a href="/" class="retro-badge bg-black text-white text-xs hover:bg-[#FFAEC1] hover:text-black transition-colors">« RETOUR AU HUB</a>
+                <span class="retro-badge bg-[#86E2D5] text-black text-xs font-black">MARKETPLACE // VENDEURS</span>
                 <span class="retro-badge bg-white text-black text-xs">V2.0</span>
             </div>
             <h1 class="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
@@ -174,7 +174,7 @@
                 <span class="text-[10px] uppercase font-bold text-black/60 block">En attente</span>
                 <span class="text-2xl font-black {pendingCount > 0 ? 'text-[#D1495B] animate-pulse' : 'text-black'}">{pendingCount}</span>
             </div>
-            <div class="bg-[#99E7DC] border-2 border-black p-4 shadow-[3px_3px_0px_0px_#000] text-center min-w-[120px]">
+            <div class="bg-[#86E2D5] border-2 border-black p-4 shadow-[3px_3px_0px_0px_#000] text-center min-w-[120px]">
                 <span class="text-[10px] uppercase font-bold text-black/60 block">Validées</span>
                 <span class="text-2xl font-black text-black">{approvedCount}</span>
             </div>
@@ -188,19 +188,19 @@
         <div class="flex flex-wrap gap-2">
             <button 
                 onclick={() => activeFilter = 'pending'}
-                class="retro-btn text-xs font-black {activeFilter === 'pending' ? 'bg-[#FFE600] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'pending' ? 'bg-[#FFD166] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
             >
                 ⏳ En Attente ({pendingCount})
             </button>
             <button 
                 onclick={() => activeFilter = 'approved'}
-                class="retro-btn text-xs font-black {activeFilter === 'approved' ? 'bg-[#99E7DC] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'approved' ? 'bg-[#86E2D5] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
             >
                 ✅ Validées ({approvedCount})
             </button>
             <button 
                 onclick={() => activeFilter = 'rejected'}
-                class="retro-btn text-xs font-black {activeFilter === 'rejected' ? 'bg-[#FFC2D1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'rejected' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
             >
                 ⚠️ Refusées / Suspendues ({rejectedCount})
             </button>
@@ -227,7 +227,7 @@
     <!-- Liste des Boutiques -->
     {#if isLoading}
         <div class="bg-white border-3 border-black p-12 text-center shadow-[4px_4px_0px_0px_#000] space-y-3">
-            <div class="w-8 h-8 border-3 border-black border-t-[#FFE600] rounded-full animate-spin mx-auto"></div>
+            <div class="w-8 h-8 border-3 border-black border-t-[#FFD166] rounded-full animate-spin mx-auto"></div>
             <p class="text-xs font-bold uppercase text-black/70">Chargement des boutiques...</p>
         </div>
     {:else if filteredShops.length === 0}
@@ -253,20 +253,20 @@
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     {#if s.approval_status === 'approved' && s.is_approved}
-                                        <span class="retro-badge bg-[#99E7DC] text-black text-[9px] font-black">● VALIDÉE</span>
+                                        <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black">● VALIDÉE</span>
                                     {:else if s.approval_status === 'rejected'}
-                                        <span class="retro-badge bg-[#FFC2D1] text-black text-[9px] font-black">✕ REJETÉE</span>
+                                        <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black">✕ REJETÉE</span>
                                     {:else if s.approval_status === 'suspended'}
                                         <span class="retro-badge bg-black text-white text-[9px] font-black">⏸️ SUSPENDUE</span>
                                     {:else}
-                                        <span class="retro-badge bg-[#FFE600] text-black text-[9px] font-black animate-pulse">⏳ EN ATTENTE DE VALIDATION</span>
+                                        <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black animate-pulse">⏳ EN ATTENTE DE VALIDATION</span>
                                     {/if}
 
                                     <span class="retro-badge bg-[#EDE9DF] text-black text-[9px]">
                                         {s.seller_type === 'societe' ? '🏢 SOCIÉTÉ' : '👤 PARTICULIER'}
                                     </span>
 
-                                    <span class="retro-badge bg-[#D4E2FD] text-black text-[9px]">
+                                    <span class="retro-badge bg-[#BFD7FE] text-black text-[9px]">
                                         FORMULE {s.type_abonnement?.toUpperCase()}
                                     </span>
                                 </div>
@@ -284,7 +284,7 @@
                                 <button 
                                     onclick={() => approveShop(s.id)}
                                     disabled={isProcessing}
-                                    class="retro-btn bg-[#99E7DC] hover:bg-[#72d4c7] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000]"
+                                    class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000]"
                                 >
                                     ✅ Valider la boutique
                                 </button>
@@ -294,7 +294,7 @@
                                 <button 
                                     onclick={() => { rejectingShop = s; rejectionReason = ""; }}
                                     disabled={isProcessing}
-                                    class="retro-btn bg-[#FFC2D1] hover:bg-[#fc9eb4] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000]"
+                                    class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000]"
                                 >
                                     ❌ Rejeter
                                 </button>
@@ -370,7 +370,7 @@
 
                     <!-- Motif du rejet (si applicable) -->
                     {#if s.rejection_reason}
-                        <div class="p-3 bg-[#FFC2D1] border-2 border-black text-xs space-y-1">
+                        <div class="p-3 bg-[#FFAEC1] border-2 border-black text-xs space-y-1">
                             <strong class="uppercase block font-black">⚠️ Motif du refus communiqué au vendeur :</strong>
                             <p class="text-black/90">{s.rejection_reason}</p>
                         </div>
@@ -396,7 +396,7 @@
                     <button 
                         type="button" 
                         onclick={() => rejectingShop = null}
-                        class="w-4 h-4 bg-[#FFC2D1] border border-black text-black text-[9px] flex items-center justify-center font-black"
+                        class="w-4 h-4 bg-[#FFAEC1] border border-black text-black text-[9px] flex items-center justify-center font-black"
                     >
                         ✕
                     </button>
@@ -428,7 +428,7 @@
                         <button 
                             type="submit" 
                             disabled={isProcessing}
-                            class="retro-btn bg-[#FFC2D1] text-xs font-black py-2 px-6 shadow-[2px_2px_0px_0px_#000]"
+                            class="retro-btn bg-[#FFAEC1] text-xs font-black py-2 px-6 shadow-[2px_2px_0px_0px_#000]"
                         >
                             {isProcessing ? "Traitement..." : "Confirmer le Rejet"}
                         </button>
