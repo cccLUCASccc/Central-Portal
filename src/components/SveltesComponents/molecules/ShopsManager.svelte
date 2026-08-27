@@ -25,6 +25,7 @@
         created_at: string;
         active_items_count?: number;
         sold_items_count?: number;
+        email?: string;
     }
 
     let shops = $state<Shop[]>([]);
@@ -281,6 +282,7 @@
                         <!-- Actions Rapides de Modération -->
                         <div class="flex items-center gap-2 flex-wrap self-end lg:self-center">
                             {#if s.approval_status !== 'approved' || !s.is_approved}
+                            {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
                                 <button 
                                     onclick={() => approveShop(s.id)}
                                     disabled={isProcessing}
@@ -346,6 +348,11 @@
                             {/if}
                             <div>
                                 <span class="text-black/60 block text-[10px]">Identifiant Utilisateur Clerk :</span>
+                                <span class="text-black/60 block text-[10px]">Email :</span>
+                                <strong class="text-black text-xs block">{s.email || 'Non trouvé'}</strong>
+                            </div>
+                            <div>
+                                <span class="text-black/60 block text-[10px]">ID Clerk :</span>
                                 <code class="text-[10px] text-black/60 truncate block">{s.user_id}</code>
                             </div>
                         </div>
