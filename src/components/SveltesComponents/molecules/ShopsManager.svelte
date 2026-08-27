@@ -38,6 +38,63 @@
     let rejectionReason = $state("");
     let isProcessing = $state(false);
 
+    // Modal gestion des objets
+    let viewingShopItems = $state<Shop | null>(null);
+    let shopItems = $state<any[]>([]);
+    let isLoadingItems = $state(false);
+    let rejectingItem = $state<any | null>(null);
+    let itemRejectionReason = $state("");
+
+    async function viewShopItems(shop: Shop) {
+        viewingShopItems = shop;
+        isLoadingItems = true;
+        try {
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/shops/${shop.id}/items`);
+            if (res.ok) {
+                shopItems = await res.json();
+            }
+        } catch(e) {
+            console.error("Erreur chargement objets:", e);
+        } finally {
+            isLoadingItems = false;
+        }
+    }
+
+    async function approveItem(itemId: number) {
+        isProcessing = true;
+        try {
+            await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${itemId}/approve`, { method: "PATCH" });
+            const item = shopItems.find(i => i.id === itemId);
+            if(item) item.approval_status = "approved";
+        } catch(e) {
+            console.error("Erreur:", e);
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    async function handleRejectItemSubmit(e: Event) {
+        e.preventDefault();
+        if (!rejectingItem) return;
+        isProcessing = true;
+        try {
+            await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${rejectingItem.id}/reject`, { 
+                method: "PATCH",
+                body: JSON.stringify({ reason: itemRejectionReason }) 
+            });
+            const item = shopItems.find(i => i.id === rejectingItem.id);
+            if(item) {
+                item.approval_status = "rejected";
+                item.rejection_reason = itemRejectionReason;
+            }
+            rejectingItem = null;
+        } catch(e) {
+            console.error("Erreur:", e);
+        } finally {
+            isProcessing = false;
+        }
+    }
+
     const PUBLIC_API_URL = (import.meta as any).env.PUBLIC_API_URL || "https://central-api-production-a031.up.railway.app";
 
     onMount(async () => {
@@ -281,6 +338,12 @@
 
                         <!-- Actions Rapides de Modération -->
                         <div class="flex items-center gap-2 flex-wrap self-end lg:self-center">
+                            <button 
+                                onclick={() => viewShopItems(s)}
+                                class="retro-btn bg-[#BFD7FE] hover:bg-[#A3C4FD] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000]"
+                            >
+                                📦 Gérer les objets
+                            </button>
                             {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
                                 <button 
                                     onclick={() => approveShop(s.id)}
