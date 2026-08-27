@@ -507,5 +507,120 @@
         </div>
     {/if}
 
+
+    <!-- MODAL GESTION DES OBJETS -->
+    {#if viewingShopItems}
+        <div class="fixed inset-0 z-[99990] bg-black/70 flex items-center justify-center p-4 font-sans">
+            <div class="w-full max-w-4xl max-h-[90vh] bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col">
+                <div class="bg-[#2B2D42] text-white px-4 py-3 border-b-2 border-black flex items-center justify-between font-black">
+                    <span>📦 OBJETS // {viewingShopItems.name}</span>
+                    <button 
+                        type="button" 
+                        onclick={() => viewingShopItems = null}
+                        class="w-6 h-6 bg-[#FFAEC1] border-2 border-black text-black text-xs flex items-center justify-center font-black"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <div class="p-4 overflow-y-auto flex-1 space-y-4 bg-[#F6F4EE]">
+                    {#if isLoadingItems}
+                        <div class="text-center font-bold text-black/60 p-10">Chargement des objets...</div>
+                    {:else if shopItems.length === 0}
+                        <div class="text-center font-bold text-black/60 p-10">Aucun objet trouvé pour cette boutique.</div>
+                    {:else}
+                        {#each shopItems as item}
+                            <div class="bg-white border-2 border-black p-4 flex flex-col md:flex-row gap-4 shadow-[4px_4px_0px_0px_#000]">
+                                <div class="w-24 h-24 border-2 border-black bg-gray-100 flex-shrink-0">
+                                    {#if item.images && item.images.length > 0}
+                                        <img src={item.images[0].url} alt={item.name} class="w-full h-full object-cover"/>
+                                    {/if}
+                                </div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-black text-lg">{item.name}</h4>
+                                        <span class="font-black border-2 border-black px-2 py-1 bg-[#FFD166]">{item.price} €</span>
+                                    </div>
+                                    <p class="text-xs line-clamp-2">{item.description}</p>
+                                    
+                                    <div class="flex items-center gap-2 text-[10px] font-bold">
+                                        Statut: 
+                                        {#if item.approval_status === 'pending'}
+                                            <span class="bg-[#FFD166] border border-black px-1.5 py-0.5">EN ATTENTE</span>
+                                        {:else if item.approval_status === 'approved'}
+                                            <span class="bg-[#86E2D5] border border-black px-1.5 py-0.5">APPROUVÉ</span>
+                                        {:else if item.approval_status === 'rejected'}
+                                            <span class="bg-[#FFAEC1] border border-black px-1.5 py-0.5">REJETÉ</span>
+                                        {/if}
+                                    </div>
+                                    {#if item.approval_status === 'rejected' && item.rejection_reason}
+                                        <p class="text-[10px] text-red-600 font-bold bg-red-50 p-1 border border-red-200">Motif: {item.rejection_reason}</p>
+                                    {/if}
+                                </div>
+                                <div class="flex flex-col gap-2 justify-center">
+                                    {#if item.approval_status !== 'approved'}
+                                        <button 
+                                            onclick={() => approveItem(item.id)}
+                                            disabled={isProcessing}
+                                            class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap"
+                                        >
+                                            ✅ Approuver
+                                        </button>
+                                    {/if}
+                                    {#if item.approval_status !== 'rejected'}
+                                        <button 
+                                            onclick={() => { rejectingItem = item; itemRejectionReason = ""; }}
+                                            disabled={isProcessing}
+                                            class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap"
+                                        >
+                                            ❌ Rejeter
+                                        </button>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/each}
+                    {/if}
+                </div>
+            </div>
+        </div>
+    {/if}
+
+    <!-- MODAL REJET D'OBJET -->
+    {#if rejectingItem}
+        <div class="fixed inset-0 z-[99999] bg-black/70 flex items-center justify-center p-4 font-mono">
+            <div class="w-full max-w-md bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] p-1">
+                <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between text-xs font-bold mb-3">
+                    <span>REJET DE L'OBJET</span>
+                    <button 
+                        type="button" 
+                        onclick={() => rejectingItem = null}
+                        class="w-4 h-4 bg-[#FFAEC1] border border-black text-black text-[9px] flex items-center justify-center font-black"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <form onsubmit={handleRejectItemSubmit} class="p-6 bg-white border-2 border-black m-1 space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-xs font-black uppercase text-black" for="item_reason_text">
+                            Motif du rejet de l'objet *
+                        </label>
+                        <textarea 
+                            id="item_reason_text" 
+                            rows="4" 
+                            required
+                            bind:value={itemRejectionReason}
+                            class="retro-input resize-none text-xs"
+                        ></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-3 border-t-2 border-black">
+                        <button type="button" onclick={() => rejectingItem = null} class="retro-btn bg-white text-xs font-black py-2 px-4">Annuler</button>
+                        <button type="submit" disabled={isProcessing} class="retro-btn bg-[#FFAEC1] text-xs font-black py-2 px-6 shadow-[2px_2px_0px_0px_#000]">
+                            Confirmer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {/if}
 </div>
 
