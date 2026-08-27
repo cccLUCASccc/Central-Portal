@@ -281,7 +281,6 @@
 
                         <!-- Actions Rapides de Modération -->
                         <div class="flex items-center gap-2 flex-wrap self-end lg:self-center">
-                            {#if s.approval_status !== 'approved' || !s.is_approved}
                             {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
                                 <button 
                                     onclick={() => approveShop(s.id)}
