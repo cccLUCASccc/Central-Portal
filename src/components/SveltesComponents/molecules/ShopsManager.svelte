@@ -558,7 +558,13 @@
                                     {/if}
                                 </div>
                                 <div class="flex flex-col gap-2 justify-center">
-                                    {#if item.approval_status !== 'approved'}
+
+                                    <a 
+                                        href={`/antiquites/${item.id}`}
+                                        class="retro-btn bg-white hover:bg-[#FFE600] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap text-center block mb-1"
+                                    >
+                                        ✏️ Modifier
+                                    </a>\n                                    {#if item.approval_status !== 'approved'}
                                         <button 
                                             onclick={() => approveItem(item.id)}
                                             disabled={isProcessing}
