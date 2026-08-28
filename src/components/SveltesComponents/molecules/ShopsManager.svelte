@@ -598,9 +598,25 @@
                     {:else}
                         {#each shopItems as item}
                             <div class="bg-white border-2 border-black p-4 flex flex-col md:flex-row gap-4 shadow-[4px_4px_0px_0px_#000]">
-                                <div class="w-24 h-24 border-2 border-black bg-gray-100 flex-shrink-0">
+                                <div class="w-24 h-24 border-2 border-black bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
                                     {#if item.images && item.images.length > 0}
-                                        <img src={item.images[0].url} alt={item.name} class="w-full h-full object-cover"/>
+                                        <img 
+                                            src={item.images[0].url} 
+                                            alt={item.name} 
+                                            class="w-full h-full object-cover"
+                                            onerror={(e) => {
+                                                const target = e.currentTarget as HTMLImageElement;
+                                                const urls = item.images.map(i => i.url);
+                                                const next = urls.find(u => u !== target.src && !target.src.includes(u));
+                                                if (next) {
+                                                    target.src = next;
+                                                } else {
+                                                    target.style.display = 'none';
+                                                }
+                                            }}
+                                        />
+                                    {:else}
+                                        <span class="text-[10px] font-bold text-gray-400">Pas d'image</span>
                                     {/if}
                                 </div>
                                 <div class="flex-1 space-y-2">
