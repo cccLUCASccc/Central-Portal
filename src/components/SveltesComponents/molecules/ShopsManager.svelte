@@ -10,7 +10,11 @@
         description: string;
         avatar_url: string;
         banner_url: string;
+        street?: string;
+        postal_code?: string;
         city: string;
+        country?: string;
+        address?: string;
         seller_type: string;
         tax_number: string;
         iban: string;
@@ -28,6 +32,7 @@
         created_at: string;
         active_items_count?: number;
         sold_items_count?: number;
+        pending_items_count?: number;
         email?: string;
     }
 
@@ -391,7 +396,7 @@
 
                                 <h3 class="text-xl font-black uppercase text-black mt-1">{s.name}</h3>
                                 <p class="text-xs text-black/60">
-                                    Slug: <code class="bg-[#F6F4EE] px-1 border border-black/20">{s.slug}</code> • Ville : <strong>{s.city || 'Non renseignée'}</strong>
+                                    Slug: <code class="bg-[#F6F4EE] px-1 border border-black/20">{s.slug}</code> • 📍 <strong>{s.address || (s.street ? `${s.street}, ${s.postal_code} ${s.city} (${s.country || 'BE'})` : s.city || 'Non renseignée')}</strong>
                                 </p>
                             </div>
                         </div>

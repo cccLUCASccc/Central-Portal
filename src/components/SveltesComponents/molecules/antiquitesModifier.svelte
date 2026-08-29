@@ -352,6 +352,7 @@
                     <DataModifier bind:data_number={status} type={4} type_name="Statut boutique"/>
                 </div>
 
+                <DataModifier bind:data_number={price} type={3} type_name='Prix de vente (€)'/>
                 <div class="grid grid-cols-2 gap-3">
                     <DataModifier bind:data_number={price} type={3} type_name='Prix de vente (€)'/>
                     <DataModifier bind:data_number={quantity} type={3} type_name='Quantité en stock'/>
