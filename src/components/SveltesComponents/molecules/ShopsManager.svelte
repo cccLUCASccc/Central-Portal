@@ -17,9 +17,9 @@
         address?: string;
         seller_type: string;
         tax_number: string;
-        iban: string;
-        bic: string;
-        account_holder: string;
+        stripe_connect_account_id?: string;
+        stripe_connect_payouts_enabled?: boolean;
+        stripe_connect_details_submitted?: boolean;
         abonnement_actif: boolean;
         type_abonnement: string;
         is_approved: boolean;
@@ -450,20 +450,26 @@
 
                     <!-- Ligne 2 : Détails Bancaires & Fiscaux -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        <!-- Bloc Coordonnées Bancaires -->
+                        <!-- Bloc Coordonnées Bancaires Stripe Connect -->
                         <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 block">💳 Coordonnées Bancaires (Reversements)</span>
+                            <span class="text-[10px] font-black uppercase text-black/60 block">💳 Stripe Connect Express</span>
                             <div>
-                                <span class="text-black/60 block text-[10px]">Titulaire :</span>
-                                <strong class="text-black">{s.account_holder || 'Non renseigné'}</strong>
+                                <span class="text-black/60 block text-[10px]">Statut Reversements :</span>
+                                {#if s.stripe_connect_payouts_enabled}
+                                    <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black inline-block mt-0.5">🟢 ACTIF & VÉRIFIÉ</span>
+                                {:else if s.stripe_connect_account_id}
+                                    <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black inline-block mt-0.5">🟡 ONBOARDING EN ATTENTE</span>
+                                {:else}
+                                    <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black inline-block mt-0.5">⚪ NON CONFIGURÉ</span>
+                                {/if}
                             </div>
                             <div>
-                                <span class="text-black/60 block text-[10px]">IBAN :</span>
-                                <code class="font-mono bg-white px-1.5 py-0.5 border border-black block mt-0.5 font-bold">{s.iban || 'Non renseigné'}</code>
+                                <span class="text-black/60 block text-[10px]">Compte Stripe ID :</span>
+                                <code class="font-mono bg-white px-1.5 py-0.5 border border-black block mt-0.5 font-bold text-[10px] truncate">{s.stripe_connect_account_id || 'Aucun compte associé'}</code>
                             </div>
                             <div>
-                                <span class="text-black/60 block text-[10px]">BIC / SWIFT :</span>
-                                <strong class="font-mono">{s.bic || '--'}</strong>
+                                <span class="text-black/60 block text-[10px]">Détails validés :</span>
+                                <strong class="font-mono text-[10px]">{s.stripe_connect_details_submitted ? '✅ Soumis' : '❌ Incomplet'}</strong>
                             </div>
                         </div>
 
