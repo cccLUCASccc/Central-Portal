@@ -202,7 +202,8 @@
                 <button 
                     type="button"
                     onclick={finishBoot}
-                    class="retro-btn btn-xs bg-[#FFC2D1] hover:bg-white text-black text-[10px] font-bold px-3 py-1 border border-black shadow-[2px_2px_0px_0px_#000]"
+                    class="retro-btn btn-xs bg-[#FFC2D1] hover:bg-white text-black text-[10px] font-bold px-3 py-1 border border-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1"
+                >
                     <span>ACCÉDER DIRECTEMENT</span>
                     <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
                 </button>
