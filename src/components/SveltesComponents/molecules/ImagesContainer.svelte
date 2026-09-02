@@ -168,8 +168,8 @@
 
             {#if image.s3_key}
                 <div class="absolute top-2 left-2 z-10 pointer-events-none">
-                    <span class="retro-badge bg-[#99E7DC] text-[10px]">
-                        ☁️ S3
+                    <span class="retro-badge bg-[#99E7DC] text-[10px] flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px]">cloud</span> S3
                     </span>
                 </div>
             {/if}
@@ -177,7 +177,7 @@
     {/each}
 
     <!-- Bouton 1 : Téléverser un fichier local -->
-    <label class="group relative flex flex-col items-center justify-center aspect-square w-full border-2 border-dashed border-black bg-white hover:bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden text-center p-3 {isCompressing ? 'opacity-70 pointer-events-none' : ''}">
+    <label class="group relative flex flex-col items-center justify-center aspect-square w-full border-2 border-dashed border-black bg-white hover:bg-[#D4E2FD] shadow-[3px_3px_0px_0px_#000] transition-all cursor-pointer overflow-hidden text-center p-3 {isCompressing ? 'opacity-70 pointer-events-none' : ''}">
         <input 
             multiple 
             onchange={handleFileChange} 
@@ -192,8 +192,8 @@
                 <span class="loading loading-spinner loading-md text-black"></span>
                 <p class="text-xs font-mono font-bold uppercase text-black">Compression...</p>
             {:else}
-                <div class="w-8 h-8 border-2 border-black bg-[#FFE600] flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000] group-hover:scale-110 transition-transform">
-                    ➕
+                <div class="w-8 h-8 border-2 border-black bg-[#FFE600] flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000]">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
                 </div>
                 <div class="space-y-0.5 font-mono">
                     <p class="text-xs font-bold uppercase text-black">Importer</p>
@@ -207,10 +207,10 @@
     <button 
         type="button"
         onclick={() => isS3PickerOpen = true}
-        class="group relative flex flex-col items-center justify-center aspect-square w-full border-2 border-dashed border-black bg-[#FFD2A6] hover:bg-[#fcae6c] shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden text-center p-3"
+        class="group relative flex flex-col items-center justify-center aspect-square w-full border-2 border-dashed border-black bg-[#FFD2A6] hover:bg-[#fcae6c] shadow-[3px_3px_0px_0px_#000] transition-all cursor-pointer overflow-hidden text-center p-3"
     >
-        <div class="w-8 h-8 border-2 border-black bg-white flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000] group-hover:scale-110 transition-transform">
-            🖼️
+        <div class="w-8 h-8 border-2 border-black bg-white flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000]">
+            <span class="material-symbols-outlined text-[18px]">photo_library</span>
         </div>
         <div class="space-y-0.5 font-mono mt-2">
             <p class="text-xs font-bold uppercase text-black">Choisir sur S3</p>

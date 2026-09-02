@@ -295,27 +295,31 @@
         <div class="flex flex-wrap gap-2">
             <button 
                 onclick={() => activeFilter = 'pending'}
-                class="retro-btn text-xs font-black {activeFilter === 'pending' ? 'bg-[#FFD166] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'pending' ? 'bg-[#FFD166] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
             >
-                ⏳ En Attente ({pendingCount})
+                <span class="material-symbols-outlined text-[14px]">hourglass_empty</span>
+                <span>En Attente ({pendingCount})</span>
             </button>
             <button 
                 onclick={() => activeFilter = 'pending_items'}
-                class="retro-btn text-xs font-black {activeFilter === 'pending_items' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'pending_items' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1.5"
             >
-                🔴 Objets à vérifier ({pendingItemsShopsCount})
+                <span class="w-2 h-2 rounded-full bg-red-600 inline-block animate-pulse"></span>
+                <span>Objets à vérifier ({pendingItemsShopsCount})</span>
             </button>
             <button 
                 onclick={() => activeFilter = 'approved'}
-                class="retro-btn text-xs font-black {activeFilter === 'approved' ? 'bg-[#86E2D5] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'approved' ? 'bg-[#86E2D5] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
             >
-                ✅ Validées ({approvedCount})
+                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                <span>Validées ({approvedCount})</span>
             </button>
             <button 
                 onclick={() => activeFilter = 'rejected'}
-                class="retro-btn text-xs font-black {activeFilter === 'rejected' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn text-xs font-black {activeFilter === 'rejected' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
             >
-                ⚠️ Refusées / Suspendues ({rejectedCount})
+                <span class="material-symbols-outlined text-[14px]">warning</span>
+                <span>Refusées / Suspendues ({rejectedCount})</span>
             </button>
             <button 
                 onclick={() => activeFilter = 'all'}
@@ -333,7 +337,9 @@
                 placeholder="Rechercher nom, ville, IBAN..."
                 class="retro-input text-xs w-full pl-8"
             />
-            <span class="absolute left-2.5 top-2.5 text-xs text-black/40">🔍</span>
+            <span class="absolute left-2.5 top-2.5 text-black/40 flex items-center">
+                <span class="material-symbols-outlined text-[16px]">search</span>
+            </span>
         </div>
     </div>
 
@@ -345,7 +351,7 @@
         </div>
     {:else if filteredShops.length === 0}
         <div class="bg-white border-3 border-black p-12 text-center shadow-[4px_4px_0px_0px_#000] space-y-2">
-            <span class="text-3xl block">🏪</span>
+            <span class="material-symbols-outlined text-4xl text-black/40 block">storefront</span>
             <p class="text-sm font-black uppercase text-black">Aucune boutique trouvée pour ce filtre.</p>
         </div>
     {:else}
@@ -370,23 +376,25 @@
                                 {#if s.avatar_url}
                                     <img src={s.avatar_url} alt={s.name} class="w-full h-full object-cover" />
                                 {:else}
-                                    <div class="w-full h-full flex items-center justify-center text-xl font-bold">🏪</div>
+                                    <div class="w-full h-full flex items-center justify-center text-xl font-bold">
+                                        <span class="material-symbols-outlined text-2xl text-black/40">storefront</span>
+                                    </div>
                                 {/if}
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     {#if s.approval_status === 'approved' && s.is_approved}
-                                        <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black">● VALIDÉE</span>
+                                        <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black">VALIDÉE</span>
                                     {:else if s.approval_status === 'rejected'}
-                                        <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black">✕ REJETÉE</span>
+                                        <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black">REJETÉE</span>
                                     {:else if s.approval_status === 'suspended'}
-                                        <span class="retro-badge bg-black text-white text-[9px] font-black">⏸️ SUSPENDUE</span>
+                                        <span class="retro-badge bg-black text-white text-[9px] font-black">SUSPENDUE</span>
                                     {:else}
-                                        <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black animate-pulse">⏳ EN ATTENTE DE VALIDATION</span>
+                                        <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black animate-pulse">EN ATTENTE DE VALIDATION</span>
                                     {/if}
 
-                                    <span class="retro-badge bg-[#EDE9DF] text-black text-[9px]">
-                                        {s.seller_type === 'societe' ? '🏢 SOCIÉTÉ' : '👤 PARTICULIER'}
+                                    <span class="retro-badge bg-[#EDE9DF] text-black text-[9px] font-bold">
+                                        {s.seller_type === 'societe' ? 'SOCIÉTÉ' : 'PARTICULIER'}
                                     </span>
 
                                     <span class="retro-badge bg-[#BFD7FE] text-black text-[9px]">
@@ -395,8 +403,11 @@
                                 </div>
 
                                 <h3 class="text-xl font-black uppercase text-black mt-1">{s.name}</h3>
-                                <p class="text-xs text-black/60">
-                                    Slug: <code class="bg-[#F6F4EE] px-1 border border-black/20">{s.slug}</code> • 📍 <strong>{s.address || (s.street ? `${s.street}, ${s.postal_code} ${s.city} (${s.country || 'BE'})` : s.city || 'Non renseignée')}</strong>
+                                <p class="text-xs text-black/60 flex items-center gap-1 flex-wrap">
+                                    <span>Slug: <code class="bg-[#F6F4EE] px-1 border border-black/20">{s.slug}</code></span>
+                                    <span>•</span>
+                                    <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                    <strong>{s.address || (s.street ? `${s.street}, ${s.postal_code} ${s.city} (${s.country || 'BE'})` : s.city || 'Non renseignée')}</strong>
                                 </p>
                             </div>
                         </div>
@@ -406,23 +417,26 @@
                         <div class="flex items-center gap-2 flex-wrap self-end lg:self-center">
                             <button 
                                 onclick={() => editingShop = JSON.parse(JSON.stringify(s))}
-                                class="retro-btn bg-[#FFD166] hover:bg-[#F0C055] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000]"
+                                class="retro-btn bg-[#FFD166] hover:bg-[#F0C055] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                             >
-                                ✏️ Modifier
+                                <span class="material-symbols-outlined text-[16px]">edit</span>
+                                <span>Modifier</span>
                             </button>
                             <button 
                                 onclick={() => viewShopItems(s)}
-                                class="retro-btn bg-[#BFD7FE] hover:bg-[#A3C4FD] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000]"
+                                class="retro-btn bg-[#BFD7FE] hover:bg-[#A3C4FD] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                             >
-                                📦 Gérer les objets
+                                <span class="material-symbols-outlined text-[16px]">inventory_2</span>
+                                <span>Gérer les objets</span>
                             </button>
                             {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
                                 <button 
                                     onclick={() => approveShop(s.id)}
                                     disabled={isProcessing}
-                                    class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000]"
+                                    class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                                 >
-                                    ✅ Valider la boutique
+                                    <span class="material-symbols-outlined text-[16px]">check</span>
+                                    <span>Valider la boutique</span>
                                 </button>
                             {/if}
 
@@ -430,9 +444,10 @@
                                 <button 
                                     onclick={() => { rejectingShop = s; rejectionReason = ""; }}
                                     disabled={isProcessing}
-                                    class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000]"
+                                    class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                                 >
-                                    ❌ Rejeter
+                                    <span class="material-symbols-outlined text-[16px]">close</span>
+                                    <span>Rejeter</span>
                                 </button>
                             {/if}
 
@@ -440,9 +455,10 @@
                                 <button 
                                     onclick={() => suspendShop(s.id)}
                                     disabled={isProcessing}
-                                    class="retro-btn bg-white hover:bg-[#EDE9DF] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000]"
+                                    class="retro-btn bg-white hover:bg-[#EDE9DF] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                                 >
-                                    ⏸️ Suspendre
+                                    <span class="material-symbols-outlined text-[16px]">pause</span>
+                                    <span>Suspendre</span>
                                 </button>
                             {/if}
                         </div>
@@ -452,15 +468,24 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                         <!-- Bloc Coordonnées Bancaires Stripe Connect -->
                         <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 block">💳 Stripe Connect Express</span>
+                            <span class="text-[10px] font-black uppercase text-black/60 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">credit_card</span>
+                                <span>Paiements Stripe Connect</span>
+                            </span>
                             <div>
                                 <span class="text-black/60 block text-[10px]">Statut Reversements :</span>
                                 {#if s.stripe_connect_payouts_enabled}
-                                    <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black inline-block mt-0.5">🟢 ACTIF & VÉRIFIÉ</span>
+                                    <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black inline-flex items-center gap-1 mt-0.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span> ACTIF & VÉRIFIÉ
+                                    </span>
                                 {:else if s.stripe_connect_account_id}
-                                    <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black inline-block mt-0.5">🟡 ONBOARDING EN ATTENTE</span>
+                                    <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black inline-flex items-center gap-1 mt-0.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> ONBOARDING EN ATTENTE
+                                    </span>
                                 {:else}
-                                    <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black inline-block mt-0.5">⚪ NON CONFIGURÉ</span>
+                                    <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black inline-flex items-center gap-1 mt-0.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span> NON CONFIGURÉ
+                                    </span>
                                 {/if}
                             </div>
                             <div>
@@ -469,13 +494,16 @@
                             </div>
                             <div>
                                 <span class="text-black/60 block text-[10px]">Détails validés :</span>
-                                <strong class="font-mono text-[10px]">{s.stripe_connect_details_submitted ? '✅ Soumis' : '❌ Incomplet'}</strong>
+                                <strong class="font-mono text-[10px]">{s.stripe_connect_details_submitted ? 'Soumis' : 'Incomplet'}</strong>
                             </div>
                         </div>
 
                         <!-- Bloc Juridique & Formule -->
                         <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 block">📜 Données Administratives</span>
+                            <span class="text-[10px] font-black uppercase text-black/60 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">description</span>
+                                <span>Données Administratives</span>
+                            </span>
                             <div>
                                 <span class="text-black/60 block text-[10px]">Statut Vendeur :</span>
                                 <strong class="uppercase">{s.seller_type}</strong>
@@ -487,7 +515,6 @@
                                 </div>
                             {/if}
                             <div>
-                                <span class="text-black/60 block text-[10px]">Identifiant Utilisateur Clerk :</span>
                                 <span class="text-black/60 block text-[10px]">Email :</span>
                                 <strong class="text-black text-xs block">{s.email || 'Non trouvé'}</strong>
                             </div>
@@ -499,7 +526,10 @@
 
                         <!-- Bloc Activité & Statistiques -->
                         <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 block">📊 Activité Catalogue</span>
+                            <span class="text-[10px] font-black uppercase text-black/60 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">bar_chart</span>
+                                <span>Activité Catalogue</span>
+                            </span>
                             <div class="flex justify-between border-b border-black/10 pb-1">
                                 <span class="text-black/60">Annonces actives :</span>
                                 <strong class="font-black">{s.active_items_count ?? 0}</strong>
@@ -518,7 +548,10 @@
                     <!-- Motif du rejet (si applicable) -->
                     {#if s.rejection_reason}
                         <div class="p-3 bg-[#FFAEC1] border-2 border-black text-xs space-y-1">
-                            <strong class="uppercase block font-black">⚠️ Motif du refus communiqué au vendeur :</strong>
+                            <strong class="uppercase block font-black flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">warning</span>
+                                <span>Motif du refus communiqué au vendeur :</span>
+                            </strong>
                             <p class="text-black/90">{s.rejection_reason}</p>
                         </div>
                     {/if}
@@ -591,7 +624,10 @@
         <div class="fixed inset-0 z-[99990] bg-black/70 flex items-center justify-center p-4 font-sans">
             <div class="w-full max-w-4xl max-h-[90vh] bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col">
                 <div class="bg-[#2B2D42] text-white px-4 py-3 border-b-2 border-black flex items-center justify-between font-black">
-                    <span>📦 OBJETS // {viewingShopItems.name}</span>
+                    <span class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+                        <span>OBJETS // {viewingShopItems.name}</span>
+                    </span>
                     <button 
                         type="button" 
                         onclick={() => viewingShopItems = null}
@@ -652,28 +688,31 @@
                                     {/if}
                                 </div>
                                 <div class="flex flex-col gap-2 justify-center">
-
                                     <a 
                                         href={`/antiquites/${item.id}`}
-                                        class="retro-btn bg-white hover:bg-[#FFE600] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap text-center block mb-1"
+                                        class="retro-btn bg-white hover:bg-[#FFE600] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap text-center block mb-1 flex items-center justify-center gap-1"
                                     >
-                                        ✏️ Modifier
-                                    </a>\n                                    {#if item.approval_status !== 'approved'}
+                                        <span class="material-symbols-outlined text-[14px]">edit</span>
+                                        <span>Modifier</span>
+                                    </a>
+                                    {#if item.approval_status !== 'approved'}
                                         <button 
                                             onclick={() => approveItem(item.id)}
                                             disabled={isProcessing}
-                                            class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap"
+                                            class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap flex items-center justify-center gap-1"
                                         >
-                                            ✅ Approuver
+                                            <span class="material-symbols-outlined text-[14px]">check</span>
+                                            <span>Approuver</span>
                                         </button>
                                     {/if}
                                     {#if item.approval_status !== 'rejected'}
                                         <button 
                                             onclick={() => { rejectingItem = item; itemRejectionReason = ""; }}
                                             disabled={isProcessing}
-                                            class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap"
+                                            class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap flex items-center justify-center gap-1"
                                         >
-                                            ❌ Rejeter
+                                            <span class="material-symbols-outlined text-[14px]">close</span>
+                                            <span>Rejeter</span>
                                         </button>
                                     {/if}
                                 </div>

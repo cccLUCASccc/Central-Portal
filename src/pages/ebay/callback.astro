@@ -9,24 +9,24 @@ const userId = auth.userId;
 
 <BasicLayout>
     <Show when="signed-in">
-        <div class="flex flex-col items-center justify-center min-h-[50vh] max-w-lg mx-auto bg-base-100 p-8 rounded-3xl shadow-xl border border-base-200 text-center space-y-6 my-12 animate-in fade-in duration-500">
-            <div class="relative flex items-center justify-center w-20 h-20 bg-info/10 rounded-full mx-auto">
-                <span id="logo-icon" class="text-3xl animate-bounce">🔑</span>
+        <div class="flex flex-col items-center justify-center min-h-[50vh] max-w-lg mx-auto bg-white p-8 border-3 border-black shadow-[6px_6px_0px_0px_#000] text-center space-y-6 my-12 animate-in fade-in duration-500 font-mono">
+            <div class="relative flex items-center justify-center w-20 h-20 bg-[#BFD7FE] border-2 border-black shadow-[3px_3px_0px_0px_#000] mx-auto">
+                <span id="logo-icon" class="material-symbols-outlined text-4xl animate-bounce text-black">key</span>
             </div>
             
-            <h1 class="text-2xl font-black tracking-tight">Authentification eBay</h1>
-            <p id="status-text" class="text-base-content/70">Échange du code d'autorisation en cours, veuillez patienter...</p>
+            <h1 class="text-2xl font-black tracking-tight uppercase">Authentification eBay</h1>
+            <p id="status-text" class="text-black/70 text-xs">Échange du code d'autorisation en cours, veuillez patienter...</p>
             
             <div id="loader" class="flex justify-center py-2">
-                <span class="loading loading-ring loading-lg text-info"></span>
+                <span class="loading loading-ring loading-lg text-black"></span>
             </div>
 
-            <div id="success-icon" class="hidden text-5xl text-success animate-in zoom-in-50 duration-300">
-                ✅
+            <div id="success-icon" class="hidden animate-in zoom-in-50 duration-300">
+                <span class="material-symbols-outlined text-5xl text-emerald-600">check_circle</span>
             </div>
 
-            <div id="error-icon" class="hidden text-5xl text-error animate-in zoom-in-50 duration-300">
-                ❌
+            <div id="error-icon" class="hidden animate-in zoom-in-50 duration-300">
+                <span class="material-symbols-outlined text-5xl text-red-600">cancel</span>
             </div>
         </div>
 
@@ -62,7 +62,7 @@ const userId = auth.userId;
                         statusText.innerText = "Connexion réussie ! Vos identifiants eBay ont été configurés. Redirection en cours...";
                         loader.classList.add('hidden');
                         successIcon.classList.remove('hidden');
-                        if (logoIcon) logoIcon.innerText = "🎉";
+                        if (logoIcon) logoIcon.innerText = "check_circle";
                         
                         setTimeout(() => {
                             window.location.href = '/ebay';
@@ -72,14 +72,14 @@ const userId = auth.userId;
                         statusText.innerText = "Erreur lors de l'échange du code : " + (result.error || response.statusText);
                         loader.classList.add('hidden');
                         errorIcon.classList.remove('hidden');
-                        if (logoIcon) logoIcon.innerText = "⚠️";
+                        if (logoIcon) logoIcon.innerText = "warning";
                     }
                 } catch (e) {
-                    console.error("❌ Erreur OAuth :", e);
+                    console.error("Erreur OAuth :", e);
                     statusText.innerText = "Impossible de contacter le serveur central. Veuillez réessayer.";
                     loader.classList.add('hidden');
                     errorIcon.classList.remove('hidden');
-                    if (logoIcon) logoIcon.innerText = "⚠️";
+                    if (logoIcon) logoIcon.innerText = "warning";
                 }
             }
 

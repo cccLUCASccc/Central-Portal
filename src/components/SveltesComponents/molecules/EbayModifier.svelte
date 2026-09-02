@@ -97,7 +97,7 @@
             });
 
             if (response.ok) {
-                feedbackMessage = "Configuration eBay enregistrée localement avec succès ! 💾";
+                feedbackMessage = "Configuration eBay enregistrée localement avec succès !";
                 feedbackType = "success";
                 return true;
             } else {
@@ -126,7 +126,7 @@
             const saved = await saveEbayConfig();
             if (!saved) return;
 
-            feedbackMessage = "Publication/Mise à jour en cours sur eBay... 🚀";
+            feedbackMessage = "Publication/Mise à jour en cours sur eBay...";
             feedbackType = "info";
 
             const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${antiquite.id}/publish-ebay`, {
@@ -135,12 +135,12 @@
 
             const res = await response.json();
             if (response.ok) {
-                feedbackMessage = `✅ ${res.message || "Objet synchronisé sur eBay avec succès !"} \nID d'annonce : ${res.listingId}`;
+                feedbackMessage = `${res.message || "Objet synchronisé sur eBay avec succès !"} \nID d'annonce : ${res.listingId}`;
                 feedbackType = "success";
                 dynamicStatus = "PUBLISHED";
                 dynamicListingId = res.listingId;
             } else {
-                feedbackMessage = `❌ Erreur eBay : ${res.error || 'Erreur inconnue'}`;
+                feedbackMessage = `Erreur eBay : ${res.error || 'Erreur inconnue'}`;
                 feedbackType = "error";
             }
         } catch (error) {
@@ -164,16 +164,19 @@
                     Vérification...
                 </span>
             {:else if dynamicStatus === "PUBLISHED" || dynamicStatus === "ACTIVE"}
-                <span class="retro-badge bg-[#99E7DC] text-[10px]">
-                    🟢 En ligne
+                <span class="retro-badge bg-[#99E7DC] text-[10px] inline-flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    <span>En ligne</span>
                 </span>
             {:else if dynamicStatus === "NOT_LISTED"}
-                <span class="retro-badge bg-white text-[10px]">
-                    ⚪ Non publié
+                <span class="retro-badge bg-white text-[10px] inline-flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                    <span>Non publié</span>
                 </span>
             {:else if dynamicStatus === "NOT_CONFIGURED"}
-                <span class="retro-badge bg-[#FFD2A6] text-[10px]">
-                    ⚠️ Non configuré
+                <span class="retro-badge bg-[#FFD2A6] text-[10px] inline-flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[12px]">warning</span>
+                    <span>Non configuré</span>
                 </span>
             {:else if dynamicStatus === "NOT_AVAILABLE"}
                 <span class="retro-badge bg-[#FFC2D1] text-[10px]">
@@ -196,21 +199,24 @@
                     href={`https://www.ebay.be/itm/${dynamicListingId}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    class="retro-btn text-xs py-1.5 px-3 bg-[#99E7DC] hover:bg-[#78ded0] font-black"
+                    class="retro-btn text-xs py-1.5 px-3 bg-[#99E7DC] hover:bg-[#78ded0] font-black flex items-center gap-1"
                 >
-                    Voir l'annonce ↗
+                    <span>Voir l'annonce</span>
+                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
                 </a>
             {/if}
             <button 
                 type="button" 
                 onclick={checkLiveStatus} 
                 disabled={isCheckingStatus || dynamicStatus === "NOT_AVAILABLE"}
-                class="retro-btn text-xs py-1.5 px-3 bg-white"
+                class="retro-btn text-xs py-1.5 px-3 bg-white flex items-center gap-1"
             >
                 {#if isCheckingStatus}
                     <span class="loading loading-spinner loading-xs mr-1"></span>
+                {:else}
+                    <span class="material-symbols-outlined text-[14px]">refresh</span>
                 {/if}
-                🔄 Actualiser
+                <span>Actualiser</span>
             </button>
         </div>
     </div>
@@ -335,25 +341,27 @@
                 type="button" 
                 onclick={saveEbayConfig} 
                 disabled={isSaving || isPublishing}
-                class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600]"
+                class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] flex items-center gap-1.5"
             >
                 {#if isSaving}
                     <span class="loading loading-spinner loading-xs mr-1"></span>
+                {:else}
+                    <span class="material-symbols-outlined text-[16px]">save</span>
                 {/if}
-                💾 Sauvegarder localement
+                <span>Sauvegarder localement</span>
             </button>
             <button 
                 type="button" 
                 onclick={publishToEbay} 
                 disabled={isSaving || isPublishing}
-                class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[3px_3px_0px_0px_#000]"
+                class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5"
             >
                 {#if isPublishing}
                     <span class="loading loading-spinner loading-xs mr-1"></span>
                 {:else}
-                    🚀
+                    <span class="material-symbols-outlined text-[16px]">sync</span>
                 {/if}
-                Enregistrer & Publier sur eBay
+                <span>Enregistrer & Publier sur eBay</span>
             </button>
         </div>
     </div>

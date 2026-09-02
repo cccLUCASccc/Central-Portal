@@ -24,6 +24,10 @@ const isMarty = pathname.startsWith('/marty');
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <title>{isMarty ? "Marty // Scrapper Leads" : "Gestionnaire // Daisy Brocante"}</title>
+    <!-- Google Fonts : Plus Jakarta Sans & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
   </head>
 
   <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFAEC1] selection:text-black">
@@ -41,13 +45,13 @@ const isMarty = pathname.startsWith('/marty');
             <div class="flex items-center gap-3">
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
               {pathname === '/' ? (
-                <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — HUB MULTI-PROJETS</span>
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> PORTAIL CENTRAL // GESTIONNAIRE.SYS — HUB MULTI-PROJETS</span>
               ) : isDaisyBrocante ? (
-                <span>⚡ DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
               ) : isMarty ? (
-                <span>⚡ MARTY // GESTIONNAIRE.SYS — STATION PROSPECTION & LEADS</span>
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> MARTY // GESTIONNAIRE.SYS — STATION PROSPECTION & LEADS</span>
               ) : (
-                <span>⚡ PORTAIL CENTRAL // GESTIONNAIRE.SYS — SERVICE GLOBAL</span>
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> PORTAIL CENTRAL // GESTIONNAIRE.SYS — SERVICE GLOBAL</span>
               )}
             </div>
             <div class="hidden md:flex items-center gap-4 text-[11px] font-mono">
@@ -57,7 +61,7 @@ const isMarty = pathname.startsWith('/marty');
                 class="border border-black px-1.5 py-0.5 bg-white shadow-[1px_1px_0px_0px_#000] hover:bg-[#FFF394] cursor-pointer flex items-center gap-1.5 transition-colors"
                 title="Rejouer la séquence de boot du terminal"
               >
-                <span>🖥️</span> SERVEUR: EN LIGNE
+                <span class="material-symbols-outlined text-[14px]">dns</span> SERVEUR: EN LIGNE
               </button>
               <span class="border border-black px-1.5 py-0.5 bg-[#86E2D5] shadow-[1px_1px_0px_0px_#000]">STORAGE: AWS S3</span>
             </div>
@@ -89,7 +93,7 @@ const isMarty = pathname.startsWith('/marty');
             <nav class="hidden lg:flex items-center gap-1.5 font-mono flex-shrink-0">
               <!-- Bouton Cross-Projet : Hub Projets -->
               <a href="/" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                🗂️ Hub Projets
+                <span class="material-symbols-outlined text-[16px]">folder_open</span> Hub Projets
               </a>
 
               {isDaisyBrocante && (
@@ -98,19 +102,19 @@ const isMarty = pathname.startsWith('/marty');
 
                   <!-- Boutons Spécifiques Daisy Brocante -->
                   <a href="/antiquites" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    📋 Inventaire
+                    <span class="material-symbols-outlined text-[16px]">inventory_2</span> Inventaire
                   </a>
                   <a href="/subcategories" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    🏷️ Sous-catégories
+                    <span class="material-symbols-outlined text-[16px]">label</span> Sous-catégories
                   </a>
                   <a href="/shops" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    🏬 Boutiques
+                    <span class="material-symbols-outlined text-[16px]">storefront</span> Boutiques
                   </a>
                   <a href="/ebay" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    📦 eBay
+                    <span class="material-symbols-outlined text-[16px]">package_2</span> eBay
                   </a>
                   <a href="/Livraison" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    🚚 Livraisons
+                    <span class="material-symbols-outlined text-[16px]">local_shipping</span> Livraisons
                   </a>
                 </>
               )}
@@ -121,7 +125,7 @@ const isMarty = pathname.startsWith('/marty');
 
                   <!-- Boutons Spécifiques Marty -->
                   <a href="/marty" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD166] {pathname.startsWith('/marty') ? '!bg-[#FFD166] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 font-black' : ''}">
-                    ⚡ Scrapper & Leads
+                    <span class="material-symbols-outlined text-[16px]">bolt</span> Scrapper & Leads
                   </a>
                 </>
               )}
@@ -130,7 +134,7 @@ const isMarty = pathname.startsWith('/marty');
 
               <!-- Bouton Cross-Projet : Fichiers S3 -->
               <a href="/storage" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                📁 Fichiers S3
+                <span class="material-symbols-outlined text-[16px]">cloud</span> Fichiers S3
               </a>
             </nav>
 
@@ -159,10 +163,10 @@ const isMarty = pathname.startsWith('/marty');
             <button 
               type="button" 
               onclick="window.replayBoot && window.replayBoot()"
-              class="retro-badge bg-[#86E2D5] hover:bg-[#65C4B5] cursor-pointer transition-transform active:scale-95"
+              class="retro-badge bg-[#86E2D5] hover:bg-[#65C4B5] cursor-pointer transition-transform active:scale-95 flex items-center gap-1"
               title="Cliquer pour relancer le terminal de démarrage"
             >
-              ⚡ SYS_OK
+              <span class="material-symbols-outlined text-[14px]">check_circle</span> SYS_OK
             </button>
             <span class="text-black/70">Gestionnaire.SYS Terminal © 2026</span>
           </div>
@@ -186,29 +190,29 @@ const isMarty = pathname.startsWith('/marty');
             <nav class="flex flex-col gap-2.5">
               <!-- Cross-projet -->
               <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE]' : ''}">
-                🗂️ Hub des Projets
+                <span class="material-symbols-outlined text-[16px]">folder_open</span> Hub des Projets
               </a>
 
               {isDaisyBrocante && (
                 <>
                   <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
-                    <span>🌼</span> Projet Daisy Brocante
+                    <span class="material-symbols-outlined text-[14px]">spa</span> Projet Daisy Brocante
                   </div>
 
                   <a href="/antiquites" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394]' : ''}">
-                    📋 Inventaire
+                    <span class="material-symbols-outlined text-[16px]">inventory_2</span> Inventaire
                   </a>
                   <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
-                    🏷️ Sous-catégories
+                    <span class="material-symbols-outlined text-[16px]">label</span> Sous-catégories
                   </a>
                   <a href="/shops" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5]' : ''}">
-                    🏬 Boutiques
+                    <span class="material-symbols-outlined text-[16px]">storefront</span> Boutiques
                   </a>
                   <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
-                    📦 eBay (Annonces)
+                    <span class="material-symbols-outlined text-[16px]">package_2</span> eBay (Annonces)
                   </a>
                   <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1]' : ''}">
-                    🚚 Livraisons
+                    <span class="material-symbols-outlined text-[16px]">local_shipping</span> Livraisons
                   </a>
                 </>
               )}
@@ -216,11 +220,11 @@ const isMarty = pathname.startsWith('/marty');
               {isMarty && (
                 <>
                   <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
-                    <span>🕵️</span> Projet Marty (Lead Gen)
+                    <span class="material-symbols-outlined text-[14px]">travel_explore</span> Projet Marty (Lead Gen)
                   </div>
 
                   <a href="/marty" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD166] {pathname.startsWith('/marty') ? '!bg-[#FFD166] font-black' : ''}">
-                    ⚡ Scrapper & Leads
+                    <span class="material-symbols-outlined text-[16px]">bolt</span> Scrapper & Leads
                   </a>
                 </>
               )}
@@ -228,7 +232,7 @@ const isMarty = pathname.startsWith('/marty');
               <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2">Services Globaux</div>
 
               <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5]' : ''}">
-                📁 Fichiers S3
+                <span class="material-symbols-outlined text-[16px]">cloud</span> Fichiers S3
               </a>
             </nav>
           </div>

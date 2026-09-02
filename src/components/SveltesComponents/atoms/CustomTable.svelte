@@ -234,16 +234,19 @@
         <div class="h-6 w-0.5 bg-black hidden sm:block"></div>
         
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick={printBulkQRCodes} class="retro-btn text-xs py-1 px-2.5 bg-white">
-            🖨️ QR Codes
+          <button onclick={printBulkQRCodes} class="retro-btn text-xs py-1 px-2.5 bg-white flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">qr_code</span>
+            <span>QR Codes</span>
           </button>
 
-          <button onclick={() => { selectedSubcatId = null; isSubcatModalOpen = true; }} class="retro-btn text-xs py-1 px-2.5 bg-white">
-            🏷️ Sous-catégorie
+          <button onclick={() => { selectedSubcatId = null; isSubcatModalOpen = true; }} class="retro-btn text-xs py-1 px-2.5 bg-white flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">label</span>
+            <span>Sous-catégorie</span>
           </button>
 
-          <button onclick={bulkDelete} class="retro-btn-error text-xs py-1 px-2.5 font-black">
-            🗑️ Supprimer
+          <button onclick={bulkDelete} class="retro-btn-error text-xs py-1 px-2.5 font-black flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">delete</span>
+            <span>Supprimer</span>
           </button>
           
           <button onclick={() => selectedIds = []} class="retro-btn text-xs py-1 px-2 bg-white">
@@ -259,8 +262,9 @@
     <div use:portal class="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4" onclick={() => isSubcatModalOpen = false}>
       <div class="bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] max-w-md w-full overflow-hidden" onclick={(e) => e.stopPropagation()}>
         <div class="bg-[#FFE600] border-b-2 border-black px-4 py-2 flex items-center justify-between">
-          <span class="font-black text-xs uppercase text-black">
-            🗔 ASSIGNER SOUS-CATÉGORIE
+          <span class="font-black text-xs uppercase text-black flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">category</span>
+            <span>ASSIGNER SOUS-CATÉGORIE</span>
           </span>
           <button onclick={() => isSubcatModalOpen = false} class="w-6 h-6 border border-black bg-white hover:bg-[#FFC2D1] flex items-center justify-center font-bold text-xs">
             ✕
@@ -408,14 +412,14 @@
               
               <td onclick={(e) => e.stopPropagation()} class="p-3 text-right">
                 <div class="flex justify-end gap-1.5">
-                  <a href={`/antiquites/${antiquite.id}`} class="retro-btn py-1 px-2 text-[10px] bg-white hover:bg-[#FFE600]" title="Modifier">
-                    ✏️
+                  <a href={`/antiquites/${antiquite.id}`} class="retro-btn py-1 px-2 text-[10px] bg-white hover:bg-[#FFE600] flex items-center justify-center" title="Modifier">
+                    <span class="material-symbols-outlined text-[14px]">edit</span>
                   </a>
                   <a href={`/ebay/${antiquite.id}`} class="retro-btn py-1 px-2 text-[10px] bg-[#FFE600] hover:bg-[#ffe169]" title="eBay">
                     eBay
                   </a>
-                  <button type="button" onclick={() => DeleteAntiquite(antiquite.id)} class="retro-btn py-1 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fca5b9]" title="Supprimer">
-                    🗑️
+                  <button type="button" onclick={() => DeleteAntiquite(antiquite.id)} class="retro-btn py-1 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fca5b9] flex items-center justify-center" title="Supprimer">
+                    <span class="material-symbols-outlined text-[14px]">delete</span>
                   </button>
                 </div>
               </td>        
@@ -424,10 +428,11 @@
             <tr>
               <td colspan="8" class="text-center py-16 bg-[#F6F4EE]">
                 <div class="flex flex-col items-center gap-2">
-                  <span class="text-4xl">📭</span>
+                  <span class="material-symbols-outlined text-4xl text-black/40">inbox</span>
                   <p class="text-sm font-bold uppercase text-black">Aucun objet dans l'inventaire</p>
-                  <a href="/antiquites/add" class="retro-btn-primary text-xs py-1.5 px-4 mt-2">
-                    ➕ Ajouter un objet
+                  <a href="/antiquites/add" class="retro-btn-primary text-xs py-1.5 px-4 mt-2 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">add</span>
+                    <span>Ajouter un objet</span>
                   </a>
                 </div>
               </td>

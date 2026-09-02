@@ -128,7 +128,7 @@
             });
 
             if (response.ok) {
-                alert("Objet créé avec succès ! ✨");
+                alert("Objet créé avec succès !");
                 window.location.href = "/antiquites"; 
             } else {
                 alert("Erreur lors de la création de l'objet.");
@@ -155,8 +155,8 @@
             </h1>
             <p class="text-xs text-black/80 mt-0.5">Remplissez les détails pour enregistrer la pièce dans la base.</p>
         </div>
-        <div class="retro-icon-box bg-white">
-            ✍️
+        <div class="retro-icon-box bg-white flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl text-black">edit_note</span>
         </div>
     </div>
 
@@ -173,12 +173,13 @@
                         <button 
                             onclick={enhanceDescription} 
                             disabled={isEnhancing}
-                            class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066]"
+                            class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066] flex items-center gap-1"
                         >
                             {#if isEnhancing}
                                 <span class="loading loading-spinner loading-xs"></span>
                             {:else}
-                                🪄 Améliorer IA
+                                <span class="material-symbols-outlined text-[14px]">auto_fix_high</span>
+                                <span>Améliorer IA</span>
                             {/if}
                         </button>
                     </div>
@@ -238,7 +239,7 @@
             <details class="group border-2 border-black bg-[#F6F4EE] shadow-[3px_3px_0px_0px_#000]">
                 <summary class="p-4 cursor-pointer font-black text-xs uppercase flex items-center justify-between bg-[#FFF394] select-none">
                     <div class="flex items-center gap-2">
-                        <span>📦</span>
+                        <span class="material-symbols-outlined text-[16px]">package_2</span>
                         <span>Personnalisation des informations eBay (Optionnel)</span>
                     </div>
                     <span class="font-bold text-sm group-open:rotate-180 transition-transform">▼</span>
@@ -278,12 +279,13 @@
             <button onclick={() => window.location.href = '/antiquites'} disabled={isCreating} class="retro-btn py-2 px-5 text-xs bg-white hover:bg-[#FFC2D1]">
                 Annuler
             </button>
-            <button onclick={createAntiquity} disabled={isCreating} class="retro-btn-primary py-2 px-8 text-xs font-black shadow-[4px_4px_0px_0px_#000]">
+            <button onclick={createAntiquity} disabled={isCreating} class="retro-btn-primary py-2 px-8 text-xs font-black shadow-[4px_4px_0px_0px_#000] flex items-center gap-1.5">
                 {#if isCreating}
                     <span class="loading loading-spinner loading-xs mr-2"></span>
                     Création en cours...
                 {:else}
-                    ✨ Enregistrer l'objet
+                    <span class="material-symbols-outlined text-[16px]">check</span>
+                    <span>Enregistrer l'objet</span>
                 {/if}
             </button>
         </div>

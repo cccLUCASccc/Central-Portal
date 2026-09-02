@@ -100,13 +100,13 @@
         <div class="flex flex-wrap items-center gap-2.5">
             <button 
                 onclick={() => {is_visible = !is_visible}} 
-                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3.5"
+                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3.5 flex items-center gap-1.5"
             >
-                <span>📦</span>
+                <span class="material-symbols-outlined text-[16px]">upload_file</span>
                 <span>Import / Export Lot</span>
             </button>
-            <a href="/antiquites/add" class="retro-btn-primary text-xs py-2 px-4 font-black shadow-[3px_3px_0px_0px_#000]">
-                <span>➕</span>
+            <a href="/antiquites/add" class="retro-btn-primary text-xs py-2 px-4 font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">add</span>
                 <span>Nouvel Objet</span>
             </a>            
         </div>
@@ -127,8 +127,9 @@
             <DataModifier type={7} type_name="Filtre Nouveauté" mode="filter" bind:data_bool={filterStore.nouveaute_filter} />
         </div>
         <div>
-            <button class="retro-btn bg-white hover:bg-[#FFC2D1] w-full py-2 text-xs" onclick={resetFilters}>
-                🔄 Réinitialiser
+            <button class="retro-btn bg-white hover:bg-[#FFC2D1] w-full py-2 text-xs flex items-center justify-center gap-1" onclick={resetFilters}>
+                <span class="material-symbols-outlined text-[16px]">refresh</span>
+                <span>Réinitialiser</span>
             </button>
         </div>
     </div>

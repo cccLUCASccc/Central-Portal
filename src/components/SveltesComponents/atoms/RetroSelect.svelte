@@ -125,7 +125,7 @@
                 >
                     <span class="truncate">{opt.label}</span>
                     {#if isSelected}
-                        <span class="text-xs font-black">✓</span>
+                        <span class="material-symbols-outlined text-[14px]">check</span>
                     {/if}
                 </button>
             {/each}

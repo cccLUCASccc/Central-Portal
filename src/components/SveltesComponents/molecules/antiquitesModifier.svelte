@@ -204,7 +204,7 @@
         if (ok) {
             window.location.href = `/${path}/${targetId}`;
         } else {
-            alert("❌ Erreur lors de l'enregistrement de l'objet. Navigation annulée.");
+            alert("Erreur lors de l'enregistrement de l'objet. Navigation annulée.");
         }
     }
 
@@ -242,7 +242,7 @@
         const ok = await saveAntiquity(id);
         isSaving = false;
         if (ok) {
-            alert("Objet mis à jour avec succès ! ✨");
+            alert("Objet mis à jour avec succès !");
             window.history.back();
         } else {
             alert("Une erreur est survenue lors de la mise à jour de l'objet.");
@@ -257,7 +257,7 @@
         try {
             const saved = await saveAntiquity(id);
             if (!saved) {
-                alert("❌ Impossible d'enregistrer les modifications de l'objet. Publication annulée.");
+                alert("Impossible d'enregistrer les modifications de l'objet. Publication annulée.");
                 return;
             }
 
@@ -266,10 +266,10 @@
             });
 
             if (response.ok) {
-                alert("✅ Objet publié avec succès sur Facebook et ajouté au catalogue !");
+                alert("Objet publié avec succès sur Facebook et ajouté au catalogue !");
             } else {
                 const res = await response.json();
-                alert(`❌ Erreur lors de la publication : ${res.error || 'Erreur inconnue'}`);
+                alert(`Erreur lors de la publication : ${res.error || 'Erreur inconnue'}`);
             }
         } catch (error) {
             console.error("Error publishing to FB:", error);
@@ -299,18 +299,19 @@
                 <button 
                     onclick={() => publishToFacebook(antiquite.id)} 
                     disabled={isPublishingFB}
-                    class="retro-btn py-1.5 px-3 text-xs bg-[#D4E2FD] hover:bg-[#b8d2fe]"
+                    class="retro-btn py-1.5 px-3 text-xs bg-[#D4E2FD] hover:bg-[#b8d2fe] flex items-center gap-1.5"
                     title="Publier sur Facebook"
                 >
                     {#if isPublishingFB}
                         <span class="loading loading-spinner loading-xs"></span>
                     {:else}
-                        📘 Facebook
+                        <span class="material-symbols-outlined text-[16px]">share</span>
+                        <span>Facebook</span>
                     {/if}
                 </button>
             {/if}
-            <div class="retro-icon-box bg-white">
-                🏷️
+            <div class="retro-icon-box bg-white flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl text-black">label</span>
             </div>
         </div>
     </div>
@@ -328,12 +329,13 @@
                         <button 
                             onclick={enhanceDescription} 
                             disabled={isEnhancing}
-                            class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066]"
+                            class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066] flex items-center gap-1"
                         >
                             {#if isEnhancing}
                                 <span class="loading loading-spinner loading-xs"></span>
                             {:else}
-                                🪄 Améliorer IA
+                                <span class="material-symbols-outlined text-[14px]">auto_fix_high</span>
+                                <span>Améliorer IA</span>
                             {/if}
                         </button>
                     </div>
@@ -404,8 +406,9 @@
                     </div>
                 </div>
 
-                <button onclick={printQRCode} type="button" class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] font-black">
-                    🖨️ Imprimer l'Étiquette
+                <button onclick={printQRCode} type="button" class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] font-black flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">print</span>
+                    <span>Imprimer l'Étiquette</span>
                 </button>
             </div>
         </div>
@@ -419,10 +422,11 @@
                         type="button"
                         onclick={() => saveAndNavigate(antiquite.prev_id!)}
                         disabled={isSaving}
-                        class="retro-btn text-xs py-1.5 px-3 bg-white hover:bg-[#D4E2FD]"
+                        class="retro-btn text-xs py-1.5 px-3 bg-white hover:bg-[#D4E2FD] flex items-center gap-1"
                         title="Enregistrer et aller au précédent (Flèche Gauche ←)"
                     >
-                        <span>« #{antiquite.prev_id}</span>
+                        <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+                        <span>#{antiquite.prev_id}</span>
                     </button>
                 {/if}
 
@@ -431,10 +435,11 @@
                         type="button"
                         onclick={() => saveAndNavigate(antiquite.next_id!)}
                         disabled={isSaving}
-                        class="retro-btn text-xs py-1.5 px-3 bg-white hover:bg-[#D4E2FD]"
+                        class="retro-btn text-xs py-1.5 px-3 bg-white hover:bg-[#D4E2FD] flex items-center gap-1"
                         title="Enregistrer et aller au suivant (Flèche Droite →)"
                     >
-                        <span>#{antiquite.next_id} »</span>
+                        <span>#{antiquite.next_id}</span>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
                     </button>
                 {/if}
             </div>
@@ -444,12 +449,13 @@
                 <button onclick={() => window.history.back()} class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFC2D1]">
                     Annuler
                 </button>
-                <button onclick={() => modifyAntiquity(antiquite.id)} disabled={isSaving} class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[4px_4px_0px_0px_#000]">
+                <button onclick={() => modifyAntiquity(antiquite.id)} disabled={isSaving} class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[4px_4px_0px_0px_#000] flex items-center gap-1.5">
                     {#if isSaving}
                         <span class="loading loading-spinner loading-xs mr-1"></span>
                         Enregistrement...
                     {:else}
-                        💾 Enregistrer les modifications
+                        <span class="material-symbols-outlined text-[16px]">save</span>
+                        <span>Enregistrer les modifications</span>
                     {/if}
                 </button>
             </div>

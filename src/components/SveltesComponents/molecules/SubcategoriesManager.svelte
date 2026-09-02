@@ -110,12 +110,13 @@
                 bind:value={category}
             />
 
-            <button type="submit" disabled={isCreating} class="retro-btn-primary w-full py-2.5 mt-2 font-black shadow-[3px_3px_0px_0px_#000]">
+            <button type="submit" disabled={isCreating} class="retro-btn-primary w-full py-2.5 mt-2 font-black shadow-[3px_3px_0px_0px_#000] flex items-center justify-center gap-1.5">
                 {#if isCreating}
                     <span class="loading loading-spinner loading-xs mr-2"></span>
                     Création...
                 {:else}
-                    ➕ Ajouter la sous-catégorie
+                    <span class="material-symbols-outlined text-[16px]">add</span>
+                    <span>Ajouter la sous-catégorie</span>
                 {/if}
             </button>
         </form>
@@ -133,8 +134,8 @@
                     Sous-catégories actives
                 </h2>
             </div>
-            <div class="retro-icon-box bg-white">
-                🏷️
+            <div class="retro-icon-box bg-white flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl text-black">label</span>
             </div>
         </div>
         

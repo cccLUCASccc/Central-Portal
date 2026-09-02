@@ -40,6 +40,10 @@ const primaryImage = current?.images && current.images.length > 0
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{current ? current.name : "Objet introuvable"} // Fiche Inventaire</title>
     <meta name="robots" content="noindex, nofollow">
+    <!-- Google Fonts : Plus Jakarta Sans & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 </head>
 <body class="bg-[#F6F4EE] text-black min-h-screen flex items-center justify-center p-4 font-mono">
     <div class="w-full max-w-md bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] overflow-hidden">
@@ -93,11 +97,11 @@ const primaryImage = current?.images && current.images.length > 0
                     <div class="flex items-center justify-between p-3 border-2 border-black bg-white">
                         <span class="font-black uppercase text-black">Statut Boutique</span>
                         {current.status === 0 ? (
-                            <span class="retro-badge bg-[#99E7DC] text-[10px]">🟢 En ligne</span>
+                            <span class="retro-badge bg-[#99E7DC] text-[10px] flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-700 inline-block"></span> En ligne</span>
                         ) : current.status === 2 ? (
-                            <span class="retro-badge bg-[#FFC2D1] text-[10px]">🔴 Vendu</span>
+                            <span class="retro-badge bg-[#FFC2D1] text-[10px] flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span> Vendu</span>
                         ) : (
-                            <span class="retro-badge bg-white text-[10px]">⚪ Inactif</span>
+                            <span class="retro-badge bg-white text-[10px] flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-neutral-400 inline-block"></span> Inactif</span>
                         )}
                     </div>
 
@@ -107,9 +111,10 @@ const primaryImage = current?.images && current.images.length > 0
                                 href={`https://daisybrocante.com/boutique/${current.name.replace(/\.+$/, '').trim()}`} 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
-                                class="retro-btn-primary w-full py-2.5 text-xs font-black shadow-[3px_3px_0px_0px_#000]"
+                                class="retro-btn-primary w-full py-2.5 text-xs font-black shadow-[3px_3px_0px_0px_#000] flex items-center justify-center gap-1.5"
                             >
-                                Voir sur le site public ↗
+                                <span>Voir sur le site public</span>
+                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
                             </a>
                         </div>
                     )}
@@ -117,7 +122,7 @@ const primaryImage = current?.images && current.images.length > 0
                 </>
             ) : (
                 <div class="text-center py-10 space-y-3">
-                    <div class="text-4xl">🔍</div>
+                    <div class="flex justify-center"><span class="material-symbols-outlined text-4xl text-black/40">search</span></div>
                     <h2 class="text-base font-black uppercase text-black">Objet introuvable</h2>
                     <p class="text-xs text-black/60">Impossible de charger cet objet ou référence introuvable.</p>
                 </div>

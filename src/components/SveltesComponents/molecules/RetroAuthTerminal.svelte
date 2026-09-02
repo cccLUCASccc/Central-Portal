@@ -545,14 +545,14 @@
 
                 {#if errorMessage}
                     <div class="mb-5 p-3.5 bg-[#FFC2D1] border-2 border-black font-mono text-xs font-bold shadow-[2px_2px_0px_0px_#000] flex items-center gap-2.5">
-                        <span class="text-base">⚠️</span>
+                        <span class="material-symbols-outlined text-base text-black">warning</span>
                         <span>{errorMessage}</span>
                     </div>
                 {/if}
 
                 {#if successMessage}
                     <div class="mb-5 p-3.5 bg-[#99E7DC] border-2 border-black font-mono text-xs font-bold shadow-[2px_2px_0px_0px_#000] flex items-center gap-2.5">
-                        <span class="text-base">⚡</span>
+                        <span class="material-symbols-outlined text-base text-black">bolt</span>
                         <span>{successMessage}</span>
                     </div>
                 {/if}
@@ -608,7 +608,8 @@
                                     <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
                                     <span>VÉRIFICATION DES DROITS...</span>
                                 {:else}
-                                    <span>⚡ SE CONNECTER AU SYSTÈME</span>
+                                    <span class="material-symbols-outlined text-[16px]">bolt</span>
+                                    <span>SE CONNECTER AU SYSTÈME</span>
                                 {/if}
                             </button>
                         </div>
@@ -626,16 +627,20 @@
                                             type="button"
                                             disabled={isLoading}
                                             onclick={() => switchSecondFactorStrategy(factor)}
-                                            class="retro-btn btn-xs text-[10px] {secondFactorStrategy === factor.strategy ? '!bg-[#99E7DC] font-black shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
+                                            class="retro-btn btn-xs text-[10px] {secondFactorStrategy === factor.strategy ? '!bg-[#99E7DC] font-black shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
                                         >
                                             {#if factor.strategy === 'email_code'}
-                                                ✉️ Email ({factor.safeIdentifier || 'par défaut'})
+                                                <span class="material-symbols-outlined text-[12px]">mail</span>
+                                                <span>Email ({factor.safeIdentifier || 'par défaut'})</span>
                                             {:else if factor.strategy === 'totp'}
-                                                📱 Authenticator App
+                                                <span class="material-symbols-outlined text-[12px]">smartphone</span>
+                                                <span>Authenticator App</span>
                                             {:else if factor.strategy === 'phone_code'}
-                                                💬 SMS ({factor.safeIdentifier || 'par défaut'})
+                                                <span class="material-symbols-outlined text-[12px]">sms</span>
+                                                <span>SMS ({factor.safeIdentifier || 'par défaut'})</span>
                                             {:else}
-                                                🔑 {factor.strategy}
+                                                <span class="material-symbols-outlined text-[12px]">key</span>
+                                                <span>{factor.strategy}</span>
                                             {/if}
                                         </button>
                                     {/each}
@@ -653,14 +658,15 @@
                                         type="button"
                                         onclick={resendCode}
                                         disabled={isLoading || isResending || resendCountdown > 0}
-                                        class="text-[11px] font-bold text-black/80 hover:text-black underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        class="text-[11px] font-bold text-black/80 hover:text-black underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                                     >
                                         {#if isResending}
-                                            Envoi en cours...
+                                            <span>Envoi en cours...</span>
                                         {:else if resendCountdown > 0}
-                                            Renvoyer ({resendCountdown}s)
+                                            <span>Renvoyer ({resendCountdown}s)</span>
                                         {:else}
-                                            🔄 Renvoyer le code
+                                            <span class="material-symbols-outlined text-[12px]">refresh</span>
+                                            <span>Renvoyer le code</span>
                                         {/if}
                                     </button>
                                 {/if}
@@ -688,7 +694,8 @@
                                     <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
                                     <span>VALIDATION...</span>
                                 {:else}
-                                    <span>✅ VALIDER LE CODE</span>
+                                    <span class="material-symbols-outlined text-[16px]">check</span>
+                                    <span>VALIDER LE CODE</span>
                                 {/if}
                             </button>
 
@@ -842,9 +849,10 @@
                 <button 
                     type="button"
                     onclick={redirectToPortal}
-                    class="retro-btn btn-xs bg-[#FFC2D1] hover:bg-white text-black font-black px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                    class="retro-btn btn-xs bg-[#FFC2D1] hover:bg-white text-black font-black px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center gap-1"
                 >
-                    PASSER L'ANIMATION »
+                    <span>PASSER L'ANIMATION</span>
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                 </button>
             </div>
         {/if}
@@ -852,7 +860,10 @@
 
     <!-- Security notice -->
     <div class="mt-6 text-center font-mono text-xs text-black/60 max-w-md">
-        <p>🔒 Accès strictement réservé aux gestionnaires autorisés de Daisy Brocante.</p>
+        <p class="flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[14px]">lock</span>
+            <span>Accès strictement réservé aux gestionnaires autorisés de Daisy Brocante.</span>
+        </p>
     </div>
 
 </div>

@@ -101,7 +101,7 @@
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 bg-black"></span>
                     <span class="font-black text-xs uppercase tracking-wider text-black">
-                        🗔 S3 IMAGE EXPLORER // MEDIA SELECTOR
+                        S3 IMAGE EXPLORER // MEDIA SELECTOR
                     </span>
                 </div>
                 <div class="flex items-center gap-1.5">
@@ -121,16 +121,18 @@
                         Toutes ({pagination?.total_items ?? '...'})
                     </button>
                     <button 
-                        class="retro-btn py-1 px-3 text-xs {filter === 'orphans' ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
+                        class="retro-btn py-1 px-3 text-xs {filter === 'orphans' ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
                         onclick={() => { filter = 'orphans'; loadS3Images(1); }}
                     >
-                        ⚠️ Orphelines
+                        <span class="material-symbols-outlined text-[14px]">warning</span>
+                        <span>Orphelines</span>
                     </button>
                     <button 
-                        class="retro-btn py-1 px-3 text-xs {filter === 'used' ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
+                        class="retro-btn py-1 px-3 text-xs {filter === 'used' ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
                         onclick={() => { filter = 'used'; loadS3Images(1); }}
                     >
-                        🔗 Associées
+                        <span class="material-symbols-outlined text-[14px]">link</span>
+                        <span>Associées</span>
                     </button>
                 </div>
 
@@ -162,7 +164,9 @@
                     </div>
                 {:else if images.length === 0}
                     <div class="text-center py-16 border-2 border-dashed border-black/40 p-8 bg-white shadow-[3px_3px_0px_0px_#000]">
-                        <div class="text-3xl mb-2">💾</div>
+                        <div class="flex justify-center mb-2">
+                            <span class="material-symbols-outlined text-4xl text-black/40">cloud_off</span>
+                        </div>
                         <p class="text-sm font-bold uppercase text-black">Aucune image trouvée</p>
                         <p class="text-xs text-black/60 mt-1">Modifiez vos critères de recherche ou filtre.</p>
                     </div>
@@ -173,7 +177,7 @@
                             <div 
                                 role="button"
                                 tabindex="0"
-                                class="group relative aspect-square border-2 border-black bg-white cursor-pointer transition-all duration-150 {isSelected ? 'ring-3 ring-black shadow-[4px_4px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 bg-[#99E7DC]' : 'shadow-[2px_2px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5'}"
+                                class="group relative aspect-square border-2 border-black bg-white cursor-pointer {isSelected ? 'ring-3 ring-black shadow-[4px_4px_0px_0px_#000] bg-[#99E7DC]' : 'shadow-[2px_2px_0px_0px_#000]'}"
                                 onclick={() => toggleSelect(img.key)}
                                 onkeydown={(e) => e.key === 'Enter' && toggleSelect(img.key)}
                             >
@@ -187,7 +191,7 @@
                                 <!-- Selection indicator checkbox -->
                                 <div class="absolute top-1.5 left-1.5 z-10">
                                     <div class="w-5 h-5 border-2 border-black flex items-center justify-center text-xs font-black {isSelected ? 'bg-black text-[#FFE600] shadow-[1px_1px_0px_0px_#000]' : 'bg-white text-transparent'}">
-                                        ✓
+                                        <span class="material-symbols-outlined text-[14px]">check</span>
                                     </div>
                                 </div>
 
@@ -215,21 +219,21 @@
                     {#if pagination && pagination.total_pages > 1}
                         <div class="flex items-center gap-1">
                             <button 
-                                class="retro-btn py-0.5 px-2 text-xs bg-white" 
+                                class="retro-btn py-0.5 px-1.5 text-xs bg-white flex items-center justify-center" 
                                 disabled={pagination.current_page <= 1}
                                 onclick={() => loadS3Images((pagination?.current_page || 1) - 1)}
                             >
-                                «
+                                <span class="material-symbols-outlined text-[14px]">chevron_left</span>
                             </button>
                             <span class="border border-black bg-white px-2 py-0.5 text-[11px] font-bold">
                                 {pagination.current_page} / {pagination.total_pages}
                             </span>
                             <button 
-                                class="retro-btn py-0.5 px-2 text-xs bg-white" 
+                                class="retro-btn py-0.5 px-1.5 text-xs bg-white flex items-center justify-center" 
                                 disabled={pagination.current_page >= pagination.total_pages}
                                 onclick={() => loadS3Images((pagination?.current_page || 1) + 1)}
                             >
-                                »
+                                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
                             </button>
                         </div>
                     {/if}

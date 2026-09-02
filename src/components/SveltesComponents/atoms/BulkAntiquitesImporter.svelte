@@ -234,20 +234,21 @@
         </div>
         
         <div class="flex flex-wrap items-center gap-2">
-            <button onclick={exportGoogleMerchantCenter} class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#D4E2FD]">
-                🛍️ Google Merchant Feed
+            <button onclick={exportGoogleMerchantCenter} class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#D4E2FD] flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">store</span> Google Merchant Feed
             </button>
 
-            <button onclick={exportExistingAntiquites} class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#FFD2A6]">
-                📤 Exporter Base
+            <button onclick={exportExistingAntiquites} class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#FFD2A6] flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">file_upload</span> Exporter Base
             </button>
 
-            <button onclick={downloadTemplate} class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#99E7DC]">
-                📥 Modèle CSV
+            <button onclick={downloadTemplate} class="retro-btn py-1.5 px-3 text-xs bg-white hover:bg-[#99E7DC] flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">download</span> Modèle CSV
             </button>
             
-            <label class="retro-btn py-1.5 px-3 text-xs bg-[#FFE600] hover:bg-[#ffea40] cursor-pointer">
-                <span>📁 Importer CSV</span>
+            <label class="retro-btn py-1.5 px-3 text-xs bg-[#FFE600] hover:bg-[#ffea40] cursor-pointer flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">upload_file</span>
+                <span>Importer CSV</span>
                 <input 
                     type="file" 
                     accept=".csv" 
@@ -331,7 +332,10 @@
                         <span class="loading loading-spinner loading-xs mr-1"></span>
                         Synchronisation...
                     {:else}
-                        🚀 Synchroniser {bulkAntiquites.length} objet(s)
+                        <span class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]">sync</span>
+                            <span>Synchroniser {bulkAntiquites.length} objet(s)</span>
+                        </span>
                     {/if}
                 </button>
             </div>

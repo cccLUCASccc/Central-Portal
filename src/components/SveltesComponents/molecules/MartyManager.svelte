@@ -153,14 +153,14 @@
 
         isScraping = true;
         elapsedTime = 0;
-        scrapingStep = "🔍 Étape 1/3 : Recherche d'adresses web cibles...";
+        scrapingStep = "Étape 1/3 : Recherche d'adresses web cibles...";
 
         timerInterval = setInterval(() => {
             elapsedTime += 1;
             if (elapsedTime === 4) {
-                scrapingStep = "🤖 Étape 2/3 : Analyse Playwright et extraction des emails...";
+                scrapingStep = "Étape 2/3 : Analyse Playwright et extraction des emails...";
             } else if (elapsedTime === 15) {
-                scrapingStep = "💾 Étape 3/3 : Déduplication et enregistrement en base...";
+                scrapingStep = "Étape 3/3 : Déduplication et enregistrement en base...";
             }
         }, 1000);
 
@@ -218,9 +218,9 @@
             isServiceOnline = true;
 
             if (addedItems.length > 0) {
-                notify(`🎯 Scraping terminé ! ${addedItems.length} nouvel(s) email(s) extrait(s) sur ${data.totalScrappes} cibles.`, "success");
+                notify(`Scraping terminé ! ${addedItems.length} nouvel(s) email(s) extrait(s) sur ${data.totalScrappes} cibles.`, "success");
             } else {
-                notify(`ℹ️ Scraping terminé : ${data.totalScrappes} sites analysés, aucun nouvel email unique trouvé.`, "info");
+                notify(`Scraping terminé : ${data.totalScrappes} sites analysés, aucun nouvel email unique trouvé.`, "info");
             }
 
             // Recharger la liste officielle depuis la base PostgreSQL
@@ -368,7 +368,7 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        notify(`📥 Fichier CSV téléchargé (${targetList.length} leads) !`, "success");
+        notify(`Fichier CSV téléchargé (${targetList.length} leads) !`, "success");
     }
 
     function formatDate(dateStr?: string): string {
@@ -421,13 +421,13 @@
                 disabled={isLoadingProspects}
                 title="Recharger la base de données"
             >
-                <span class="{isLoadingProspects ? 'animate-spin' : ''}">🔄</span>
+                <span class="material-symbols-outlined text-[16px] {isLoadingProspects ? 'animate-spin' : ''}">refresh</span>
                 <span>{isLoadingProspects ? 'Chargement...' : 'Actualiser Base'}</span>
             </button>
             <div class="bg-[#FFD2A6] border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] text-xs space-y-1">
                 <div class="text-[10px] text-black/60 font-bold uppercase">Moteur Web Scraper</div>
                 <div class="font-black text-black flex items-center gap-1.5">
-                    <span>⚡</span> PLAYWRIGHT CHROMIUM
+                    <span class="material-symbols-outlined text-[14px]">bolt</span> PLAYWRIGHT CHROMIUM
                 </div>
             </div>
         </div>
@@ -443,8 +443,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Base de Données</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Total Leads</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    📧
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">mail</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
@@ -460,8 +460,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Dernière Session</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Emails Extraits</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    🎯
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">ads_click</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
@@ -477,8 +477,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Requête Récente</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Dernière Cible</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    🔍
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">search</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
@@ -496,8 +496,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Service Node/Bun</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">État Scrapper</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    ⚡
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">bolt</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000] flex items-center justify-between">
@@ -532,14 +532,15 @@
         <div class="retro-card-rose p-5 border-3 border-black shadow-[4px_4px_0px_0px_#000] space-y-3 animate-in fade-in duration-200">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2 font-black text-sm uppercase text-black">
-                    <span class="text-xl">⚠️</span>
+                    <span class="material-symbols-outlined text-xl text-black">warning</span>
                     <span>Service Scrapper Marty Injoignable ({scrapperUrl})</span>
                 </div>
                 <button 
                     onclick={() => { checkServiceHealth(); loadProspects(); }}
-                    class="retro-btn py-1 px-3 bg-white hover:bg-[#FFE600] text-xs font-black shadow-[2px_2px_0px_0px_#000]"
+                    class="retro-btn py-1 px-3 bg-white hover:bg-[#FFE600] text-xs font-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1"
                 >
-                    🔄 Réessayer
+                    <span class="material-symbols-outlined text-[14px]">refresh</span>
+                    <span>Réessayer</span>
                 </button>
             </div>
 
@@ -547,7 +548,7 @@
                 <p class="font-bold text-black">Pour connecter le portail à la base de Marty :</p>
                 <ul class="list-disc list-inside space-y-1">
                     <li><strong>En local :</strong> Assurez-vous d'avoir démarré le serveur avec <code class="bg-[#EDE9DF] px-1.5 py-0.5 border border-black font-mono font-bold">bun run index.ts</code> dans le dossier <code class="font-bold">Scrapper-Prospects</code>.</li>
-                    <li><strong>Sur Railway / Distant :</strong> Cliquez sur <button onclick={() => showAdvancedConfig = true} class="underline font-bold text-black hover:text-[#D1495B]">⚙️ Options</button> ci-dessous et entrez l'URL publique de votre déploiement Marty (ex: <code class="bg-[#EDE9DF] px-1 font-mono">https://scrapper-prospects.up.railway.app</code>).</li>
+                    <li><strong>Sur Railway / Distant :</strong> Cliquez sur <button onclick={() => showAdvancedConfig = true} class="underline font-bold text-black hover:text-[#D1495B]">Options</button> ci-dessous et entrez l'URL publique de votre déploiement Marty (ex: <code class="bg-[#EDE9DF] px-1 font-mono">https://scrapper-prospects.up.railway.app</code>).</li>
                 </ul>
             </div>
         </div>
@@ -567,8 +568,9 @@
                 onclick={() => showAdvancedConfig = !showAdvancedConfig}
                 class="retro-btn text-xs py-1 px-2.5 bg-[#EDE9DF] hover:bg-white flex items-center gap-1.5"
             >
-                <span>⚙️ Options</span>
-                <span>{showAdvancedConfig ? '▲' : '▼'}</span>
+                <span class="material-symbols-outlined text-[14px]">settings</span>
+                <span>Options</span>
+                <span class="material-symbols-outlined text-[14px]">{showAdvancedConfig ? 'expand_less' : 'expand_more'}</span>
             </button>
         </div>
 
@@ -625,8 +627,9 @@
                             <span class="loading loading-spinner loading-sm"></span>
                             <span>EXTRACTION EN COURS ({elapsedTime}s)...</span>
                         {:else}
-                            <span>⚡ LANCER LE SCRAPPER</span>
-                            <span>»</span>
+                            <span class="material-symbols-outlined text-[20px]">bolt</span>
+                            <span>LANCER LE SCRAPPER</span>
+                            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
                         {/if}
                     </button>
                 </div>
@@ -680,15 +683,18 @@
                 
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick={copySelectedEmails} class="retro-btn text-xs py-1.5 px-3 bg-white font-bold flex items-center gap-1.5">
-                        📋 Copier Emails (;)
+                        <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                        <span>Copier Emails (;)</span>
                     </button>
 
                     <button onclick={() => exportToCSV()} class="retro-btn text-xs py-1.5 px-3 bg-[#99E7DC] font-bold flex items-center gap-1.5">
-                        📥 Exporter Sélection CSV
+                        <span class="material-symbols-outlined text-[14px]">download</span>
+                        <span>Exporter Sélection CSV</span>
                     </button>
 
-                    <button onclick={deleteSelectedProspects} class="retro-btn-error text-xs py-1.5 px-3 font-black">
-                        🗑️ Supprimer
+                    <button onclick={deleteSelectedProspects} class="retro-btn-error text-xs py-1.5 px-3 font-black flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">delete</span>
+                        <span>Supprimer</span>
                     </button>
                     
                     <button onclick={() => selectedIds = []} class="retro-btn text-xs py-1.5 px-2 bg-white" title="Annuler sélection">
@@ -715,7 +721,8 @@
                     disabled={filteredProspects.length === 0}
                     class="retro-btn text-xs py-1.5 px-3 bg-[#99E7DC] hover:bg-[#7fe2d5] font-black border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <span>📥 EXPORTER CSV</span>
+                    <span class="material-symbols-outlined text-[16px]">download</span>
+                    <span>EXPORTER CSV</span>
                     {#if filterWorktype !== "all"}
                         <span class="bg-black text-white px-1 text-[10px]">({filterWorktype})</span>
                     {/if}
@@ -759,9 +766,9 @@
                 <div class="flex items-center gap-1.5 text-xs">
                     <span class="font-bold uppercase text-black/70">Tri :</span>
                     <select bind:value={sortBy} class="retro-select text-xs py-1.5 w-auto">
-                        <option value="date_desc">📅 Plus récent</option>
-                        <option value="date_asc">📅 Plus ancien</option>
-                        <option value="email_asc">🔤 Email A-Z</option>
+                        <option value="date_desc">Plus récent</option>
+                        <option value="date_asc">Plus ancien</option>
+                        <option value="email_asc">Email A-Z</option>
                     </select>
                 </div>
             </div>
@@ -811,24 +818,24 @@
                                 <td class="p-3 border-r border-black font-bold">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2">
-                                            <span class="text-base">📧</span>
+                                            <span class="material-symbols-outlined text-[16px] text-black/60">mail</span>
                                             <span class="text-sm text-black selection:bg-black selection:text-white font-mono">{prospect.email}</span>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <button 
                                                 type="button" 
                                                 onclick={() => copyToClipboard(prospect.email)}
-                                                class="retro-btn py-0.5 px-1.5 text-[10px] bg-white hover:bg-[#FFE600]"
+                                                class="retro-btn py-0.5 px-1.5 text-[10px] bg-white hover:bg-[#FFE600] flex items-center justify-center"
                                                 title="Copier l'email"
                                             >
-                                                📋
+                                                <span class="material-symbols-outlined text-[13px]">content_copy</span>
                                             </button>
                                             <a 
                                                 href={`mailto:${prospect.email}`}
-                                                class="retro-btn py-0.5 px-1.5 text-[10px] bg-[#99E7DC] hover:bg-[#7ce0d3]"
+                                                class="retro-btn py-0.5 px-1.5 text-[10px] bg-[#99E7DC] hover:bg-[#7ce0d3] flex items-center justify-center"
                                                 title="Écrire à ce prospect"
                                             >
-                                                ✉️
+                                                <span class="material-symbols-outlined text-[13px]">send</span>
                                             </a>
                                         </div>
                                     </div>
@@ -848,10 +855,11 @@
                                     <button 
                                         type="button" 
                                         onclick={() => deleteSingleProspect(prospect.id as number)}
-                                        class="retro-btn py-1 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fa96ab] font-bold" 
+                                        class="retro-btn py-1 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fa96ab] font-bold flex items-center gap-1 ml-auto" 
                                         title="Supprimer ce lead"
                                     >
-                                        🗑️ Supprimer
+                                        <span class="material-symbols-outlined text-[13px]">delete</span>
+                                        <span>Supprimer</span>
                                     </button>
                                 </td>
                             </tr>
@@ -859,7 +867,7 @@
                             <tr>
                                 <td colspan="6" class="text-center py-16 bg-[#F6F4EE]">
                                     <div class="flex flex-col items-center gap-2">
-                                        <span class="text-4xl">🕵️</span>
+                                        <span class="material-symbols-outlined text-4xl text-black/40">travel_explore</span>
                                         <p class="text-sm font-bold uppercase text-black">Aucun email de prospect dans la table</p>
                                         <p class="text-xs text-black/60 max-w-sm">
                                             Saisissez un mot-clé ci-dessus (ex: "antiquaire liege") et cliquez sur <strong>Lancer le scrapper</strong> pour collecter vos premiers leads.

@@ -50,7 +50,7 @@
             <div class="bg-[#FFD2A6] border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] text-xs space-y-1">
                 <div class="text-[10px] text-black/60 font-bold uppercase">Stockage Cloud</div>
                 <div class="font-black text-black flex items-center gap-1.5">
-                    <span>📁</span> AWS S3 READY
+                    <span class="material-symbols-outlined text-[16px]">cloud</span> AWS S3 READY
                 </div>
             </div>
         </div>
@@ -71,12 +71,12 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
         <!-- PROJET #01 : DAISY BROCANTE (ACTIVE) -->
-        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] hover:shadow-[10px_10px_0px_0px_#000] transition-all flex flex-col justify-between group overflow-hidden">
+        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] flex flex-col justify-between group overflow-hidden">
             
             <!-- Window Titlebar -->
             <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
                 <div class="flex items-center gap-2">
-                    <span class="text-[#86E2D5] font-black">▶</span>
+                    <span class="material-symbols-outlined text-[14px] text-[#86E2D5]">play_arrow</span>
                     <span class="tracking-wider uppercase">PROJET_01.SYS</span>
                 </div>
                 <span class="retro-badge bg-[#86E2D5] text-black text-[10px] py-0 font-black">
@@ -89,15 +89,15 @@
                 
                 <!-- Project Icon & Title -->
                 <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 bg-[#FFD2A6] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFD166] transition-colors">
-                        🌼
+                    <div class="w-14 h-14 bg-[#FFD2A6] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0">
+                        <span class="material-symbols-outlined text-3xl text-black">spa</span>
                     </div>
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-black bg-black text-white px-1.5 py-0.5">E-COMMERCE</span>
                             <span class="text-xs font-bold text-black/60">DAISYBROCANTE.FR</span>
                         </div>
-                        <h3 class="text-xl font-black uppercase text-black tracking-tight group-hover:text-[#D1495B] transition-colors">
+                        <h3 class="text-xl font-black uppercase text-black tracking-tight">
                             Daisy Brocante
                         </h3>
                     </div>
@@ -112,26 +112,23 @@
                 <div class="space-y-2 pt-2 border-t border-black/10">
                     <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
                     <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <a href="/antiquites" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer" title="Voir l'inventaire">
-                            📋 Inventaire
+                        <a href="/antiquites" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Voir l'inventaire">
+                            <span class="material-symbols-outlined text-[14px]">inventory_2</span> Inventaire
                         </a>
-                        <a href="/subcategories" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer" title="Gérer les catégories">
-                            🏷️ Sous-catégories
+                        <a href="/subcategories" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Gérer les catégories">
+                            <span class="material-symbols-outlined text-[14px]">label</span> Sous-catégories
                         </a>
-                        <a href="/shops" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer" title="Gérer les vendeurs">
-                            🏬 Boutiques
+                        <a href="/shops" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Gérer les vendeurs">
+                            <span class="material-symbols-outlined text-[14px]">storefront</span> Boutiques
                         </a>
-                        <a href="/ebay" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer" title="Synchronisation eBay">
-                            📦 eBay Sync
+                        <a href="/ebay" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Synchronisation eBay">
+                            <span class="material-symbols-outlined text-[14px]">package_2</span> eBay Sync
                         </a>
-                        <a href="/shops" class="retro-badge bg-[#FFD2A6] hover:bg-white text-black transition-colors cursor-pointer" title="Modération des boutiques">
-                            🏪 Boutiques
+                        <a href="/Livraison" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Gestion des livraisons">
+                            <span class="material-symbols-outlined text-[14px]">local_shipping</span> Livraisons
                         </a>
-                        <a href="/Livraison" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer" title="Gestion des livraisons">
-                            🚚 Livraisons
-                        </a>
-                        <a href="/storage" class="retro-badge bg-[#EDE9DF] hover:bg-white text-black transition-colors cursor-pointer" title="Stockage S3">
-                            📁 Médias S3
+                        <a href="/storage" class="retro-badge bg-[#EDE9DF] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Stockage S3">
+                            <span class="material-symbols-outlined text-[14px]">cloud</span> Médias S3
                         </a>
                     </div>
                 </div>
@@ -143,22 +140,22 @@
                 <span class="text-[11px] font-bold text-black/60">STATION #01</span>
                 <a 
                     href="/antiquites" 
-                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000]"
+                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000]"
                 >
                     <span>OUVRIR LA STATION</span>
-                    <span>»</span>
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </a>
             </div>
 
         </div>
 
         <!-- PROJET #02 : MARTY (ACTIVE) -->
-        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] hover:shadow-[10px_10px_0px_0px_#000] transition-all flex flex-col justify-between group overflow-hidden">
+        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] flex flex-col justify-between group overflow-hidden">
             
             <!-- Window Titlebar -->
             <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
                 <div class="flex items-center gap-2">
-                    <span class="text-[#FFD166] font-black">▶</span>
+                    <span class="material-symbols-outlined text-[14px] text-[#FFD166]">play_arrow</span>
                     <span class="tracking-wider uppercase">PROJET_02.SYS</span>
                 </div>
                 <span class="retro-badge bg-[#FFD166] text-black text-[10px] py-0 font-black">
@@ -171,15 +168,15 @@
                 
                 <!-- Project Icon & Title -->
                 <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 bg-[#86E2D5] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0 group-hover:bg-[#FFD166] transition-colors">
-                        🕵️
+                    <div class="w-14 h-14 bg-[#86E2D5] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0">
+                        <span class="material-symbols-outlined text-3xl text-black">travel_explore</span>
                     </div>
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-black bg-black text-white px-1.5 py-0.5">LEAD GEN</span>
                             <span class="text-xs font-bold text-black/60">MARTY.SYS</span>
                         </div>
-                        <h3 class="text-xl font-black uppercase text-black tracking-tight group-hover:text-[#D1495B] transition-colors">
+                        <h3 class="text-xl font-black uppercase text-black tracking-tight">
                             Marty
                         </h3>
                     </div>
@@ -194,14 +191,14 @@
                 <div class="space-y-2 pt-2 border-t border-black/10">
                     <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
                     <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <a href="/marty" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer" title="Lancer le scraping">
-                            ⚡ Scrapper de Leads
+                        <a href="/marty" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Lancer le scraping">
+                            <span class="material-symbols-outlined text-[14px]">bolt</span> Scrapper de Leads
                         </a>
-                        <a href="/marty" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer" title="Voir les prospects">
-                            📋 Table des Emails
+                        <a href="/marty" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Voir les prospects">
+                            <span class="material-symbols-outlined text-[14px]">mail</span> Table des Emails
                         </a>
-                        <a href="/marty" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer" title="Télécharger CSV">
-                            📥 Export CSV
+                        <a href="/marty" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Télécharger CSV">
+                            <span class="material-symbols-outlined text-[14px]">download</span> Export CSV
                         </a>
                     </div>
                 </div>
@@ -213,10 +210,10 @@
                 <span class="text-[11px] font-bold text-black/60">STATION #02</span>
                 <a 
                     href="/marty" 
-                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000]"
+                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000]"
                 >
                     <span>OUVRIR LA STATION</span>
-                    <span>»</span>
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </a>
             </div>
 
@@ -224,7 +221,7 @@
 
 
         <!-- PROJET #03 : SLOT DISPONIBLE -->
-        <div class="border-3 border-dashed border-black/40 bg-[#EDE9DF]/60 p-1 flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:border-black transition-all">
+        <div class="border-3 border-dashed border-black/40 bg-[#EDE9DF]/60 p-1 flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
             
             <div class="bg-[#2B2D42]/70 text-white px-4 py-2 border-b-2 border-black/30 flex items-center justify-between font-mono text-xs font-bold">
                 <span class="tracking-wider uppercase text-white/70">PROJET_03.SYS</span>
@@ -235,7 +232,7 @@
 
             <div class="p-6 space-y-4 flex-grow flex flex-col justify-center items-center text-center">
                 <div class="w-14 h-14 bg-white/80 border-2 border-dashed border-black/40 flex items-center justify-center text-2xl">
-                    ⚙️
+                    <span class="material-symbols-outlined text-3xl text-black/50">settings</span>
                 </div>
                 <div class="space-y-1">
                     <h3 class="text-lg font-black uppercase text-black/80">
@@ -299,7 +296,7 @@
             </div>
             <div class="p-4 bg-white border-2 border-black m-1 space-y-4">
                 <div class="flex items-center gap-3">
-                    <span class="text-2xl">📦</span>
+                    <span class="material-symbols-outlined text-2xl text-black">package_2</span>
                     <div>
                         <h4 class="font-black text-sm uppercase text-black">Ajout d'un nouveau projet</h4>
                         <p class="text-xs text-black/60">Emplacement {selectedSlot}</p>
@@ -314,7 +311,7 @@
                         onclick={closeModal}
                         class="retro-btn text-xs py-1.5 px-4 bg-[#FFAEC1] font-black"
                     >
-                        COMPRIS »
+                        COMPRIS
                     </button>
                 </div>
             </div>

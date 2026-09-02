@@ -62,11 +62,6 @@
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .retro-card:hover {
-    box-shadow: 5px 5px 0px 0px #000000;
-    transform: translate(-1px, -1px);
   }
 
   .retro-card-peach {
@@ -75,11 +70,6 @@
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .retro-card-peach:hover {
-    box-shadow: 5px 5px 0px 0px #000000;
-    transform: translate(-1px, -1px);
   }
 
   .retro-card-blue {
@@ -88,11 +78,6 @@
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .retro-card-blue:hover {
-    box-shadow: 5px 5px 0px 0px #000000;
-    transform: translate(-1px, -1px);
   }
 
   .retro-card-mint {
@@ -101,11 +86,6 @@
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .retro-card-mint:hover {
-    box-shadow: 5px 5px 0px 0px #000000;
-    transform: translate(-1px, -1px);
   }
 
   .retro-card-yellow {
@@ -114,11 +94,6 @@
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .retro-card-yellow:hover {
-    box-shadow: 5px 5px 0px 0px #000000;
-    transform: translate(-1px, -1px);
   }
 
   .retro-card-rose {
@@ -127,11 +102,14 @@
     color: #000000;
     box-shadow: 4px 4px 0px 0px #000000;
     border-radius: 0px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .retro-card-rose:hover {
-    box-shadow: 5px 5px 0px 0px #000000;
-    transform: translate(-1px, -1px);
+
+  /* Material Symbols Font Alignment */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
   }
 
   /* Boutons Rétro */
