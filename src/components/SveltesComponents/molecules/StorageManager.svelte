@@ -208,30 +208,29 @@
     }
 
     async function deleteSingleFile(file: S3FileItem) {
-        const confirmMsg = file.is_used 
-            ? `⚠️ ATTENTION : Le fichier "${file.key}" est actuellement utilisé par "${file.reference_title}". Le supprimer cassera l'affichage sur la boutique. Confirmer ?`
-            : `Supprimer définitivement "${file.key}" de S3 ?`;
+        const confirmMsg = file.is_used
+            ? `ATTENTION : Le fichier "${file.key}" est actuellement utilisé par "${file.reference_title}". Le supprimer cassera l'affichage sur la boutique. Confirmer ?`
+            : `Confirmer la suppression définitive du fichier "${file.key}" sur S3 ?`;
 
         if (!confirm(confirmMsg)) return;
 
         try {
-            const res = await apiFetch(`${PUBLIC_API_URL}/api/storage/files?key=${encodeURIComponent(file.key)}`, {
-                method: 'DELETE'
+            const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/storage/delete?key=${encodeURIComponent(file.key)}`, {
+                method: "DELETE"
             });
 
             if (res.ok) {
-                notify(`Fichier "${file.key}" supprimé avec succès.`, "success");
                 if (previewFile?.key === file.key) previewFile = null;
                 selectedKeys = selectedKeys.filter(k => k !== file.key);
-                await loadStats();
                 await loadFiles(pagination?.current_page || 1);
+                await loadStats();
             } else {
-                const err = await res.json();
-                notify(`Erreur lors de la suppression : ${err.error}`, "error");
+                alert("Erreur lors de la suppression du fichier.");
             }
-        } catch (err) {
-            console.error("Erreur suppression :", err);
-            notify("Erreur réseau lors de la suppression", "error");
+        } catch (e) {
+            console.error(e);
+            alert("Erreur réseau");
         }
     }
 
@@ -240,8 +239,8 @@
 
         const hasUsed = files.some(f => selectedKeys.includes(f.key) && f.is_used);
         const confirmMsg = hasUsed
-            ? `⚠️ ATTENTION : Certains des ${selectedKeys.length} fichiers sélectionnés sont liés à des articles en ligne. Confirmer la suppression ?`
-            : `Confirmer la suppression définitive de ces ${selectedKeys.length} fichiers sur S3 ?`;
+            ? `ATTENTION : Certains des ${selectedKeys.length} fichiers sélectionnés sont liés à des articles en ligne. Confirmer la suppression ?`
+            : `Confirmer la suppression définitive des ${selectedKeys.length} fichiers sélectionnés sur S3 ?`;
 
         if (!confirm(confirmMsg)) return;
 
@@ -309,10 +308,10 @@
         <div class="flex items-center gap-2">
             <button 
                 onclick={() => { loadStats(); loadFiles(pagination?.current_page || 1); }} 
-                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3"
+                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3 flex items-center gap-1.5"
                 disabled={isLoading}
             >
-                <span class="{isLoading ? 'animate-spin' : ''}">🔄</span>
+                <span class="material-symbols-outlined text-[16px] {isLoading ? 'animate-spin' : ''}">refresh</span>
                 <span>Actualiser</span>
             </button>
         </div>
@@ -327,8 +326,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Stockage S3</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Espace Total</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    💾
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">database</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
@@ -344,8 +343,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Indexation</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Total Fichiers</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    📁
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">folder</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
@@ -361,8 +360,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Boutique</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">En Boutique</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    🔗
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">link</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
@@ -378,8 +377,8 @@
                     <span class="text-[10px] font-bold uppercase tracking-wider text-black/70 block">Maintenance</span>
                     <h3 class="text-lg font-black uppercase tracking-tight text-black mt-0.5">Orphelins</h3>
                 </div>
-                <div class="retro-icon-box bg-white">
-                    ⚠️
+                <div class="retro-icon-box bg-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-black">warning</span>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000] flex items-center justify-between">
@@ -425,7 +424,7 @@
                 {#if isUploading}
                     <span class="loading loading-spinner loading-md text-black"></span>
                 {:else}
-                    📤
+                    <span class="material-symbols-outlined text-2xl text-black">upload_file</span>
                 {/if}
             </div>
 
@@ -460,22 +459,25 @@
                 Tous
             </button>
             <button 
-                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'images' ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'images' ? '!bg-[#99E7DC] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
                 onclick={() => handleFilterChange('images')}
             >
-                🖼️ Images
+                <span class="material-symbols-outlined text-[14px]">photo_library</span>
+                <span>Images</span>
             </button>
             <button 
-                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'antiquite' ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'antiquite' ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
                 onclick={() => handleFilterChange('antiquite')}
             >
-                🏷️ Boutique
+                <span class="material-symbols-outlined text-[14px]">storefront</span>
+                <span>Boutique</span>
             </button>
             <button 
-                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'orphans' ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'}"
+                class="retro-btn py-1 px-3 text-xs {selectedFilter === 'orphans' ? '!bg-[#FFC2D1] shadow-[3px_3px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
                 onclick={() => handleFilterChange('orphans')}
             >
-                ⚠️ Orphelins ({stats?.orphan_files ?? 0})
+                <span class="material-symbols-outlined text-[14px]">warning</span>
+                <span>Orphelins ({stats?.orphan_files ?? 0})</span>
             </button>
         </div>
 
@@ -506,29 +508,31 @@
                 value={selectedSort} 
                 onchange={handleSortChange}
             >
-                <option value="date_desc">📅 Plus récent</option>
-                <option value="date_asc">📅 Plus ancien</option>
-                <option value="size_desc">⚖️ Plus lourd</option>
-                <option value="size_asc">⚖️ Plus léger</option>
-                <option value="name_asc">🔤 Nom A-Z</option>
+                <option value="date_desc">Plus récent</option>
+                <option value="date_asc">Plus ancien</option>
+                <option value="size_desc">Plus lourd</option>
+                <option value="size_asc">Plus léger</option>
+                <option value="name_asc">Nom A-Z</option>
             </select>
 
             <!-- Bascule Vue Grille / Tableau -->
             <div class="flex items-center border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000]">
                 <button 
-                    class="p-1.5 text-xs font-bold {viewMode === 'grid' ? 'bg-[#FFE600]' : 'hover:bg-[#EDE9DF]'}" 
+                    class="p-1.5 text-xs font-bold {viewMode === 'grid' ? 'bg-[#FFE600]' : 'hover:bg-[#EDE9DF]'} flex items-center gap-1" 
                     onclick={() => viewMode = 'grid'}
                     title="Vue Grille"
                 >
-                    ⊞ Grille
+                    <span class="material-symbols-outlined text-[14px]">grid_view</span>
+                    <span>Grille</span>
                 </button>
                 <div class="w-0.5 h-6 bg-black"></div>
                 <button 
-                    class="p-1.5 text-xs font-bold {viewMode === 'table' ? 'bg-[#FFE600]' : 'hover:bg-[#EDE9DF]'}" 
+                    class="p-1.5 text-xs font-bold {viewMode === 'table' ? 'bg-[#FFE600]' : 'hover:bg-[#EDE9DF]'} flex items-center gap-1" 
                     onclick={() => viewMode = 'table'}
                     title="Vue Tableau"
                 >
-                    ☰ Table
+                    <span class="material-symbols-outlined text-[14px]">table_rows</span>
+                    <span>Table</span>
                 </button>
             </div>
         </div>
@@ -546,8 +550,9 @@
                 <button onclick={() => selectedKeys = []} class="retro-btn py-1 px-3 text-xs bg-white">
                     Désélectionner tout
                 </button>
-                <button onclick={deleteSelectedBulk} class="retro-btn-error py-1 px-3 text-xs font-black">
-                    🗑️ Supprimer ({selectedKeys.length})
+                <button onclick={deleteSelectedBulk} class="retro-btn-error py-1 px-3 text-xs font-black flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">delete</span>
+                    <span>Supprimer ({selectedKeys.length})</span>
                 </button>
             </div>
         </div>
@@ -561,7 +566,9 @@
         </div>
     {:else if files.length === 0}
         <div class="retro-card p-12 text-center">
-            <div class="text-4xl mb-2">💾</div>
+            <div class="flex justify-center mb-2">
+                <span class="material-symbols-outlined text-4xl text-black/40">cloud_off</span>
+            </div>
             <h3 class="text-base font-black uppercase text-black">Aucun fichier trouvé</h3>
             <p class="text-xs text-black/60 mt-1">Aucun fichier ne correspond à vos filtres actuels.</p>
             {#if selectedFilter !== 'all' || searchQuery}
@@ -614,11 +621,13 @@
                             <img 
                                 src={file.url} 
                                 alt={file.key} 
-                                loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                                loading="lazy" 
+                                class="w-full h-full object-cover" 
                             />
                         {:else}
-                            <div class="text-3xl">📄</div>
+                            <div class="flex items-center justify-center">
+                                <span class="material-symbols-outlined text-3xl text-black/40">description</span>
+                            </div>
                         {/if}
                     </div>
 
@@ -629,9 +638,10 @@
                             <span>{formatFileSize(file.size)}</span>
                             <button 
                                 onclick={() => previewFile = file}
-                                class="font-bold uppercase text-black hover:underline"
+                                class="font-bold uppercase text-black hover:underline flex items-center gap-0.5"
                             >
-                                Voir ↗
+                                <span>Voir</span>
+                                <span class="material-symbols-outlined text-[12px]">open_in_new</span>
                             </button>
                         </div>
                     </div>
@@ -676,7 +686,7 @@
                                 {#if file.content_type?.startsWith('image/')}
                                     <img src={file.url} alt="" class="w-8 h-8 object-cover border border-black mx-auto" />
                                 {:else}
-                                    <span class="text-base">📄</span>
+                                    <span class="material-symbols-outlined text-[16px] text-black/50">description</span>
                                 {/if}
                             </td>
                             <td class="p-2.5 border-r border-black font-bold truncate max-w-xs text-black">
@@ -711,21 +721,23 @@
         <div class="flex justify-center mt-4 font-mono">
             <div class="flex items-center gap-1 border-2 border-black bg-[#EDE9DF] p-1.5 shadow-[3px_3px_0px_0px_#000]">
                 <button 
-                    class="retro-btn py-1 px-3 text-xs bg-white"
+                    class="retro-btn py-1 px-3 text-xs bg-white flex items-center gap-1"
                     disabled={pagination.current_page <= 1}
                     onclick={() => loadFiles((pagination?.current_page || 1) - 1)}
                 >
-                    « Précédent
+                    <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+                    <span>Précédent</span>
                 </button>
                 <div class="border border-black bg-white px-3 py-1 text-xs font-bold">
                     Page {pagination.current_page} / {pagination.total_pages} ({pagination.total_items} fichiers)
                 </div>
                 <button 
-                    class="retro-btn py-1 px-3 text-xs bg-white"
+                    class="retro-btn py-1 px-3 text-xs bg-white flex items-center gap-1"
                     disabled={pagination.current_page >= pagination.total_pages}
                     onclick={() => loadFiles((pagination?.current_page || 1) + 1)}
                 >
-                    Suivant »
+                    <span>Suivant</span>
+                    <span class="material-symbols-outlined text-[14px]">chevron_right</span>
                 </button>
             </div>
         </div>
@@ -739,7 +751,7 @@
                 <!-- Window Titlebar -->
                 <div class="bg-[#FFE600] border-b-2 border-black px-4 py-2 flex items-center justify-between">
                     <span class="font-black text-xs uppercase text-black">
-                        🗔 S3 FILE INSPECTOR // {previewFile.key}
+                        S3 FILE INSPECTOR // {previewFile.key}
                     </span>
                     <button onclick={() => previewFile = null} class="w-6 h-6 border border-black bg-white hover:bg-[#FFC2D1] flex items-center justify-center font-bold text-xs">
                         ✕
@@ -752,8 +764,8 @@
                         {#if previewFile.content_type?.startsWith('image/')}
                             <img src={previewFile.url} alt={previewFile.key} class="max-h-72 object-contain" />
                         {:else}
-                            <div class="p-10 text-center">
-                                <div class="text-5xl mb-2">📄</div>
+                            <div class="p-10 text-center flex flex-col items-center">
+                                <span class="material-symbols-outlined text-5xl text-black/30 mb-2">description</span>
                                 <p class="text-xs font-bold font-mono">{previewFile.content_type}</p>
                             </div>
                         {/if}
@@ -784,23 +796,27 @@
                     </div>
 
                     {#if previewFile.reference_title}
-                        <div class="border-2 border-black bg-[#D4E2FD] p-2.5 text-xs text-black shadow-[2px_2px_0px_0px_#000]">
-                            <span>🔗 Rattaché à : <strong>{previewFile.reference_title}</strong> (ID #{previewFile.reference_id})</span>
+                        <div class="border-2 border-black bg-[#D4E2FD] p-2.5 text-xs text-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[14px]">link</span>
+                            <span>Rattaché à : <strong>{previewFile.reference_title}</strong> (ID #{previewFile.reference_id})</span>
                         </div>
                     {/if}
 
                     <div class="flex flex-wrap justify-between items-center gap-3 pt-2">
                         <div class="flex gap-2">
-                            <button onclick={() => copyURL(previewFile?.url || '')} class="retro-btn text-xs bg-white hover:bg-[#FFE600]">
-                                📋 Copier URL
+                            <button onclick={() => copyURL(previewFile?.url || '')} class="retro-btn text-xs bg-white hover:bg-[#FFE600] flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                                <span>Copier URL</span>
                             </button>
-                            <a href={previewFile.url} target="_blank" rel="noreferrer" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD]">
-                                Ouvrir ↗
+                            <a href={previewFile.url} target="_blank" rel="noreferrer" class="retro-btn text-xs bg-white hover:bg-[#D4E2FD] flex items-center gap-1">
+                                <span>Ouvrir</span>
+                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
                             </a>
                         </div>
 
-                        <button onclick={() => previewFile && deleteSingleFile(previewFile)} class="retro-btn-error text-xs font-black">
-                            🗑️ Supprimer de S3
+                        <button onclick={() => previewFile && deleteSingleFile(previewFile)} class="retro-btn-error text-xs font-black flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">delete</span>
+                            <span>Supprimer de S3</span>
                         </button>
                     </div>
                 </div>

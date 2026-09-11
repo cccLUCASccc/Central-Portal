@@ -11,9 +11,11 @@ const category = Astro.url.searchParams.get('category') || ''
 const status = Astro.url.searchParams.get('status') || ''
 const priceMax = Astro.url.searchParams.get('priceMax') || ''
 const nouveaute = Astro.url.searchParams.get('nouveaute') || ''
+const shopId = Astro.url.searchParams.get('shop_id') || ''
 
 let antiquites = []
 let antiquitesPagination = null
+let shopName = ''
 
 if (userId && token){
     try{
@@ -34,6 +36,7 @@ if (userId && token){
         if (status) queryParams.set('status', status);
         if (priceMax) queryParams.set('priceMax', priceMax);
         if (nouveaute) queryParams.set('nouveaute', nouveaute);
+        if (shopId) queryParams.set('shop_id', shopId);
 
         // Fetch Antiquités
         const response_antiquites = await fetch(`${API_URL}/api/antiquites?${queryParams.toString()}`, fetchOptions);
@@ -43,6 +46,21 @@ if (userId && token){
             const result = await response_antiquites.json();
             antiquites = result.data || result;
             antiquitesPagination = result.pagination;
+        }
+
+        // Si shop_id est renseigné, récupérer le nom de la boutique pour l'en-tête
+        if (shopId && shopId !== 'daisy' && shopId !== '0') {
+            try {
+                const resShops = await fetch(`${API_URL}/api/shops`, fetchOptions);
+                if (resShops.ok) {
+                    const dataShops = await resShops.json();
+                    const list = dataShops.data || dataShops;
+                    const currentShop = list.find((s: any) => s.id?.toString() === shopId.toString());
+                    if (currentShop) shopName = currentShop.name;
+                }
+            } catch (errShop) {
+                console.error("Erreur récupération boutique:", errShop);
+            }
         }
     }
     catch(error : any){
@@ -58,6 +76,8 @@ if (userId && token){
             apiUrl={import.meta.env.API_URL}
             antiquites={antiquites} 
             pagination={antiquitesPagination}
+            shopId={shopId}
+            shopName={shopName}
         />
     </Show>
 </BasicLayout>

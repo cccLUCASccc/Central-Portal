@@ -15,29 +15,29 @@
 
     const statusOptions = [
         { value: null, label: "Tous les statuts" },
-        { value: 0, label: "🟢 Actif" },
-        { value: 1, label: "⚪ Inactif" },
-        { value: 2, label: "🔴 Vendu" }
+        { value: 0, label: "Actif" },
+        { value: 1, label: "Inactif" },
+        { value: 2, label: "Vendu" }
     ];
 
     const categoryOptionsFilter = [
         { value: "", label: "Toutes les catégories" },
-        { value: "Mobilier", label: "🪑 Mobilier" },
-        { value: "Objets d'art & Décoration", label: "🏺 Objets d'art & Décoration" },
-        { value: "Art de la table", label: "🍽️ Art de la table" },
-        { value: "Curiosités & Divers", label: "🔮 Curiosités & Divers" }
+        { value: "Mobilier", label: "Mobilier" },
+        { value: "Objets d'art & Décoration", label: "Objets d'art & Décoration" },
+        { value: "Art de la table", label: "Art de la table" },
+        { value: "Curiosités & Divers", label: "Curiosités & Divers" }
     ];
 
     const categoryOptionsForm = [
-        { value: "Mobilier", label: "🪑 Mobilier" },
-        { value: "Objets d'art & Décoration", label: "🏺 Objets d'art & Décoration" },
-        { value: "Art de la table", label: "🍽️ Art de la table" },
-        { value: "Curiosités & Divers", label: "🔮 Curiosités & Divers" }
+        { value: "Mobilier", label: "Mobilier" },
+        { value: "Objets d'art & Décoration", label: "Objets d'art & Décoration" },
+        { value: "Art de la table", label: "Art de la table" },
+        { value: "Curiosités & Divers", label: "Curiosités & Divers" }
     ];
 
     const nouveauteOptions = [
         { value: null, label: "Tout le catalogue" },
-        { value: true, label: "⭐ Nouveautés uniquement" },
+        { value: true, label: "Nouveautés uniquement" },
         { value: false, label: "Catalogues standards" }
     ];
 
@@ -49,11 +49,11 @@
     ];
 
     const epoqueOptions = [
-        { value: "vintage", label: "⏳ Vintage" },
-        { value: "art-deco", label: "🏛️ Art Déco" },
-        { value: "art-nouveau", label: "🌿 Art Nouveau" },
-        { value: "avant 1850", label: "📜 Avant 1850" },
-        { value: "contemporain", label: "✨ Contemporain" }
+        { value: "vintage", label: "Vintage" },
+        { value: "art-deco", label: "Art Déco" },
+        { value: "art-nouveau", label: "Art Nouveau" },
+        { value: "avant 1850", label: "Avant 1850" },
+        { value: "contemporain", label: "Contemporain" }
     ];
 </script>
 

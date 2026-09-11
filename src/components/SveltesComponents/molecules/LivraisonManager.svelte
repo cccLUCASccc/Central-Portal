@@ -51,7 +51,7 @@
             });
 
             if (response.ok) {
-                alert(isEditing ? "Modifié avec succès ! ✨" : "Ajouté avec succès ! ✨");
+                alert(isEditing ? "Modifié avec succès !" : "Ajouté avec succès !");
                 resetForm();
                 await fetchLivraisons();
             } else {
@@ -116,8 +116,8 @@
                 Configurez les tarifs d'expédition par gabarit (S, M, L, XL) calculés automatiquement sur la boutique.
             </p>
         </div>
-        <div class="retro-icon-box bg-white">
-            🚚
+        <div class="retro-icon-box bg-white flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl text-black">local_shipping</span>
         </div>
     </div>
 
@@ -159,8 +159,9 @@
                     Annuler
                 </button>
             {/if}
-            <button onclick={saveLivraison} class="retro-btn-primary py-1.5 px-6 text-xs font-black shadow-[3px_3px_0px_0px_#000]" disabled={!providerName}>
-                {isEditing ? '💾 Mettre à jour' : '➕ Enregistrer le transporteur'}
+            <button onclick={saveLivraison} class="retro-btn-primary py-1.5 px-6 text-xs font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5" disabled={!providerName}>
+                <span class="material-symbols-outlined text-[16px]">{isEditing ? 'save' : 'add'}</span>
+                <span>{isEditing ? 'Mettre à jour' : 'Enregistrer le transporteur'}</span>
             </button>
         </div>
     </div>
@@ -171,8 +172,8 @@
             <span class="font-black text-xs uppercase text-black">
                 Transporteurs et barèmes configurés
             </span>
-            <button onclick={fetchLivraisons} class="retro-btn py-1 px-2.5 text-xs bg-white hover:bg-[#FFE600]" title="Rafraîchir">
-                <span class="{isLoading ? 'animate-spin' : ''}">🔄</span>
+            <button onclick={fetchLivraisons} class="retro-btn py-1 px-2.5 text-xs bg-white hover:bg-[#FFE600] flex items-center justify-center" title="Rafraîchir">
+                <span class="material-symbols-outlined text-[16px] {isLoading ? 'animate-spin' : ''}">refresh</span>
             </button>
         </div>
 
@@ -198,11 +199,11 @@
                             <td class="p-3 border-r border-black text-center font-mono font-bold">{l.pricextralarge ? l.pricextralarge + ' €' : '-'}</td>
                             <td class="p-3 text-right">
                                 <div class="flex justify-end gap-1.5">
-                                    <button onclick={() => editLivraison(l)} class="retro-btn py-0.5 px-2 text-[10px] bg-white hover:bg-[#FFE600]" title="Modifier">
-                                        ✏️
+                                    <button onclick={() => editLivraison(l)} class="retro-btn py-0.5 px-2 text-[10px] bg-white hover:bg-[#FFE600] flex items-center justify-center" title="Modifier">
+                                        <span class="material-symbols-outlined text-[14px]">edit</span>
                                     </button>
-                                    <button onclick={() => deleteLivraison(l.id!)} class="retro-btn py-0.5 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fca5b9]" title="Supprimer">
-                                        🗑️
+                                    <button onclick={() => deleteLivraison(l.id!)} class="retro-btn py-0.5 px-2 text-[10px] bg-[#FFC2D1] hover:bg-[#fca5b9] flex items-center justify-center" title="Supprimer">
+                                        <span class="material-symbols-outlined text-[14px]">delete</span>
                                     </button>
                                 </div>
                             </td>

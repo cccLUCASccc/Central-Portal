@@ -128,14 +128,14 @@
         <button 
             onclick={handleConnectEbay} 
             disabled={isRedirecting}
-            class="retro-btn py-2 px-4 text-xs bg-white hover:bg-[#99E7DC] font-black shadow-[3px_3px_0px_0px_#000]"
+            class="retro-btn py-2 px-4 text-xs bg-white hover:bg-[#99E7DC] font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5"
         >
             {#if isRedirecting}
                 <span class="loading loading-spinner loading-xs mr-1"></span>
             {:else}
-                🔗
+                <span class="material-symbols-outlined text-[16px]">link</span>
             {/if}
-            Connexion Compte eBay
+            <span>Connexion Compte eBay</span>
         </button>
     </div>
 
@@ -154,8 +154,9 @@
             <DataModifier type={7} type_name="Filtre Nouveauté" mode="filter" bind:data_bool={filterStore.nouveaute_filter} />
         </div>
         <div>
-            <button class="retro-btn bg-white hover:bg-[#FFC2D1] w-full py-2 text-xs" onclick={resetFilters}>
-                🔄 Réinitialiser
+            <button class="retro-btn bg-white hover:bg-[#FFC2D1] w-full py-2 text-xs flex items-center justify-center gap-1" onclick={resetFilters}>
+                <span class="material-symbols-outlined text-[16px]">refresh</span>
+                <span>Réinitialiser</span>
             </button>
         </div>
     </div>
@@ -180,7 +181,7 @@
                     <!-- Cover Image -->
                     <div class="relative aspect-[4/3] bg-[#EDE9DF] border-b-2 border-black overflow-hidden flex items-center justify-center">
                         {#if import.meta.env.PUBLIC_DISABLE_IMAGES !== "true" && (antiquite.images && antiquite.images.length > 0)}
-                            <img src={antiquite.images[0].url} alt={antiquite.name} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                            <img src={antiquite.images[0].url} alt={antiquite.name} class="w-full h-full object-cover" />
                         {:else}
                             <div class="flex items-center justify-center h-full text-[10px] opacity-40 uppercase font-bold">
                                 {antiquite.images?.length > 0 ? 'OFF' : 'N/A'}
@@ -229,18 +230,19 @@
 
                         <!-- Card Footer / Actions -->
                         <div class="flex items-center gap-1.5 mt-1 pt-2 border-t border-black/20" onclick={(e) => e.stopPropagation()}>
-                            <a href={`/ebay/${antiquite.id}`} class="retro-btn text-[10px] py-1 px-2.5 flex-1 bg-white hover:bg-[#FFE600] font-black text-center">
-                                Configurer ⚙️
+                            <a href={`/ebay/${antiquite.id}`} class="retro-btn text-[10px] py-1 px-2.5 flex-1 bg-white hover:bg-[#FFE600] font-black text-center flex items-center justify-center gap-1">
+                                <span>Configurer</span>
+                                <span class="material-symbols-outlined text-[13px]">settings</span>
                             </a>
                             {#if antiquite.ebay_listing_id}
                                 <a 
                                     href={`https://www.ebay.be/itm/${antiquite.ebay_listing_id}`} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    class="retro-btn text-[10px] py-1 px-2 bg-[#99E7DC] hover:bg-[#7ce0d3]"
+                                    class="retro-btn text-[10px] py-1 px-2 bg-[#99E7DC] hover:bg-[#7ce0d3] flex items-center justify-center"
                                     title="Voir sur eBay"
                                 >
-                                    ↗
+                                    <span class="material-symbols-outlined text-[13px]">open_in_new</span>
                                 </a>
                             {/if}
                         </div>
@@ -248,7 +250,9 @@
                 </div>
             {:else}
                 <div class="col-span-full text-center py-16 retro-card">
-                    <div class="text-4xl mb-2">📦</div>
+                    <div class="flex justify-center mb-2">
+                        <span class="material-symbols-outlined text-4xl text-black/40">package_2</span>
+                    </div>
                     <p class="text-xs font-bold uppercase text-black">Aucune antiquité trouvée pour eBay.</p>
                 </div>
             {/each}
