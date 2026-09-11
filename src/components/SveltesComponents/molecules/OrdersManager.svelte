@@ -11,6 +11,7 @@
             name: string;
             price: number;
             images?: { url: string }[];
+            images_urls?: string;
         };
         shop_id?: number;
         shop?: {
@@ -62,12 +63,53 @@
     let isUpdatingStatus = $state(false);
     let previewPhotos = $state<string[] | null>(null);
 
-    const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+    const API_BASE = (import.meta as any).env.PUBLIC_API_URL || "https://central-api-production-a031.up.railway.app";
+
+    function getArticleImageUrl(article?: any): string {
+        if (!article) return "";
+        let rawUrl = "";
+        if (article.images && article.images.length > 0 && article.images[0]?.url) {
+            rawUrl = article.images[0].url;
+        } else if (article.images_urls) {
+            const split = article.images_urls.split(/[;,]/);
+            if (split.length > 0 && split[0].trim()) {
+                rawUrl = split[0].trim();
+            }
+        }
+        if (!rawUrl) return "";
+        const url = rawUrl.trim();
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            return url;
+        }
+        if (url.startsWith("/api") || url.startsWith("/front")) {
+            return `${API_BASE}${url}`;
+        }
+        const cleanPath = url.startsWith("/") ? url.slice(1) : url;
+        return `${API_BASE}/api/antiquites/images/${cleanPath}`;
+    }
+
+    function resolveProofUrl(rawUrl?: string): string {
+        if (!rawUrl) return "";
+        const url = rawUrl.trim();
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            return url;
+        }
+        if (url.startsWith("/api") || url.startsWith("/front")) {
+            return `${API_BASE}${url}`;
+        }
+        const cleanPath = url.startsWith("/") ? url.slice(1) : url;
+        return `${API_BASE}/api/antiquites/images/${cleanPath}`;
+    }
+
+    function getPackagingPhotos(str?: string): string[] {
+        if (!str) return [];
+        return str.split(',').filter(Boolean).map(p => resolveProofUrl(p));
+    }
 
     async function fetchOrders() {
         isLoading = true;
         try {
-            const res = await apiFetch(`${PUBLIC_API_URL}/api/orders`);
+            const res = await apiFetch(`${API_BASE}/api/orders`);
             if (res.ok) {
                 orders = await res.json();
             } else {
@@ -347,17 +389,26 @@
 
                                 <!-- Article & Prix -->
                                 <td class="p-3 border-r border-black">
-                                    <div class="flex items-center gap-2">
-                                        {#if item.article?.images?.[0]?.url}
-                                            <img 
-                                                src={item.article.images[0].url} 
-                                                alt={item.article?.name} 
-                                                class="w-9 h-9 object-cover border border-black flex-shrink-0"
-                                            />
-                                        {/if}
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-10 h-10 border-2 border-black bg-[#EDE9DF] flex-shrink-0 overflow-hidden flex items-center justify-center shadow-[1px_1px_0px_0px_#000]">
+                                            {#if getArticleImageUrl(item.article)}
+                                                <img 
+                                                    src={getArticleImageUrl(item.article)} 
+                                                    alt={item.article?.name || "Objet"} 
+                                                    class="w-full h-full object-cover"
+                                                    onerror={(e) => {
+                                                        const target = e.currentTarget as HTMLImageElement;
+                                                        target.style.display = 'none';
+                                                    }}
+                                                />
+                                            {:else}
+                                                <span class="material-symbols-outlined text-sm text-black/40">image_not_supported</span>
+                                            {/if}
+                                        </div>
                                         <div class="min-w-0">
-                                            <div class="font-black text-black truncate max-w-[180px]">{item.article?.name || "Objet"}</div>
+                                            <div class="font-black text-black truncate max-w-[180px] text-xs">{item.article?.name || "Objet"}</div>
                                             <div class="text-[10px] font-mono font-bold text-black/80">{item.price?.toFixed(2)} €</div>
+                                            <div class="text-[9px] font-mono text-black/50">Réf. #{item.article_id}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -486,14 +537,27 @@
                     <div class="p-4 bg-white border-2 border-black shadow-[3px_3px_0px_0px_#000] space-y-3">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-black/20 pb-2">
                             <div class="flex items-center gap-3">
-                                {#if item.article?.images?.[0]?.url}
-                                    <img src={item.article.images[0].url} alt={item.article?.name} class="w-12 h-12 object-cover border border-black" />
-                                {/if}
+                                <div class="w-14 h-14 border-2 border-black bg-[#EDE9DF] flex-shrink-0 overflow-hidden flex items-center justify-center shadow-[2px_2px_0px_0px_#000]">
+                                    {#if getArticleImageUrl(item.article)}
+                                        <img 
+                                            src={getArticleImageUrl(item.article)} 
+                                            alt={item.article?.name || "Objet"} 
+                                            class="w-full h-full object-cover"
+                                            onerror={(e) => {
+                                                const target = e.currentTarget as HTMLImageElement;
+                                                target.style.display = 'none';
+                                            }}
+                                        />
+                                    {:else}
+                                        <span class="material-symbols-outlined text-lg text-black/40">image_not_supported</span>
+                                    {/if}
+                                </div>
                                 <div>
                                     <h5 class="font-black text-sm text-black">{item.article?.name || "Objet"}</h5>
                                     <div class="text-xs font-mono font-bold text-black/70">
-                                        Boutique : <strong>{item.shop?.name}</strong> &bull; Prix : <strong>{item.price?.toFixed(2)} €</strong>
+                                        Boutique : <strong>{item.shop?.name || "Boutique"}</strong> &bull; Prix : <strong>{item.price?.toFixed(2)} €</strong>
                                     </div>
+                                    <div class="text-[10px] font-mono text-black/50">Réf. #{item.article_id}</div>
                                 </div>
                             </div>
 
@@ -515,15 +579,14 @@
                             <div class="p-2.5 bg-[#FBF8EE] border border-black space-y-1">
                                 <span class="font-bold text-[10px] uppercase text-black/70 block">Photos d'emballage colis :</span>
                                 {#if item.packaging_photos}
-                                    {@const photos = item.packaging_photos.split(',')}
                                     <div class="flex items-center gap-2">
                                         <button 
                                             type="button" 
-                                            onclick={() => previewPhotos = photos}
-                                            class="retro-btn bg-[#86E2D5] text-[10px] font-black py-1 px-2.5 flex items-center gap-1 shadow-[1px_1px_0px_0px_#000]"
+                                            onclick={() => previewPhotos = getPackagingPhotos(item.packaging_photos)}
+                                            class="retro-btn bg-[#86E2D5] text-[10px] font-black py-1 px-2.5 flex items-center gap-1 shadow-[1px_1px_0px_0px_#000] cursor-pointer"
                                         >
                                             <span class="material-symbols-outlined text-[13px]">photo_library</span>
-                                            <span>Voir les {photos.length} photo(s)</span>
+                                            <span>Voir les {getPackagingPhotos(item.packaging_photos).length} photo(s)</span>
                                         </button>
                                     </div>
                                 {:else}
@@ -547,8 +610,8 @@
                                 {#if item.shipping_proof_url}
                                     <button 
                                         type="button" 
-                                        onclick={() => previewPhotos = [item.shipping_proof_url!]}
-                                        class="text-[10px] font-black underline flex items-center gap-1 mt-1"
+                                        onclick={() => previewPhotos = [resolveProofUrl(item.shipping_proof_url)]}
+                                        class="text-[10px] font-black underline flex items-center gap-1 mt-1 cursor-pointer"
                                     >
                                         <span class="material-symbols-outlined text-xs">receipt_long</span>
                                         <span>Voir le reçu de dépôt</span>
