@@ -11,7 +11,6 @@
             name: string;
             price: number;
             images?: { url: string }[];
-            images_urls?: string;
         };
         shop_id?: number;
         shop?: {
@@ -63,53 +62,12 @@
     let isUpdatingStatus = $state(false);
     let previewPhotos = $state<string[] | null>(null);
 
-    const API_BASE = (import.meta as any).env.PUBLIC_API_URL || "https://central-api-production-a031.up.railway.app";
-
-    function getArticleImageUrl(article?: any): string {
-        if (!article) return "";
-        let rawUrl = "";
-        if (article.images && article.images.length > 0 && article.images[0]?.url) {
-            rawUrl = article.images[0].url;
-        } else if (article.images_urls) {
-            const split = article.images_urls.split(/[;,]/);
-            if (split.length > 0 && split[0].trim()) {
-                rawUrl = split[0].trim();
-            }
-        }
-        if (!rawUrl) return "";
-        const url = rawUrl.trim();
-        if (url.startsWith("http://") || url.startsWith("https://")) {
-            return url;
-        }
-        if (url.startsWith("/api") || url.startsWith("/front")) {
-            return `${API_BASE}${url}`;
-        }
-        const cleanPath = url.startsWith("/") ? url.slice(1) : url;
-        return `${API_BASE}/api/antiquites/images/${cleanPath}`;
-    }
-
-    function resolveProofUrl(rawUrl?: string): string {
-        if (!rawUrl) return "";
-        const url = rawUrl.trim();
-        if (url.startsWith("http://") || url.startsWith("https://")) {
-            return url;
-        }
-        if (url.startsWith("/api") || url.startsWith("/front")) {
-            return `${API_BASE}${url}`;
-        }
-        const cleanPath = url.startsWith("/") ? url.slice(1) : url;
-        return `${API_BASE}/api/antiquites/images/${cleanPath}`;
-    }
-
-    function getPackagingPhotos(str?: string): string[] {
-        if (!str) return [];
-        return str.split(',').filter(Boolean).map(p => resolveProofUrl(p));
-    }
+    const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
 
     async function fetchOrders() {
         isLoading = true;
         try {
-            const res = await apiFetch(`${API_BASE}/api/orders`);
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/orders`);
             if (res.ok) {
                 orders = await res.json();
             } else {
@@ -132,17 +90,41 @@
     }
 
     function isOrderLate(order: Order): boolean {
+        if (order.status === 'cancelled') return false;
         const days = getElapsedDays(order.created_at);
         if (days < 4) return false;
         return order.items.some(it => it.shipping_status === 'preparation');
     }
 
+    function getArticleImageUrl(article?: { images?: { url: string }[] }): string | null {
+        if (!article?.images || article.images.length === 0) return null;
+        const img = article.images[0]?.url;
+        if (!img) return null;
+        if (img.startsWith("http://") || img.startsWith("https://")) return img;
+        return `${PUBLIC_API_URL}${img.startsWith('/') ? '' : '/'}${img}`;
+    }
+
+    function resolveProofUrl(url?: string): string {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return `${PUBLIC_API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    }
+
+    function getPackagingPhotos(photosStr?: string): string[] {
+        if (!photosStr) return [];
+        return photosStr.split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .map(resolveProofUrl);
+    }
+
     // Statistiques rapides
     let totalOrders = $derived(orders.length);
     let lateOrdersCount = $derived(orders.filter(o => isOrderLate(o)).length);
-    let prepOrdersCount = $derived(orders.filter(o => o.items.some(it => it.shipping_status === 'preparation')).length);
-    let shippedOrdersCount = $derived(orders.filter(o => o.items.every(it => it.shipping_status === 'shipped')).length);
-    let deliveredOrdersCount = $derived(orders.filter(o => o.items.every(it => it.shipping_status === 'delivered' || it.buyer_confirmed)).length);
+    let cancelledOrdersCount = $derived(orders.filter(o => o.status === 'cancelled' || o.items.some(it => it.shipping_status === 'cancelled')).length);
+    let prepOrdersCount = $derived(orders.filter(o => o.status !== 'cancelled' && o.items.some(it => it.shipping_status === 'preparation')).length);
+    let shippedOrdersCount = $derived(orders.filter(o => o.status !== 'cancelled' && o.items.every(it => it.shipping_status === 'shipped')).length);
+    let deliveredOrdersCount = $derived(orders.filter(o => o.status !== 'cancelled' && o.items.every(it => it.shipping_status === 'delivered' || it.buyer_confirmed)).length);
 
     // Filtrage
     let filteredOrders = $derived(orders.filter(order => {
@@ -159,17 +141,21 @@
         // Filtre onglet
         if (activeFilter === 'late') return isOrderLate(order);
         if (activeFilter === 'cancelled') return order.status === 'cancelled' || order.items.some(it => it.shipping_status === 'cancelled');
-        if (activeFilter === 'preparation') return order.items.some(it => it.shipping_status === 'preparation');
-        if (activeFilter === 'shipped') return order.items.some(it => it.shipping_status === 'shipped');
-        if (activeFilter === 'delivered') return order.items.every(it => it.shipping_status === 'delivered' || it.buyer_confirmed);
+        if (activeFilter === 'preparation') return order.status !== 'cancelled' && order.items.some(it => it.shipping_status === 'preparation');
+        if (activeFilter === 'shipped') return order.status !== 'cancelled' && order.items.some(it => it.shipping_status === 'shipped');
+        if (activeFilter === 'delivered') return order.status !== 'cancelled' && order.items.every(it => it.shipping_status === 'delivered' || it.buyer_confirmed);
 
         return true;
     }));
 
-    async function updateItemStatus(itemId: number, newStatus: string) {
+    async function updateItemStatus(item: OrderItem, newStatus: string) {
+        if (item.shipping_status === 'cancelled' || selectedOrder?.status === 'cancelled') {
+            alert("Cette commande/vente a été annulée et remboursée. Son statut ne peut plus être modifié.");
+            return;
+        }
         isUpdatingStatus = true;
         try {
-            const res = await apiFetch(`${PUBLIC_API_URL}/api/orders/items/${itemId}/status`, {
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/orders/items/${item.id}/status`, {
                 method: "PATCH",
                 body: JSON.stringify({ shipping_status: newStatus })
             });
@@ -180,7 +166,8 @@
                     if (refreshed) selectedOrder = refreshed;
                 }
             } else {
-                alert("Erreur lors de la mise à jour du statut");
+                const errData = await res.json().catch(() => null);
+                alert(errData?.error || "Erreur lors de la mise à jour du statut");
             }
         } catch (e) {
             alert("Erreur de connexion");
@@ -238,7 +225,7 @@
     {/if}
 
     <!-- BARRE DE STATISTIQUES RAPIDES -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
         <div class="p-3 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000]">
             <span class="text-[10px] font-mono font-black uppercase text-black/60 block">Total Commandes</span>
             <span class="text-xl font-mono font-black text-black">{totalOrders}</span>
@@ -259,6 +246,10 @@
             <span class="text-[10px] font-mono font-black uppercase text-black/60 block">Livrées</span>
             <span class="text-xl font-mono font-black text-black">{deliveredOrdersCount}</span>
         </div>
+        <div class="p-3 bg-[#FFAEC1]/30 border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+            <span class="text-[10px] font-mono font-black uppercase text-[#E63946] block">Annulées</span>
+            <span class="text-xl font-mono font-black text-[#E63946]">{cancelledOrdersCount}</span>
+        </div>
     </div>
 
     <!-- FILTRES & RECHERCHE -->
@@ -275,37 +266,39 @@
                 <button 
                     type="button" 
                     onclick={() => activeFilter = 'late'} 
-                    class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] {activeFilter === 'late' ? 'bg-[#FFAEC1] text-black ring-2 ring-black font-black' : 'bg-white text-black'}"
+                    class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1 {activeFilter === 'late' ? 'bg-[#FFAEC1] text-black ring-2 ring-black font-black' : 'bg-white text-black'}"
                 >
-                    ⚠️ En retard ({lateOrdersCount})
+                    <span class="material-symbols-outlined text-[13px]">warning</span>
+                    <span>En retard ({lateOrdersCount})</span>
                 </button>
                 <button 
                     type="button" 
                     onclick={() => activeFilter = 'preparation'} 
                     class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] {activeFilter === 'preparation' ? 'bg-[#FFD166] text-black font-black' : 'bg-white text-black'}"
                 >
-                    À préparer
+                    À préparer ({prepOrdersCount})
                 </button>
                 <button 
                     type="button" 
                     onclick={() => activeFilter = 'shipped'} 
                     class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] {activeFilter === 'shipped' ? 'bg-[#BFD7FE] text-black font-black' : 'bg-white text-black'}"
                 >
-                    Expédiées
+                    Expédiées ({shippedOrdersCount})
                 </button>
                 <button 
                     type="button" 
                     onclick={() => activeFilter = 'delivered'} 
                     class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] {activeFilter === 'delivered' ? 'bg-[#86E2D5] text-black font-black' : 'bg-white text-black'}"
                 >
-                    Livrées
+                    Livrées ({deliveredOrdersCount})
                 </button>
                 <button 
                     type="button" 
                     onclick={() => activeFilter = 'cancelled'} 
-                    class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] {activeFilter === 'cancelled' ? 'bg-[#FFAEC1] text-black' : 'bg-white text-black'}"
+                    class="retro-btn py-1 px-3 text-xs font-black shadow-[2px_2px_0px_0px_#000] flex items-center gap-1 {activeFilter === 'cancelled' ? 'bg-[#E63946] text-white ring-2 ring-black font-black' : 'bg-white text-black'}"
                 >
-                    Annulées
+                    <span class="material-symbols-outlined text-[13px]">cancel</span>
+                    <span>Annulées ({cancelledOrdersCount})</span>
                 </button>
             </div>
 
@@ -352,7 +345,7 @@
                         {@const late = isOrderLate(order)}
                         {@const days = getElapsedDays(order.created_at)}
                         {#each order.items as item, itemIndex}
-                            <tr class="hover:bg-[#FBF8EE] transition-colors {late ? 'bg-[#FFF0F3]' : ''}">
+                            <tr class="hover:bg-[#FBF8EE] transition-colors {(order.status === 'cancelled' || item.shipping_status === 'cancelled') ? 'bg-[#FFF0F0]/60 opacity-80' : (late ? 'bg-[#FFF0F3]' : '')}">
                                 {#if itemIndex === 0}
                                     <td rowspan={order.items.length} class="p-3 border-r border-black font-mono font-black align-top bg-white/50">
                                         <div class="space-y-1">
@@ -362,7 +355,11 @@
                                             <span class="text-[10px] text-black/60 block text-center font-bold">
                                                 Total: {order.total_amount?.toFixed(2)} €
                                             </span>
-                                            {#if late}
+                                            {#if order.status === 'cancelled'}
+                                                <span class="retro-badge bg-[#E63946] text-white text-[9px] font-black uppercase block text-center mt-1">
+                                                    ANNULÉE
+                                                </span>
+                                            {:else if late}
                                                 <span class="retro-badge bg-[#E63946] text-white text-[9px] font-black uppercase block text-center mt-1 animate-pulse">
                                                     RETARD ({days}j)
                                                 </span>
@@ -421,9 +418,10 @@
 
                                 <!-- Statut Logistique 3 Étapes -->
                                 <td class="p-3 border-r border-black text-center">
-                                    {#if item.shipping_status === 'cancelled'}
-                                        <span class="retro-badge bg-[#E63946] text-white text-[9px] font-black uppercase">
-                                            Annulée
+                                    {#if item.shipping_status === 'cancelled' || order.status === 'cancelled'}
+                                        <span class="retro-badge bg-[#E63946] text-white text-[9px] font-black uppercase flex items-center justify-center gap-1">
+                                            <span class="material-symbols-outlined text-[12px]">cancel</span>
+                                            <span>Annulée</span>
                                         </span>
                                     {:else if item.shipping_status === 'delivered' || item.buyer_confirmed}
                                         <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black uppercase flex items-center justify-center gap-1">
@@ -446,7 +444,6 @@
                                         {#if late}
                                             <span class="text-[9px] font-black text-[#D90429] block mt-0.5">En retard</span>
                                         {/if}
-                                    {/if}
                                 </td>
 
                                 <!-- Actions -->
@@ -476,14 +473,19 @@
         <div class="bg-[#FBF8EE] border-3 border-black shadow-[8px_8px_0px_0px_#000] w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-6">
             <!-- En-tête modale -->
             <div class="flex items-center justify-between border-b-2 border-black pb-3">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span class="retro-badge bg-black text-white text-xs font-black uppercase">
                         {selectedOrder.order_number}
                     </span>
                     <span class="text-xs font-bold text-black">
                         Passée le {new Date(selectedOrder.created_at).toLocaleDateString('fr-FR')} (il y a {days}j)
                     </span>
-                    {#if late}
+                    {#if selectedOrder.status === 'cancelled'}
+                        <span class="retro-badge bg-[#E63946] text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-[2px_2px_0px_0px_#000]">
+                            <span class="material-symbols-outlined text-xs">cancel</span>
+                            <span>COMMANDE ANNULÉE</span>
+                        </span>
+                    {:else if late}
                         <span class="retro-badge bg-[#E63946] text-white text-[9px] font-black uppercase animate-pulse">
                             EXPÉDITION EN RETARD
                         </span>
@@ -497,6 +499,20 @@
                     ✕
                 </button>
             </div>
+
+            {#if selectedOrder.status === 'cancelled'}
+                <!-- Bannière d'alerte commande annulée -->
+                <div class="p-3.5 bg-[#FFAEC1] border-2 border-black shadow-[3px_3px_0px_0px_#000] flex items-center justify-between gap-3 text-black">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-xl text-[#E63946]">info</span>
+                        <div>
+                            <div class="font-black text-xs uppercase text-[#E63946]">Vente / Commande Annulée & Remboursée</div>
+                            <div class="text-[11px] font-bold text-black/80">L'acheteur a été remboursé et l'article a été remis en vente. Les statuts logistiques sont verrouillés.</div>
+                        </div>
+                    </div>
+                    <span class="retro-badge bg-black text-white text-[9px] font-black uppercase flex-shrink-0">VERROUILLÉ</span>
+                </div>
+            {/if}
 
             <!-- Destinataire & Livraison -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -563,12 +579,26 @@
 
                             <!-- Statut actuel -->
                             <div>
-                                {#if item.shipping_status === 'delivered' || item.buyer_confirmed}
-                                    <span class="retro-badge bg-[#86E2D5] text-black text-[10px] font-black uppercase">Livré</span>
+                                {#if item.shipping_status === 'cancelled' || selectedOrder.status === 'cancelled'}
+                                    <span class="retro-badge bg-[#E63946] text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-[1px_1px_0px_0px_#000]">
+                                        <span class="material-symbols-outlined text-[13px]">cancel</span>
+                                        <span>Annulé / Remboursé</span>
+                                    </span>
+                                {:else if item.shipping_status === 'delivered' || item.buyer_confirmed}
+                                    <span class="retro-badge bg-[#86E2D5] text-black text-[10px] font-black uppercase flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                                        <span>Livré</span>
+                                    </span>
                                 {:else if item.shipping_status === 'shipped'}
-                                    <span class="retro-badge bg-[#BFD7FE] text-black text-[10px] font-black uppercase">Expédié</span>
+                                    <span class="retro-badge bg-[#BFD7FE] text-black text-[10px] font-black uppercase flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[13px]">local_shipping</span>
+                                        <span>Expédié</span>
+                                    </span>
                                 {:else}
-                                    <span class="retro-badge bg-[#FFD166] text-black text-[10px] font-black uppercase">En Préparation</span>
+                                    <span class="retro-badge bg-[#FFD166] text-black text-[10px] font-black uppercase flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[13px]">inventory_2</span>
+                                        <span>En Préparation</span>
+                                    </span>
                                 {/if}
                             </div>
                         </div>
@@ -578,7 +608,7 @@
                             <!-- Preuves d'emballage du vendeur -->
                             <div class="p-2.5 bg-[#FBF8EE] border border-black space-y-1">
                                 <span class="font-bold text-[10px] uppercase text-black/70 block">Photos d'emballage colis :</span>
-                                {#if item.packaging_photos}
+                                {#if getPackagingPhotos(item.packaging_photos).length > 0}
                                     <div class="flex items-center gap-2">
                                         <button 
                                             type="button" 
@@ -621,34 +651,46 @@
                         </div>
 
                         <!-- Actions Administrateur de changement de statut -->
-                        <div class="pt-2 border-t border-black/10 flex flex-wrap items-center justify-between gap-2">
-                            <span class="text-[10px] font-black uppercase text-black/60">Modifier le statut (Action Admin) :</span>
-                            <div class="flex items-center gap-2">
-                                <button 
-                                    type="button" 
-                                    disabled={isUpdatingStatus}
-                                    onclick={() => updateItemStatus(item.id, 'preparation')}
-                                    class="retro-btn bg-white hover:bg-[#FFD166] text-[10px] font-black py-1 px-2 border border-black shadow-[1px_1px_0px_0px_#000]"
-                                >
-                                    À Préparer
-                                </button>
-                                <button 
-                                    type="button" 
-                                    disabled={isUpdatingStatus}
-                                    onclick={() => updateItemStatus(item.id, 'shipped')}
-                                    class="retro-btn bg-white hover:bg-[#BFD7FE] text-[10px] font-black py-1 px-2 border border-black shadow-[1px_1px_0px_0px_#000]"
-                                >
-                                    Expédié
-                                </button>
-                                <button 
-                                    type="button" 
-                                    disabled={isUpdatingStatus}
-                                    onclick={() => updateItemStatus(item.id, 'delivered')}
-                                    class="retro-btn bg-white hover:bg-[#86E2D5] text-[10px] font-black py-1 px-2 border border-black shadow-[1px_1px_0px_0px_#000]"
-                                >
-                                    Livré
-                                </button>
-                            </div>
+                        <div class="pt-2 border-t border-black/10">
+                            {#if item.shipping_status === 'cancelled' || selectedOrder.status === 'cancelled'}
+                                <div class="p-3 bg-[#FFAEC1]/20 border-2 border-dashed border-[#E63946] flex items-center justify-between gap-2 text-xs font-black text-[#E63946]">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-base">lock</span>
+                                        <span>Vente annulée et remboursée : le statut logistique est verrouillé et ne peut plus être modifié.</span>
+                                    </div>
+                                    <span class="retro-badge bg-[#E63946] text-white text-[9px] font-black uppercase flex-shrink-0">FIGÉ</span>
+                                </div>
+                            {:else}
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="text-[10px] font-black uppercase text-black/60">Modifier le statut (Action Admin) :</span>
+                                    <div class="flex items-center gap-2">
+                                        <button 
+                                            type="button" 
+                                            disabled={isUpdatingStatus}
+                                            onclick={() => updateItemStatus(item, 'preparation')}
+                                            class="retro-btn {item.shipping_status === 'preparation' ? 'bg-[#FFD166] ring-2 ring-black font-black' : 'bg-white hover:bg-[#FFD166]'} text-[10px] font-black py-1 px-2.5 border border-black shadow-[1px_1px_0px_0px_#000] cursor-pointer"
+                                        >
+                                            À Préparer
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            disabled={isUpdatingStatus}
+                                            onclick={() => updateItemStatus(item, 'shipped')}
+                                            class="retro-btn {item.shipping_status === 'shipped' ? 'bg-[#BFD7FE] ring-2 ring-black font-black' : 'bg-white hover:bg-[#BFD7FE]'} text-[10px] font-black py-1 px-2.5 border border-black shadow-[1px_1px_0px_0px_#000] cursor-pointer"
+                                        >
+                                            Expédié
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            disabled={isUpdatingStatus}
+                                            onclick={() => updateItemStatus(item, 'delivered')}
+                                            class="retro-btn {item.shipping_status === 'delivered' ? 'bg-[#86E2D5] ring-2 ring-black font-black' : 'bg-white hover:bg-[#86E2D5]'} text-[10px] font-black py-1 px-2.5 border border-black shadow-[1px_1px_0px_0px_#000] cursor-pointer"
+                                        >
+                                            Livré
+                                        </button>
+                                    </div>
+                                </div>
+                            {/if}
                         </div>
                     </div>
                 {/each}
