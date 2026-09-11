@@ -10,6 +10,8 @@ const userId = auth.userId;
 const pathname = Astro.url.pathname;
 const isDaisyBrocante = pathname.startsWith('/antiquites') || 
                         pathname.startsWith('/subcategories') || 
+                        pathname.startsWith('/shops') || 
+                        pathname.startsWith('/orders') || 
                         pathname.startsWith('/ebay') || 
                         pathname.startsWith('/Livraison');
 const isMarty = pathname.startsWith('/marty');
@@ -110,6 +112,9 @@ const isMarty = pathname.startsWith('/marty');
                   <a href="/shops" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     <span class="material-symbols-outlined text-[16px]">storefront</span> Boutiques
                   </a>
+                  <a href="/orders" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#BFD7FE] {pathname.startsWith('/orders') ? '!bg-[#BFD7FE] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">receipt_long</span> Commandes
+                  </a>
                   <a href="/ebay" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     <span class="material-symbols-outlined text-[16px]">package_2</span> eBay
                   </a>
@@ -207,6 +212,9 @@ const isMarty = pathname.startsWith('/marty');
                   </a>
                   <a href="/shops" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">storefront</span> Boutiques
+                  </a>
+                  <a href="/orders" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname.startsWith('/orders') ? '!bg-[#BFD7FE]' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">receipt_long</span> Commandes
                   </a>
                   <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">package_2</span> eBay (Annonces)
