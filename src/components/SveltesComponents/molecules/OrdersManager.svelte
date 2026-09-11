@@ -444,6 +444,7 @@
                                         {#if late}
                                             <span class="text-[9px] font-black text-[#D90429] block mt-0.5">En retard</span>
                                         {/if}
+                                    {/if}
                                 </td>
 
                                 <!-- Actions -->
