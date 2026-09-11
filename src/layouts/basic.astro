@@ -13,7 +13,9 @@ const isDaisyBrocante = pathname.startsWith('/antiquites') ||
                         pathname.startsWith('/shops') || 
                         pathname.startsWith('/orders') || 
                         pathname.startsWith('/ebay') || 
-                        pathname.startsWith('/Livraison');
+                        pathname.startsWith('/Livraison') ||
+                        pathname.startsWith('/reviews') ||
+                        pathname.startsWith('/feedback');
 const isMarty = pathname.startsWith('/marty');
 ---
 
@@ -126,6 +128,12 @@ const isMarty = pathname.startsWith('/marty');
                   <a href="/Livraison" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
                     <span class="material-symbols-outlined text-[16px]">local_shipping</span> Livraisons
                   </a>
+                  <a href="/reviews" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD166] {pathname.startsWith('/reviews') ? '!bg-[#FFD166] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">reviews</span> Avis
+                  </a>
+                  <a href="/feedback" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFAEC1] {pathname.startsWith('/feedback') ? '!bg-[#FFAEC1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">rate_review</span> Boîte à idées & Bugs
+                  </a>
                 </>
               )}
 
@@ -226,6 +234,12 @@ const isMarty = pathname.startsWith('/marty');
                   </a>
                   <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">local_shipping</span> Livraisons
+                  </a>
+                  <a href="/reviews" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD166] {pathname.startsWith('/reviews') ? '!bg-[#FFD166]' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">reviews</span> Avis Clients
+                  </a>
+                  <a href="/feedback" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/feedback') ? '!bg-[#FFAEC1]' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">rate_review</span> Boîte à idées & Bugs
                   </a>
                 </>
               )}

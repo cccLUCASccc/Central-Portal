@@ -130,6 +130,12 @@
                         <a href="/storage" class="retro-badge bg-[#EDE9DF] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Stockage S3">
                             <span class="material-symbols-outlined text-[14px]">cloud</span> Médias S3
                         </a>
+                        <a href="/reviews" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Avis & Témoignages">
+                            <span class="material-symbols-outlined text-[14px]">reviews</span> Avis
+                        </a>
+                        <a href="/feedback" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Boîte à idées & Signalements de bugs">
+                            <span class="material-symbols-outlined text-[14px]">rate_review</span> Idées & Bugs
+                        </a>
                     </div>
                 </div>
 
