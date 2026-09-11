@@ -16,6 +16,7 @@
         "Mobilier",
         "Objets d'art & Décoration",
         "Art de la table",
+        "Mode",
         "Curiosités & Divers"
     ];
 

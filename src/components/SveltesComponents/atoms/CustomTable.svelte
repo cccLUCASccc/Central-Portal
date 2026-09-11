@@ -313,7 +313,7 @@
             <label class="text-xs font-bold uppercase text-black">Sous-catégorie cible</label>
             <select bind:value={selectedSubcatId} class="retro-select text-xs">
               <option value={null}>Aucune sous-catégorie (Désassocier)</option>
-              {#each ["Mobilier", "Objets d'art & Décoration", "Art de la table", "Curiosités & Divers"] as cat}
+              {#each ["Mobilier", "Objets d'art & Décoration", "Art de la table", "Mode", "Curiosités & Divers"] as cat}
                 {@const catSubs = subcategories.filter(s => s.category === cat)}
                 {#if catSubs.length > 0}
                   <optgroup label={cat} class="font-bold">

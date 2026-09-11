@@ -25,6 +25,7 @@
         { value: "Mobilier", label: "Mobilier" },
         { value: "Objets d'art & Décoration", label: "Objets d'art & Décoration" },
         { value: "Art de la table", label: "Art de la table" },
+        { value: "Mode", label: "Mode" },
         { value: "Curiosités & Divers", label: "Curiosités & Divers" }
     ];
 
@@ -32,6 +33,7 @@
         { value: "Mobilier", label: "Mobilier" },
         { value: "Objets d'art & Décoration", label: "Objets d'art & Décoration" },
         { value: "Art de la table", label: "Art de la table" },
+        { value: "Mode", label: "Mode" },
         { value: "Curiosités & Divers", label: "Curiosités & Divers" }
     ];
 
