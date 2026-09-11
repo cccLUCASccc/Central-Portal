@@ -182,7 +182,7 @@
             </div>
         {/if}
 
-        <CustomTable antiquites={currentAntiquites} mode={"antiquites"}/>
+        <CustomTable antiquites={currentAntiquites} mode={"antiquites"} apiUrl={apiUrl}/>
         
         {#if currentPagination && currentPagination.total_pages > 1}
             <PaginationComponent pagination={currentPagination} onPageChange={handlePageChange} />

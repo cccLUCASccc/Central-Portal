@@ -46,7 +46,23 @@ export async function apiFetch(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  return fetch(`${endpoint}`, {
+  let finalEndpoint = endpoint;
+  const baseUrl = (typeof window !== 'undefined' && (window.__API_URL__ || window.PUBLIC_API_URL))
+    || import.meta.env.PUBLIC_API_URL
+    || "";
+
+  if (baseUrl) {
+    const cleanBase = baseUrl.replace(/\/+$/, '');
+    if (finalEndpoint.startsWith('undefined/')) {
+      finalEndpoint = finalEndpoint.replace(/^undefined\/?/, `${cleanBase}/`);
+    } else if (finalEndpoint.startsWith('null/')) {
+      finalEndpoint = finalEndpoint.replace(/^null\/?/, `${cleanBase}/`);
+    } else if (finalEndpoint.startsWith('/')) {
+      finalEndpoint = `${cleanBase}${finalEndpoint}`;
+    }
+  }
+
+  return fetch(finalEndpoint, {
     ...options,
     headers,
   });

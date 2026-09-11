@@ -8,10 +8,13 @@
     import { untrack, onMount } from "svelte";
 
     interface Props {
-        antiquite: Antiquite
+        antiquite: Antiquite;
+        apiUrl?: string;
     }
 
-    let { antiquite }: Props = $props();
+    let { antiquite, apiUrl = "" }: Props = $props();
+
+    const getApiUrl = () => apiUrl || (typeof window !== 'undefined' && (window as any).__API_URL__) || import.meta.env.PUBLIC_API_URL || "";
     
     let name = $state(antiquite.name);
     let description = $state(antiquite.description);
@@ -31,8 +34,8 @@
     $effect(() => {
         const currentCategory = category;
         if (currentCategory) {
-            const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
-            fetch(`${PUBLIC_API_URL}/front/subcategories?category=${encodeURIComponent(currentCategory)}`)
+            const base = getApiUrl();
+            fetch(`${base}/front/subcategories?category=${encodeURIComponent(currentCategory)}`)
                 .then(res => {
                     if (res.ok) return res.json();
                     return [];
@@ -124,10 +127,11 @@
         }
 
         isEnhancing = true;
-        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+        const targetApiUrl = getApiUrl();
         
         try {
-            const response = await apiFetch(`${PUBLIC_API_URL}/api/ai/enhance`, {
+            const endpoint = targetApiUrl ? `${targetApiUrl}/api/ai/enhance` : `/api/ai/enhance`;
+            const response = await apiFetch(endpoint, {
                 method: "POST",
                 body: JSON.stringify({
                     name,
@@ -151,47 +155,62 @@
     }
 
     async function saveAntiquity(id: number): Promise<boolean> {
-        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+        const targetApiUrl = getApiUrl();
         const formData = new FormData();
         
-        formData.append("name", name);
-        formData.append("description", description);
-        formData.append("category", category);
-        formData.append("subcategory_id", subcategory_id !== null ? subcategory_id.toString() : "");
-        formData.append("size", size);
-        formData.append("price", price.toString());
+        formData.append("name", name || "");
+        formData.append("description", description || "");
+        formData.append("category", category || "");
+        formData.append("subcategory_id", subcategory_id !== null && subcategory_id !== undefined ? subcategory_id.toString() : "");
+        formData.append("size", size || "S");
+        formData.append("price", (price !== null && price !== undefined ? price : 0).toString());
         formData.append("quantity", (quantity !== null && quantity !== undefined ? quantity : 1).toString());
-        formData.append("year", year.toString());
-        formData.append("status", status.toString());
-        formData.append("nouveaute", nouveaute.toString());
-        formData.append("ebay_title", ebayTitle);
-        formData.append("ebay_description", ebayDescription);
-        formData.append("ebay_price", ebayPrice !== null ? ebayPrice.toString() : "0");
-        formData.append("ebay_category_id", ebayCategoryID);
+        formData.append("year", (year ? String(year) : "vintage"));
+        formData.append("status", (status !== null && status !== undefined ? status : 0).toString());
+        formData.append("nouveaute", Boolean(nouveaute).toString());
+        formData.append("ebay_title", ebayTitle || "");
+        formData.append("ebay_description", ebayDescription || "");
+        formData.append("ebay_price", (ebayPrice !== null && ebayPrice !== undefined ? ebayPrice : 0).toString());
+        formData.append("ebay_category_id", ebayCategoryID || "");
 
-        const existingIds = images
-            .filter(img => !img.url.startsWith('blob:') && !img.s3_key)
+        const existingIds = (images || [])
+            .filter(img => img && !img.url?.startsWith('blob:') && !img.s3_key)
             .map(img => img.id)
             .join(',');
         
         formData.append("existing_ids", existingIds);
 
-        if (s3Keys.length > 0) {
+        if (s3Keys && s3Keys.length > 0) {
             formData.append("new_s3_keys", s3Keys.join(','));
         }
 
-        newFiles.forEach(file => {
+        (newFiles || []).forEach(file => {
             formData.append("new_images", file);  
         });
 
         try {
-            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, {
+            const endpoint = targetApiUrl ? `${targetApiUrl}/api/antiquites/${id}` : `/api/antiquites/${id}`;
+            const response = await apiFetch(endpoint, {
                 method: "PATCH",
                 body: formData 
             });
-            return response.ok;
-        } catch (error) {
-            console.error("Error saving antiquity:", error);
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error(`❌ Erreur sauvegarde antiquité #${id} (${response.status}):`, errText);
+                let message = `Erreur ${response.status}`;
+                try {
+                    const parsed = JSON.parse(errText);
+                    if (parsed.error) message = parsed.error;
+                } catch {
+                    if (errText) message = errText;
+                }
+                alert("Impossible d'enregistrer l'article : " + message);
+                return false;
+            }
+            return true;
+        } catch (error: any) {
+            console.error("❌ Erreur réseau ou exception sauvegarde antiquité:", error);
+            alert("Erreur de connexion : " + (error?.message || "Vérifiez votre réseau"));
             return false;
         }
     }
@@ -244,8 +263,6 @@
         if (ok) {
             alert("Objet mis à jour avec succès !");
             window.history.back();
-        } else {
-            alert("Une erreur est survenue lors de la mise à jour de l'objet.");
         }
     }
 
@@ -253,7 +270,7 @@
         if (!confirm("Voulez-vous enregistrer les modifications et publier cet objet sur la Page Facebook et l'ajouter au Catalogue ?")) return;
         
         isPublishingFB = true;
-        const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+        const targetApiUrl = getApiUrl();
         try {
             const saved = await saveAntiquity(id);
             if (!saved) {
@@ -261,7 +278,8 @@
                 return;
             }
 
-            const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}/publish-facebook`, {
+            const endpoint = targetApiUrl ? `${targetApiUrl}/api/antiquites/${id}/publish-facebook` : `/api/antiquites/${id}/publish-facebook`;
+            const response = await apiFetch(endpoint, {
                 method: "POST",
             });
 
