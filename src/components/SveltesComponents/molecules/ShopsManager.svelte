@@ -84,16 +84,61 @@
     let rejectionReason = $state("");
     let isProcessing = $state(false);
 
-    // Modal gestion des objets
+    // Modal gestion de l'inventaire d'une boutique
     let viewingShopItems = $state<Shop | null>(null);
     let shopItems = $state<any[]>([]);
     let isLoadingItems = $state(false);
     let rejectingItem = $state<any | null>(null);
     let itemRejectionReason = $state("");
+    let itemSearchQuery = $state("");
+    let itemFilterStatus = $state<'all' | 'active' | 'pending' | 'sold' | 'rejected'>('all');
+
+    function getItemImageUrl(item: any): string | null {
+        if (!item?.images || item.images.length === 0) return null;
+        const img = item.images[0]?.url;
+        if (!img) return null;
+        if (img.startsWith("http://") || img.startsWith("https://")) return img;
+        return `${PUBLIC_API_URL}${img.startsWith('/') ? '' : '/'}${img}`;
+    }
+
+    let filteredShopItems = $derived(
+        shopItems.filter(item => {
+            // Filtre par statut
+            if (itemFilterStatus === 'active') {
+                if (item.status !== 0 || item.approval_status !== 'approved') return false;
+            } else if (itemFilterStatus === 'pending') {
+                if (item.approval_status !== 'pending') return false;
+            } else if (itemFilterStatus === 'sold') {
+                if (item.status !== 2) return false;
+            } else if (itemFilterStatus === 'rejected') {
+                if (item.approval_status !== 'rejected') return false;
+            }
+
+            // Filtre texte
+            if (itemSearchQuery.trim() !== '') {
+                const q = itemSearchQuery.toLowerCase();
+                const matchName = item.name?.toLowerCase().includes(q);
+                const matchDesc = item.description?.toLowerCase().includes(q);
+                const matchId = item.id?.toString().includes(q);
+                return matchName || matchDesc || matchId;
+            }
+
+            return true;
+        })
+    );
+
+    let shopTotalItems = $derived(shopItems.length);
+    let shopActiveItems = $derived(shopItems.filter(i => i.status === 0 && i.approval_status === 'approved').length);
+    let shopPendingItems = $derived(shopItems.filter(i => i.approval_status === 'pending').length);
+    let shopSoldItems = $derived(shopItems.filter(i => i.status === 2).length);
+    let shopRejectedItems = $derived(shopItems.filter(i => i.approval_status === 'rejected').length);
+    let shopTotalValue = $derived(shopItems.filter(i => i.status === 0).reduce((acc, i) => acc + (Number(i.price) || 0), 0));
 
     async function viewShopItems(shop: Shop) {
         viewingShopItems = shop;
         isLoadingItems = true;
+        itemSearchQuery = "";
+        itemFilterStatus = "all";
         try {
             const res = await apiFetch(`${PUBLIC_API_URL}/api/shops/${shop.id}/items`);
             if (res.ok) {
@@ -424,10 +469,16 @@
                             </button>
                             <button 
                                 onclick={() => viewShopItems(s)}
-                                class="retro-btn bg-[#BFD7FE] hover:bg-[#A3C4FD] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
+                                class="retro-btn bg-[#BFD7FE] hover:bg-[#A3C4FD] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5 cursor-pointer"
+                                title="Consulter et gérer l'inventaire de cette boutique"
                             >
                                 <span class="material-symbols-outlined text-[16px]">inventory_2</span>
-                                <span>Gérer les objets</span>
+                                <span>Voir inventaire</span>
+                                {#if s.pending_items_count && s.pending_items_count > 0}
+                                    <span class="bg-[#FFAEC1] border border-black px-1.5 py-0.2 text-[9px] font-black rounded-none">
+                                        {s.pending_items_count}
+                                    </span>
+                                {/if}
                             </button>
                             {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
                                 <button 
@@ -619,102 +670,231 @@
     {/if}
 
 
-    <!-- MODAL GESTION DES OBJETS -->
+    <!-- MODAL INVENTAIRE D'UNE BOUTIQUE -->
     {#if viewingShopItems}
-        <div class="fixed inset-0 z-[99990] bg-black/70 flex items-center justify-center p-4 font-sans">
-            <div class="w-full max-w-4xl max-h-[90vh] bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col">
-                <div class="bg-[#2B2D42] text-white px-4 py-3 border-b-2 border-black flex items-center justify-between font-black">
-                    <span class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px]">inventory_2</span>
-                        <span>OBJETS // {viewingShopItems.name}</span>
-                    </span>
-                    <button 
-                        type="button" 
-                        onclick={() => viewingShopItems = null}
-                        class="w-6 h-6 bg-[#FFAEC1] border-2 border-black text-black text-xs flex items-center justify-center font-black"
-                    >
-                        ✕
-                    </button>
+        <div class="fixed inset-0 z-[99990] bg-black/70 flex items-center justify-center p-3 sm:p-5 font-sans backdrop-blur-xs">
+            <div class="w-full max-w-5xl max-h-[92vh] bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col overflow-hidden">
+                <!-- En-tête -->
+                <div class="bg-[#2B2D42] text-white px-5 py-3.5 border-b-3 border-black flex items-center justify-between font-mono">
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <span class="w-3 h-3 bg-[#86E2D5]"></span>
+                        <span class="font-black text-sm uppercase tracking-wide">
+                            INVENTAIRE BOUTIQUE // {viewingShopItems.name}
+                        </span>
+                        <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black">
+                            FORMULE {viewingShopItems.type_abonnement?.toUpperCase()}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a 
+                            href={`/antiquites?shop_id=${viewingShopItems.id}`}
+                            target="_blank"
+                            class="retro-btn bg-[#86E2D5] text-black hover:bg-[#65C4B5] text-[10px] py-1 px-2.5 flex items-center gap-1 font-black shadow-[1px_1px_0px_0px_#000] cursor-pointer"
+                            title="Ouvrir dans l'interface complète de tableau"
+                        >
+                            <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+                            <span>Vue Tableau Plein Écran</span>
+                        </a>
+                        <button 
+                            type="button" 
+                            onclick={() => viewingShopItems = null}
+                            class="w-7 h-7 bg-[#FFAEC1] hover:bg-[#FF8CA4] border-2 border-black text-black text-xs flex items-center justify-center font-black cursor-pointer shadow-[1px_1px_0px_0px_#000]"
+                        >
+                            ✕
+                        </button>
+                    </div>
                 </div>
 
-                <div class="p-4 overflow-y-auto flex-1 space-y-4 bg-[#F6F4EE]">
+                <!-- Bandeau KPIs Inventaire Boutique -->
+                <div class="bg-white border-b-2 border-black p-3.5 grid grid-cols-2 sm:grid-cols-5 gap-2.5 font-mono text-xs">
+                    <div class="p-2 border border-black bg-[#F6F4EE]">
+                        <span class="text-[9px] font-black uppercase text-black/60 block">Total Pièces</span>
+                        <span class="text-base font-black text-black">{shopTotalItems}</span>
+                    </div>
+                    <div class="p-2 border border-black bg-[#86E2D5]/20">
+                        <span class="text-[9px] font-black uppercase text-emerald-800 block">En Vente (Actif)</span>
+                        <span class="text-base font-black text-emerald-900">{shopActiveItems}</span>
+                    </div>
+                    <div class="p-2 border border-black bg-[#FFD166]/30">
+                        <span class="text-[9px] font-black uppercase text-amber-800 block">En Attente</span>
+                        <span class="text-base font-black text-amber-900">{shopPendingItems}</span>
+                    </div>
+                    <div class="p-2 border border-black bg-[#BFD7FE]/30">
+                        <span class="text-[9px] font-black uppercase text-blue-800 block">Vendus</span>
+                        <span class="text-base font-black text-blue-900">{shopSoldItems}</span>
+                    </div>
+                    <div class="p-2 border border-black bg-[#FFAEC1]/20">
+                        <span class="text-[9px] font-black uppercase text-[#D90429] block">Valeur Stock Actif</span>
+                        <span class="text-base font-black text-[#D90429]">{shopTotalValue.toFixed(0)} €</span>
+                    </div>
+                </div>
+
+                <!-- Barre d'outils : Filtres & Recherche -->
+                <div class="bg-[#FBF8EE] border-b-2 border-black p-3 flex flex-wrap items-center justify-between gap-2.5 font-mono text-xs">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button 
+                            type="button" 
+                            onclick={() => itemFilterStatus = 'all'} 
+                            class="retro-btn py-1 px-2.5 text-[10px] font-black {itemFilterStatus === 'all' ? 'bg-black text-white' : 'bg-white text-black'}"
+                        >
+                            Tous ({shopTotalItems})
+                        </button>
+                        <button 
+                            type="button" 
+                            onclick={() => itemFilterStatus = 'active'} 
+                            class="retro-btn py-1 px-2.5 text-[10px] font-black {itemFilterStatus === 'active' ? 'bg-[#86E2D5] text-black font-black' : 'bg-white text-black'}"
+                        >
+                            En vente ({shopActiveItems})
+                        </button>
+                        <button 
+                            type="button" 
+                            onclick={() => itemFilterStatus = 'pending'} 
+                            class="retro-btn py-1 px-2.5 text-[10px] font-black {itemFilterStatus === 'pending' ? 'bg-[#FFD166] text-black font-black' : 'bg-white text-black'}"
+                        >
+                            En attente ({shopPendingItems})
+                        </button>
+                        <button 
+                            type="button" 
+                            onclick={() => itemFilterStatus = 'sold'} 
+                            class="retro-btn py-1 px-2.5 text-[10px] font-black {itemFilterStatus === 'sold' ? 'bg-[#BFD7FE] text-black font-black' : 'bg-white text-black'}"
+                        >
+                            Vendus ({shopSoldItems})
+                        </button>
+                        {#if shopRejectedItems > 0}
+                            <button 
+                                type="button" 
+                                onclick={() => itemFilterStatus = 'rejected'} 
+                                class="retro-btn py-1 px-2.5 text-[10px] font-black {itemFilterStatus === 'rejected' ? 'bg-[#FFAEC1] text-black font-black' : 'bg-white text-black'}"
+                            >
+                                Rejetés ({shopRejectedItems})
+                            </button>
+                        {/if}
+                    </div>
+
+                    <div class="relative w-full sm:w-64">
+                        <input 
+                            type="text" 
+                            bind:value={itemSearchQuery}
+                            placeholder="Rechercher nom, description, réf #..."
+                            class="w-full bg-white border border-black px-2.5 py-1 text-xs font-mono font-bold outline-none shadow-[1px_1px_0px_0px_#000]"
+                        />
+                    </div>
+                </div>
+
+                <!-- Liste des Pièces de l'inventaire -->
+                <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-[#F6F4EE]">
                     {#if isLoadingItems}
-                        <div class="text-center font-bold text-black/60 p-10">Chargement des objets...</div>
-                    {:else if shopItems.length === 0}
-                        <div class="text-center font-bold text-black/60 p-10">Aucun objet trouvé pour cette boutique.</div>
+                        <div class="p-12 text-center bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] space-y-2 font-mono">
+                            <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+                            <p class="text-xs font-black uppercase">Chargement de l'inventaire de la boutique...</p>
+                        </div>
+                    {:else if filteredShopItems.length === 0}
+                        <div class="p-12 text-center bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] space-y-2 font-mono">
+                            <span class="material-symbols-outlined text-3xl text-black/40">inventory_2</span>
+                            <p class="text-xs font-black uppercase text-black/70">Aucune pièce ne correspond aux filtres sélectionnés dans cet inventaire.</p>
+                        </div>
                     {:else}
-                        {#each shopItems as item}
-                            <div class="bg-white border-2 border-black p-4 flex flex-col md:flex-row gap-4 shadow-[4px_4px_0px_0px_#000]">
-                                <div class="w-24 h-24 border-2 border-black bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                                    {#if item.images && item.images.length > 0}
-                                        <img 
-                                            src={item.images[0].url} 
-                                            alt={item.name} 
-                                            class="w-full h-full object-cover"
-                                            onerror={(e) => {
-                                                const target = e.currentTarget as HTMLImageElement;
-                                                const urls = item.images.map(i => i.url);
-                                                const next = urls.find(u => u !== target.src && !target.src.includes(u));
-                                                if (next) {
-                                                    target.src = next;
-                                                } else {
+                        {#each filteredShopItems as item}
+                            <div class="bg-white border-2 border-black p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[3px_3px_0px_0px_#000]">
+                                <div class="flex items-center gap-3.5 flex-1 min-w-0">
+                                    <div class="w-16 h-16 border-2 border-black bg-[#EDE9DF] flex-shrink-0 overflow-hidden flex items-center justify-center shadow-[1px_1px_0px_0px_#000]">
+                                        {#if getItemImageUrl(item)}
+                                            <img 
+                                                src={getItemImageUrl(item)} 
+                                                alt={item.name} 
+                                                class="w-full h-full object-cover"
+                                                onerror={(e) => {
+                                                    const target = e.currentTarget as HTMLImageElement;
                                                     target.style.display = 'none';
-                                                }
-                                            }}
-                                        />
-                                    {:else}
-                                        <span class="text-[10px] font-bold text-gray-400">Pas d'image</span>
-                                    {/if}
-                                </div>
-                                <div class="flex-1 space-y-2">
-                                    <div class="flex justify-between items-start">
-                                        <h4 class="font-black text-lg">{item.name}</h4>
-                                        <span class="font-black border-2 border-black px-2 py-1 bg-[#FFD166]">{item.price} €</span>
-                                    </div>
-                                    <p class="text-xs line-clamp-2">{item.description}</p>
-                                    
-                                    <div class="flex items-center gap-2 text-[10px] font-bold">
-                                        Statut: 
-                                        {#if item.approval_status === 'pending'}
-                                            <span class="bg-[#FFD166] border border-black px-1.5 py-0.5">EN ATTENTE</span>
-                                        {:else if item.approval_status === 'approved'}
-                                            <span class="bg-[#86E2D5] border border-black px-1.5 py-0.5">APPROUVÉ</span>
-                                        {:else if item.approval_status === 'rejected'}
-                                            <span class="bg-[#FFAEC1] border border-black px-1.5 py-0.5">REJETÉ</span>
+                                                }}
+                                            />
+                                        {:else}
+                                            <span class="material-symbols-outlined text-lg text-black/40">image_not_supported</span>
                                         {/if}
                                     </div>
-                                    {#if item.approval_status === 'rejected' && item.rejection_reason}
-                                        <p class="text-[10px] text-red-600 font-bold bg-red-50 p-1 border border-red-200">Motif: {item.rejection_reason}</p>
-                                    {/if}
+
+                                    <div class="min-w-0 space-y-1">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="font-mono text-[10px] font-bold text-black/50">#{item.id}</span>
+                                            {#if item.status === 0}
+                                                <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black">EN VENTE</span>
+                                            {:else if item.status === 2}
+                                                <span class="retro-badge bg-[#BFD7FE] text-black text-[9px] font-black">VENDU</span>
+                                            {:else}
+                                                <span class="retro-badge bg-[#EDE9DF] text-black text-[9px] font-black">INACTIF</span>
+                                            {/if}
+
+                                            {#if item.approval_status === 'pending'}
+                                                <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black animate-pulse">EN ATTENTE VALIDATION</span>
+                                            {:else if item.approval_status === 'approved'}
+                                                <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black">APPROUVÉ</span>
+                                            {:else if item.approval_status === 'rejected'}
+                                                <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black">REJETÉ</span>
+                                            {/if}
+
+                                            {#if item.subcategory?.name}
+                                                <span class="text-[10px] font-mono text-black/60 bg-[#F6F4EE] px-1 border border-black/20">
+                                                    {item.subcategory.name}
+                                                </span>
+                                            {/if}
+                                        </div>
+
+                                        <h4 class="font-black text-sm text-black truncate max-w-md">{item.name}</h4>
+                                        <p class="text-xs text-black/70 line-clamp-1 max-w-md">{item.description || "Aucune description"}</p>
+                                        {#if item.approval_status === 'rejected' && item.rejection_reason}
+                                            <div class="text-[10px] text-[#D90429] font-bold bg-[#FFAEC1]/20 p-1 border border-[#D90429]/30">
+                                                Motif du rejet : {item.rejection_reason}
+                                            </div>
+                                        {/if}
+                                    </div>
                                 </div>
-                                <div class="flex flex-col gap-2 justify-center">
-                                    <a 
-                                        href={`/antiquites/${item.id}`}
-                                        class="retro-btn bg-white hover:bg-[#FFE600] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap text-center block mb-1 flex items-center justify-center gap-1"
-                                    >
-                                        <span class="material-symbols-outlined text-[14px]">edit</span>
-                                        <span>Modifier</span>
-                                    </a>
-                                    {#if item.approval_status !== 'approved'}
-                                        <button 
-                                            onclick={() => approveItem(item.id)}
-                                            disabled={isProcessing}
-                                            class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap flex items-center justify-center gap-1"
+
+                                <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-2 md:pt-0 border-black/10">
+                                    <div class="text-right font-mono pr-2">
+                                        <div class="font-black text-base text-black">{item.price?.toFixed(2)} €</div>
+                                        <div class="text-[10px] text-black/50">Qté: {item.quantity || 1}</div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <a 
+                                            href={`/antiquites/${item.id}`}
+                                            target="_blank"
+                                            class="retro-btn bg-white hover:bg-[#FFE600] text-[10px] font-black py-1.5 px-2.5 shadow-[1px_1px_0px_0px_#000] flex items-center gap-1"
+                                            title="Modifier l'objet"
                                         >
-                                            <span class="material-symbols-outlined text-[14px]">check</span>
-                                            <span>Approuver</span>
-                                        </button>
-                                    {/if}
-                                    {#if item.approval_status !== 'rejected'}
-                                        <button 
-                                            onclick={() => { rejectingItem = item; itemRejectionReason = ""; }}
-                                            disabled={isProcessing}
-                                            class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-[10px] font-black py-1.5 px-3 shadow-[2px_2px_0px_0px_#000] whitespace-nowrap flex items-center justify-center gap-1"
+                                            <span class="material-symbols-outlined text-[14px]">edit</span>
+                                            <span>Modifier</span>
+                                        </a>
+                                        <a 
+                                            href={`/inventoryt5hr4hr85g48412r/${item.id}`}
+                                            target="_blank"
+                                            class="retro-btn bg-white hover:bg-[#FFD166] text-[10px] font-black py-1.5 px-2.5 shadow-[1px_1px_0px_0px_#000] flex items-center gap-1"
+                                            title="Fiche Inventaire QR Tag"
                                         >
-                                            <span class="material-symbols-outlined text-[14px]">close</span>
-                                            <span>Rejeter</span>
-                                        </button>
-                                    {/if}
+                                            <span class="material-symbols-outlined text-[14px]">qr_code_2</span>
+                                            <span>Tag</span>
+                                        </a>
+                                        {#if item.approval_status !== 'approved'}
+                                            <button 
+                                                onclick={() => approveItem(item.id)}
+                                                disabled={isProcessing}
+                                                class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-[10px] font-black py-1.5 px-2.5 shadow-[1px_1px_0px_0px_#000] flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <span class="material-symbols-outlined text-[14px]">check</span>
+                                                <span>Valider</span>
+                                            </button>
+                                        {/if}
+                                        {#if item.approval_status !== 'rejected'}
+                                            <button 
+                                                onclick={() => { rejectingItem = item; itemRejectionReason = ""; }}
+                                                disabled={isProcessing}
+                                                class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-[10px] font-black py-1.5 px-2.5 shadow-[1px_1px_0px_0px_#000] flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <span class="material-symbols-outlined text-[14px]">close</span>
+                                                <span>Rejeter</span>
+                                            </button>
+                                        {/if}
+                                    </div>
                                 </div>
                             </div>
                         {/each}

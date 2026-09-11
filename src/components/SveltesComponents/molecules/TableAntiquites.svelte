@@ -12,9 +12,11 @@
         apiUrl: string;
         antiquites : Antiquite[];
         pagination ?: Pagination;
+        shopId?: string;
+        shopName?: string;
     }
 
-    let { apiUrl, antiquites: initialAntiquites, pagination: initialPagination }: Props = $props();
+    let { apiUrl, antiquites: initialAntiquites, pagination: initialPagination, shopId, shopName }: Props = $props();
 
     let currentAntiquites = $state(initialAntiquites);
     let currentPagination = $state(initialPagination);
@@ -32,6 +34,7 @@
         
         isLoading = true;
         const params = new URLSearchParams({ page: page.toString() });
+        if (shopId) params.set('shop_id', shopId);
         
         if (filterStore.category_filter) params.set('category', filterStore.category_filter);
         if (filterStore.status_filter !== null) params.set('status', filterStore.status_filter.toString());
@@ -46,8 +49,9 @@
                 currentPagination = result.pagination;
                 
                 const url = new URL(window.location.href);
-                url.searchParams.forEach((_, key) => { if (key !== 'project') url.searchParams.delete(key) });
+                url.searchParams.forEach((_, key) => { if (key !== 'project' && key !== 'shop_id') url.searchParams.delete(key) });
                 params.forEach((value, key) => url.searchParams.set(key, value));
+                if (shopId) url.searchParams.set('shop_id', shopId);
                 window.history.pushState({}, '', url.toString());
             }
         } catch (e) {
@@ -85,30 +89,58 @@
     <!-- Header Rétro -->
     <div class="retro-card-blue p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <div class="flex items-center gap-2">
-                <span class="retro-badge bg-black text-white text-[10px]">MODULE INVENTAIRE</span>
-                <span class="text-xs font-bold tracking-widest text-black/70">CATALOGUE BOUTIQUE</span>
+            <div class="flex items-center gap-2 flex-wrap">
+                {#if shopId && shopId !== 'daisy' && shopId !== '0'}
+                    <span class="retro-badge bg-[#BFD7FE] text-black text-[10px] font-black uppercase">INVENTAIRE BOUTIQUE TIERS</span>
+                    <span class="text-xs font-bold tracking-widest text-black/70">BOUTIQUE #{shopId}</span>
+                {:else}
+                    <span class="retro-badge bg-black text-white text-[10px] font-black uppercase">STOCK OFFICIEL</span>
+                    <span class="text-xs font-bold tracking-widest text-black/70">STOCK PROPRE DAISY BROCANTE</span>
+                {/if}
             </div>
             <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">
-                Gestion de l'Inventaire
+                {#if shopId && shopId !== 'daisy' && shopId !== '0'}
+                    Inventaire : {shopName || `Boutique #${shopId}`}
+                {:else}
+                    Inventaire Daisy Brocante
+                {/if}
             </h1>
             <p class="text-xs text-black/80 mt-1 max-w-xl">
-                Suivez votre catalogue d'antiquités, ajustez les prix, gérez les statuts et publiez vos trésors.
+                {#if shopId && shopId !== 'daisy' && shopId !== '0'}
+                    Supervision du catalogue et des pièces de cette boutique partenaire.
+                {:else}
+                    Catalogue exclusif de la maison Daisy Brocante. Les pièces des boutiques partenaires sont gérées séparément dans la gestion des boutiques.
+                {/if}
             </p>
         </div>
         
         <div class="flex flex-wrap items-center gap-2.5">
-            <button 
-                onclick={() => {is_visible = !is_visible}} 
-                class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3.5 flex items-center gap-1.5"
-            >
-                <span class="material-symbols-outlined text-[16px]">upload_file</span>
-                <span>Import / Export Lot</span>
-            </button>
-            <a href="/antiquites/add" class="retro-btn-primary text-xs py-2 px-4 font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px]">add</span>
-                <span>Nouvel Objet</span>
-            </a>            
+            {#if shopId && shopId !== 'daisy' && shopId !== '0'}
+                <a href="/antiquites" class="retro-btn bg-white hover:bg-[#FFD166] text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#000]">
+                    <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                    <span>Inventaire Daisy Brocante</span>
+                </a>
+                <a href="/shops" class="retro-btn bg-[#EDE9DF] hover:bg-[#86E2D5] text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#000]">
+                    <span class="material-symbols-outlined text-[16px]">storefront</span>
+                    <span>Gestion des Boutiques</span>
+                </a>
+            {:else}
+                <a href="/shops" class="retro-btn bg-white hover:bg-[#86E2D5] text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#000]">
+                    <span class="material-symbols-outlined text-[16px]">storefront</span>
+                    <span>Inventaires Boutiques ↗</span>
+                </a>
+                <button 
+                    onclick={() => {is_visible = !is_visible}} 
+                    class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3.5 flex items-center gap-1.5"
+                >
+                    <span class="material-symbols-outlined text-[16px]">upload_file</span>
+                    <span>Import / Export Lot</span>
+                </button>
+                <a href="/antiquites/add" class="retro-btn-primary text-xs py-2 px-4 font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">add</span>
+                    <span>Nouvel Objet</span>
+                </a>
+            {/if}
         </div>
     </div>
 
