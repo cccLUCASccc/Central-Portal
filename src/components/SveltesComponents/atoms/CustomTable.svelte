@@ -7,9 +7,12 @@
   interface Props {
       antiquites?: Antiquite[];
       mode?: string;
+      apiUrl?: string;
   }
   
-  let { antiquites, mode }: Props = $props();
+  let { antiquites, mode, apiUrl }: Props = $props();
+
+  const getApiUrl = () => apiUrl || (typeof window !== 'undefined' && ((window as any).__API_URL__ || (window as any).PUBLIC_API_URL)) || (import.meta as any).env?.PUBLIC_API_URL || "";
 
   let current_antiquites = $state(antiquites || []);
   let selectedIds = $state<number[]>([]);
@@ -20,7 +23,7 @@
   let isUpdating = $state(false);
 
   onMount(async () => {
-    const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+    const PUBLIC_API_URL = getApiUrl();
     try {
       const res = await fetch(`${PUBLIC_API_URL}/front/subcategories`);
       if (res.ok) {
@@ -72,7 +75,7 @@
   async function bulkDelete() {
     if (!confirm(`Supprimer définitivement les ${selectedIds.length} éléments sélectionnés ?`)) return;
     
-    const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+    const PUBLIC_API_URL = getApiUrl();
     
     try {
       const promises = selectedIds.map(id => 
@@ -93,7 +96,7 @@
   async function bulkUpdateSubcategory() {
     if (selectedIds.length === 0) return;
     isUpdating = true;
-    const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+    const PUBLIC_API_URL = getApiUrl();
     
     const selectedSubcat = subcategories.find(s => Number(s.id) === Number(selectedSubcatId));
 
@@ -141,7 +144,7 @@
 
   async function DeleteAntiquite(id: number){
       if(!confirm("Êtes-vous sûr de vouloir supprimer cette antiquité ?")) return;
-      const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+      const PUBLIC_API_URL = getApiUrl();
       try{
         const response = await apiFetch(`${PUBLIC_API_URL}/api/antiquites/${id}`, { method: "DELETE" });
         if(response.ok){

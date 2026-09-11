@@ -44,7 +44,7 @@ if (userId) {
         </div>
 
         {current && (
-            <AntiquitesModifier client:load antiquite={current} />
+            <AntiquitesModifier client:load antiquite={current} apiUrl={API_URL} />
         )}
     </div>
 </BasicLayout>

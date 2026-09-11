@@ -30,6 +30,11 @@ const isMarty = pathname.startsWith('/marty');
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+    <script is:inline define:vars={{ apiUrl: import.meta.env.API_URL || import.meta.env.PUBLIC_API_URL || "" }}>
+      if (typeof window !== 'undefined' && apiUrl) {
+        window.__API_URL__ = apiUrl;
+      }
+    </script>
   </head>
 
   <body class="min-h-screen bg-[#F6F4EE] text-black font-sans flex flex-col antialiased selection:bg-[#FFAEC1] selection:text-black">
