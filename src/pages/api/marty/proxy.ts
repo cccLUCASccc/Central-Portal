@@ -7,12 +7,17 @@ const handler: APIRoute = async ({ request, url }) => {
     const customScrapperUrl = url.searchParams.get("scrapperUrl");
 
     // Déterminer l'URL de base du scrapper
-    const scrapperBaseUrl = (
-        customScrapperUrl ||
-        import.meta.env.SCRAPPER_URL ||
-        import.meta.env.PUBLIC_SCRAPPER_URL ||
-        "http://localhost:3000"
-    ).replace(/\/$/, "");
+    const envScrapperUrl = import.meta.env.SCRAPPER_URL || import.meta.env.PUBLIC_SCRAPPER_URL;
+
+    let scrapperBaseUrl: string;
+    if (customScrapperUrl && customScrapperUrl !== "http://localhost:3000") {
+        scrapperBaseUrl = customScrapperUrl;
+    } else if (envScrapperUrl) {
+        scrapperBaseUrl = envScrapperUrl;
+    } else {
+        scrapperBaseUrl = customScrapperUrl || "http://localhost:3000";
+    }
+    scrapperBaseUrl = scrapperBaseUrl.replace(/\/$/, "");
 
     try {
         if (action === "list") {

@@ -14,6 +14,12 @@
         error?: string;
     }
 
+    interface Props {
+        defaultScrapperUrl?: string;
+    }
+
+    let { defaultScrapperUrl = "http://localhost:3000" }: Props = $props();
+
     let keyword = $state("");
     let isScraping = $state(false);
     let scrapingStep = $state("");
@@ -33,7 +39,7 @@
         date: string;
     } | null>(null);
 
-    let scrapperUrl = $state("http://localhost:3000");
+    let scrapperUrl = $state(defaultScrapperUrl);
     let useAstroProxy = $state(true);
     let showAdvancedConfig = $state(false);
     let isServiceOnline = $state<boolean | null>(null);
@@ -103,6 +109,8 @@
             const savedUrl = localStorage.getItem("marty_scrapper_url");
             if (savedUrl) {
                 scrapperUrl = savedUrl;
+            } else if (defaultScrapperUrl) {
+                scrapperUrl = defaultScrapperUrl;
             }
             const saved = localStorage.getItem("marty_prospects");
             if (saved) {
@@ -135,6 +143,12 @@
 
             const res = await fetch(target, { signal: AbortSignal.timeout(3000) });
             isServiceOnline = res.ok;
+            if (res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (data.scrapperBaseUrl && !localStorage.getItem("marty_scrapper_url")) {
+                    scrapperUrl = data.scrapperBaseUrl;
+                }
+            }
         } catch {
             isServiceOnline = false;
         }

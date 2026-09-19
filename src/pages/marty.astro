@@ -5,11 +5,12 @@ import { Show } from '@clerk/astro/components';
 
 const auth = Astro.locals.auth();
 const userId = auth.userId;
+const defaultScrapperUrl = import.meta.env.SCRAPPER_URL || import.meta.env.PUBLIC_SCRAPPER_URL || "http://localhost:3000";
 ---
 
 <BasicLayout>
     <Show when="signed-in">
-        <MartyManager client:load />
+        <MartyManager client:load defaultScrapperUrl={defaultScrapperUrl} />
     </Show>
 </BasicLayout>
 
