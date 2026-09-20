@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { Prospect } from "../../../type";
+    import EmailCampaignModal from "./EmailCampaignModal.svelte";
 
     interface ScrapeResultItem {
         url: string;
@@ -46,6 +47,12 @@
     let isLoadingProspects = $state(false);
 
     let notification = $state<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+    let isEmailModalOpen = $state(false);
+
+    const selectedProspects = $derived(
+        prospects.filter(p => p.id !== undefined && selectedIds.includes(p.id as number))
+    );
 
     const keywordSuggestions = [
         "antiquaire liege",
@@ -726,6 +733,14 @@
                         <span>Exporter Sélection CSV</span>
                     </button>
 
+                    <button
+                        onclick={() => isEmailModalOpen = true}
+                        class="retro-btn text-xs py-1.5 px-3 bg-[#D4E2FD] hover:bg-[#FFE600] font-black flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#000]"
+                    >
+                        <span class="material-symbols-outlined text-[14px]">send</span>
+                        <span>Rédiger Campagne</span>
+                    </button>
+
                     <button onclick={deleteSelectedProspects} class="retro-btn-error text-xs py-1.5 px-3 font-black flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-[14px]">delete</span>
                         <span>Supprimer</span>
@@ -917,3 +932,8 @@
     </div>
 </div>
 
+<EmailCampaignModal
+    isOpen={isEmailModalOpen}
+    prospects={selectedProspects}
+    onclose={() => isEmailModalOpen = false}
+/>
