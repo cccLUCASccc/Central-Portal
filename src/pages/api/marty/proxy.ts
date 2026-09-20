@@ -19,18 +19,19 @@ const handler: APIRoute = async ({ request, url }) => {
     }
     scrapperBaseUrl = scrapperBaseUrl.replace(/\/$/, "");
 
+    const defaultHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*'
+    };
+
     try {
         if (action === "list") {
             const limit = url.searchParams.get("limit") || "";
             const targetUrl = `${scrapperBaseUrl}/prospects?type=${encodeURIComponent(type)}${limit ? `&limit=${encodeURIComponent(limit)}` : ''}`;
-            const headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json'
-            };
 
             const res = await fetch(targetUrl, { 
                 method: "GET",
-                headers,
+                headers: defaultHeaders,
                 signal: AbortSignal.timeout(6000)
             });
 
@@ -62,6 +63,7 @@ const handler: APIRoute = async ({ request, url }) => {
             const targetUrl = `${scrapperBaseUrl}/prospects?id=${encodeURIComponent(id)}`;
             const res = await fetch(targetUrl, { 
                 method: "DELETE",
+                headers: defaultHeaders,
                 signal: AbortSignal.timeout(6000)
             });
 
@@ -92,6 +94,7 @@ const handler: APIRoute = async ({ request, url }) => {
             const res = await fetch(targetUrl, {
                 method: "POST",
                 headers: {
+                    ...defaultHeaders,
                     "Content-Type": "application/json"
                 }
             });
@@ -114,7 +117,8 @@ const handler: APIRoute = async ({ request, url }) => {
         if (action === "export") {
             const targetUrl = `${scrapperBaseUrl}/export-prospects?type=${encodeURIComponent(type)}`;
             const res = await fetch(targetUrl, {
-                method: "GET"
+                method: "GET",
+                headers: defaultHeaders
             });
 
             if (!res.ok) {
@@ -136,7 +140,10 @@ const handler: APIRoute = async ({ request, url }) => {
             const targetUrl = `${scrapperBaseUrl}/health`;
             let isOk = false;
             try {
-                const res = await fetch(targetUrl, { signal: AbortSignal.timeout(3000) });
+                const res = await fetch(targetUrl, { 
+                    headers: defaultHeaders,
+                    signal: AbortSignal.timeout(3000) 
+                });
                 isOk = res.ok;
             } catch {
                 isOk = false;

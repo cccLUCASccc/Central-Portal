@@ -3,7 +3,8 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/astro/server";
 // On définit les routes qui ne nécessitent pas d'authentification
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
-  '/inventoryt5hr4hr85g48412r(.*)'
+  '/inventoryt5hr4hr85g48412r(.*)',
+  '/api/(.*)'
 ]);
 
 export const onRequest = clerkMiddleware((auth, context) => {

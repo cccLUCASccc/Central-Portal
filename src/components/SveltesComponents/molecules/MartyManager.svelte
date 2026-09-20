@@ -107,7 +107,9 @@
                 lastScrapeStats = JSON.parse(savedStats);
             }
             const savedUrl = localStorage.getItem("marty_scrapper_url");
-            if (savedUrl) {
+            if (defaultScrapperUrl && defaultScrapperUrl !== "http://localhost:3000") {
+                scrapperUrl = (savedUrl && savedUrl !== "http://localhost:3000") ? savedUrl : defaultScrapperUrl;
+            } else if (savedUrl) {
                 scrapperUrl = savedUrl;
             } else if (defaultScrapperUrl) {
                 scrapperUrl = defaultScrapperUrl;

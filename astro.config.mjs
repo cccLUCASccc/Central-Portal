@@ -11,6 +11,9 @@ import clerk from "@clerk/astro";
 
 // https://astro.build/config
 export default defineConfig({
+  security: {
+    checkOrigin: false
+  },
   vite: {
     plugins: [tailwindcss()],
     ssr: {
