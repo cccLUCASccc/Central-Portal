@@ -23,13 +23,20 @@ const handler: APIRoute = async ({ request, url }) => {
         if (action === "list") {
             const limit = url.searchParams.get("limit") || "";
             const targetUrl = `${scrapperBaseUrl}/prospects?type=${encodeURIComponent(type)}${limit ? `&limit=${encodeURIComponent(limit)}` : ''}`;
+            const headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            };
+
             const res = await fetch(targetUrl, { 
                 method: "GET",
+                headers,
                 signal: AbortSignal.timeout(6000)
             });
 
             if (!res.ok) {
                 const text = await res.text();
+                console.error(`Erreur du scrapper (${res.status}): ${text}`);
                 return new Response(JSON.stringify({ error: `Erreur du scrapper (${res.status}): ${text}` }), {
                     status: res.status,
                     headers: { "Content-Type": "application/json" }
