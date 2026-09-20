@@ -180,6 +180,8 @@
             }
         }, 1000);
 
+        const initialCount = prospects.length;
+
         try {
             let res: Response;
 
@@ -203,19 +205,26 @@
             const data: ScrapeResponse = await res.json();
             const newInserted = data.prospectsInseres || [];
 
-            // Fusionner avec les prospects locaux sans doublons d'email
-            const existingEmails = new Set(prospects.map(p => p.email.toLowerCase()));
+            // Fusionner avec les prospects locaux sans doublons d'email (protégé contre null/undefined)
+            const existingEmails = new Set(
+                prospects
+                    .filter(p => p && p.email)
+                    .map(p => p.email.toLowerCase().trim())
+            );
             const addedItems: Prospect[] = [];
 
             for (const item of newInserted) {
-                if (item.email && !existingEmails.has(item.email.toLowerCase())) {
-                    existingEmails.add(item.email.toLowerCase());
-                    addedItems.push({
-                        id: item.id || Date.now() + Math.floor(Math.random() * 1000),
-                        email: item.email,
-                        worktype: item.worktype || query,
-                        creaton: item.creaton || new Date().toISOString()
-                    });
+                if (item && item.email && typeof item.email === 'string') {
+                    const cleanEmail = item.email.toLowerCase().trim();
+                    if (!existingEmails.has(cleanEmail)) {
+                        existingEmails.add(cleanEmail);
+                        addedItems.push({
+                            id: item.id || Date.now() + Math.floor(Math.random() * 1000),
+                            email: item.email.trim(),
+                            worktype: item.worktype || query,
+                            creaton: item.creaton || new Date().toISOString()
+                        });
+                    }
                 }
             }
 
@@ -234,9 +243,9 @@
             isServiceOnline = true;
 
             if (addedItems.length > 0) {
-                notify(`Scraping terminé ! ${addedItems.length} nouvel(s) email(s) extrait(s) sur ${data.totalScrappes} cibles.`, "success");
+                notify(`Scraping terminé ! ${addedItems.length} nouvel(s) email(s) extrait(s) sur ${data.totalScrappes || addedItems.length} cibles.`, "success");
             } else {
-                notify(`Scraping terminé : ${data.totalScrappes} sites analysés, aucun nouvel email unique trouvé.`, "info");
+                notify(`Scraping terminé : ${data.totalScrappes || 0} sites analysés, aucun nouvel email unique trouvé.`, "info");
             }
 
             // Recharger la liste officielle depuis la base PostgreSQL
@@ -244,8 +253,17 @@
 
         } catch (err: any) {
             console.error("Erreur de scraping :", err);
-            notify(`Échec du scraping : ${err.message || "Service inaccessible"}`, "error");
-            isServiceOnline = false;
+
+            // Vérifier si le scrapper a quand même réussi à insérer les données en base
+            await loadProspects(true);
+            if (prospects.length > initialCount) {
+                const diff = prospects.length - initialCount;
+                notify(`Scraping réussi ! ${diff} prospect(s) enregistré(s) dans la base.`, "success");
+                isServiceOnline = true;
+            } else {
+                notify(`Échec du scraping : ${err.message || "Service inaccessible"}`, "error");
+                isServiceOnline = false;
+            }
         } finally {
             isScraping = false;
             scrapingStep = "";

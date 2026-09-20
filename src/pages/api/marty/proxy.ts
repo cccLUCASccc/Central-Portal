@@ -96,7 +96,8 @@ const handler: APIRoute = async ({ request, url }) => {
                 headers: {
                     ...defaultHeaders,
                     "Content-Type": "application/json"
-                }
+                },
+                signal: AbortSignal.timeout(120000)
             });
 
             if (!res.ok) {
