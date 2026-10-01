@@ -1,0 +1,25 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import QrCodePrintManager from '../components/SveltesComponents/molecules/QrCodePrintManager.svelte';
+import QRCode from 'qrcode';
+
+// Pré-génération SSR du QR Code pour un rendu immédiat sans délai côté client
+let initialSvg = '';
+try {
+  initialSvg = await QRCode.toString('https://daisybrocante.com', {
+    type: 'svg',
+    margin: 1,
+    errorCorrectionLevel: 'H',
+    color: {
+      dark: '#000000',
+      light: '#ffffff',
+    },
+  });
+} catch (e) {
+  console.error('Erreur génération SSR du QR code DaisyBrocante:', e);
+}
+---
+
+<BasicLayout>
+  <QrCodePrintManager client:load initialSvg={initialSvg} />
+</BasicLayout>

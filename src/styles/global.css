@@ -627,3 +627,55 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
   font-weight: 800 !important;
 }
+
+/* ==========================================================================
+   PRINT MEDIA STYLES
+   ========================================================================== */
+
+@media print {
+  /* Cacher tous les éléments UI de l'application pendant l'impression */
+  .no-print,
+  header,
+  footer,
+  #my-drawer,
+  .drawer-toggle,
+  .drawer-side,
+  .terminal-boot {
+    display: none !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .drawer,
+  .drawer-content,
+  main {
+    min-height: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  /* Forcer le rendu exact des arrière-plans et bordures */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    margin: 6mm;
+    size: auto;
+  }
+}

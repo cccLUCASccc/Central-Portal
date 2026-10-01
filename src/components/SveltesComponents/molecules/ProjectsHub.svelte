@@ -95,7 +95,7 @@
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-black bg-black text-white px-1.5 py-0.5">E-COMMERCE</span>
-                            <span class="text-xs font-bold text-black/60">DAISYBROCANTE.FR</span>
+                            <span class="text-xs font-bold text-black/60">DAISYBROCANTE.COM</span>
                         </div>
                         <h3 class="text-xl font-black uppercase text-black tracking-tight">
                             Daisy Brocante
@@ -135,6 +135,9 @@
                         </a>
                         <a href="/feedback" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Boîte à idées & Signalements de bugs">
                             <span class="material-symbols-outlined text-[14px]">rate_review</span> Idées & Bugs
+                        </a>
+                        <a href="/qrcode" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1 font-bold" title="Générer et imprimer le QR Code">
+                            <span class="material-symbols-outlined text-[14px]">qr_code_2</span> QR Code Imprimable
                         </a>
                     </div>
                 </div>

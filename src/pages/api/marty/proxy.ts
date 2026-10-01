@@ -6,7 +6,7 @@ const handler: APIRoute = async ({ request, url }) => {
     const type = url.searchParams.get("type") || "";
     const customScrapperUrl = url.searchParams.get("scrapperUrl");
 
-    // Déterminer l'URL de base du scrapper
+    // Déterminer l'URL de base du scrapper (utilisée uniquement pour le ping /health)
     const envScrapperUrl = import.meta.env.SCRAPPER_URL || import.meta.env.PUBLIC_SCRAPPER_URL;
 
     let scrapperBaseUrl: string;
@@ -24,14 +24,27 @@ const handler: APIRoute = async ({ request, url }) => {
         'Accept': 'application/json, text/plain, */*'
     };
 
+    // Toutes les actions sauf 'health' passent désormais par Central-API avec la
+    // clé API admin Marty, qui relaie elle-même vers le service de scraping via
+    // le token interne (SCRAPER_INTERNAL_TOKEN), sans passer par un abonnement Stripe.
+    const apiBaseUrl = (import.meta.env.MARTY_API_URL || import.meta.env.PUBLIC_API_URL || "").replace(/\/$/, "");
+    const adminApiKey = import.meta.env.MARTY_ADMIN_API_KEY;
+
+    const apiHeaders = () => {
+        if (!adminApiKey) {
+            throw new Error("MARTY_ADMIN_API_KEY manquante côté portail.");
+        }
+        return { Authorization: `Bearer ${adminApiKey}` };
+    };
+
     try {
         if (action === "list") {
             const limit = url.searchParams.get("limit") || "";
-            const targetUrl = `${scrapperBaseUrl}/prospects?type=${encodeURIComponent(type)}${limit ? `&limit=${encodeURIComponent(limit)}` : ''}`;
+            const targetUrl = `${apiBaseUrl}/v1/scraper/prospects?type=${encodeURIComponent(type)}${limit ? `&limit=${encodeURIComponent(limit)}` : ''}`;
 
-            const res = await fetch(targetUrl, { 
+            const res = await fetch(targetUrl, {
                 method: "GET",
-                headers: defaultHeaders,
+                headers: apiHeaders(),
                 signal: AbortSignal.timeout(6000)
             });
 
@@ -60,10 +73,10 @@ const handler: APIRoute = async ({ request, url }) => {
                 });
             }
 
-            const targetUrl = `${scrapperBaseUrl}/prospects?id=${encodeURIComponent(id)}`;
-            const res = await fetch(targetUrl, { 
+            const targetUrl = `${apiBaseUrl}/v1/scraper/prospects?id=${encodeURIComponent(id)}`;
+            const res = await fetch(targetUrl, {
                 method: "DELETE",
-                headers: defaultHeaders,
+                headers: apiHeaders(),
                 signal: AbortSignal.timeout(6000)
             });
 
@@ -90,11 +103,11 @@ const handler: APIRoute = async ({ request, url }) => {
                 });
             }
 
-            const targetUrl = `${scrapperBaseUrl}/generer-leads?q=${encodeURIComponent(q)}`;
+            const targetUrl = `${apiBaseUrl}/v1/scraper/leads?q=${encodeURIComponent(q)}`;
             const res = await fetch(targetUrl, {
                 method: "POST",
                 headers: {
-                    ...defaultHeaders,
+                    ...apiHeaders(),
                     "Content-Type": "application/json"
                 },
                 signal: AbortSignal.timeout(120000)
@@ -116,10 +129,10 @@ const handler: APIRoute = async ({ request, url }) => {
         }
 
         if (action === "export") {
-            const targetUrl = `${scrapperBaseUrl}/export-prospects?type=${encodeURIComponent(type)}`;
+            const targetUrl = `${apiBaseUrl}/v1/scraper/prospects/export?type=${encodeURIComponent(type)}`;
             const res = await fetch(targetUrl, {
                 method: "GET",
-                headers: defaultHeaders
+                headers: apiHeaders()
             });
 
             if (!res.ok) {
@@ -162,9 +175,8 @@ const handler: APIRoute = async ({ request, url }) => {
         });
     } catch (err: any) {
         return new Response(JSON.stringify({ 
-            error: `Impossible de contacter le service de scraping Marty (${scrapperBaseUrl}).`,
-            details: err?.message || String(err),
-            scrapperBaseUrl
+            error: `Impossible de contacter Central-API pour Marty (${apiBaseUrl}).`,
+            details: err?.message || String(err)
         }), {
             status: 502,
             headers: { "Content-Type": "application/json" }
