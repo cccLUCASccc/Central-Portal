@@ -15,8 +15,13 @@
         city: string;
         country?: string;
         address?: string;
+        iban?: string;
+        bic?: string;
+        account_holder?: string;
         seller_type: string;
         tax_number: string;
+        stripe_customer_id?: string;
+        stripe_subscription_id?: string;
         stripe_connect_account_id?: string;
         stripe_connect_payouts_enabled?: boolean;
         stripe_connect_details_submitted?: boolean;
@@ -59,7 +64,12 @@
                     history: editingShop.history,
                     hours: editingShop.hours,
                     links: editingShop.links,
+                    street: editingShop.street,
+                    postal_code: editingShop.postal_code,
                     city: editingShop.city,
+                    country: editingShop.country,
+                    address: editingShop.address,
+                    seller_type: editingShop.seller_type,
                     iban: editingShop.iban,
                     bic: editingShop.bic,
                     account_holder: editingShop.account_holder,
@@ -403,6 +413,9 @@
         <div class="grid grid-cols-1 gap-6">
             {#each filteredShops as s}
                 <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] p-6 space-y-6">
+                    {#if s.banner_url}
+                        <img src={s.banner_url} alt={`Bannière de ${s.name}`} class="h-36 w-full border-2 border-black object-cover" loading="lazy" />
+                    {/if}
                     
                     <!-- Ligne 1 : En-tête Boutique & Statuts -->
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-2 border-black pb-4">
@@ -543,9 +556,27 @@
                                 <span class="text-black/60 block text-[10px]">Compte Stripe ID :</span>
                                 <code class="font-mono bg-white px-1.5 py-0.5 border border-black block mt-0.5 font-bold text-[10px] truncate">{s.stripe_connect_account_id || 'Aucun compte associé'}</code>
                             </div>
+                            {#if s.stripe_customer_id || s.stripe_subscription_id}
+                                <div>
+                                    <span class="text-black/60 block text-[10px]">Client Stripe :</span>
+                                    <code class="block truncate font-mono text-[10px]">{s.stripe_customer_id || '—'}</code>
+                                </div>
+                                <div>
+                                    <span class="text-black/60 block text-[10px]">Abonnement Stripe :</span>
+                                    <code class="block truncate font-mono text-[10px]">{s.stripe_subscription_id || '—'}</code>
+                                </div>
+                            {/if}
                             <div>
                                 <span class="text-black/60 block text-[10px]">Détails validés :</span>
                                 <strong class="font-mono text-[10px]">{s.stripe_connect_details_submitted ? 'Soumis' : 'Incomplet'}</strong>
+                            </div>
+                            <div>
+                                <span class="text-black/60 block text-[10px]">IBAN / BIC :</span>
+                                <code class="block break-all font-mono text-[10px]">{s.iban || 'IBAN absent'}{s.bic ? ` · ${s.bic}` : ''}</code>
+                            </div>
+                            <div>
+                                <span class="text-black/60 block text-[10px]">Titulaire du compte :</span>
+                                <strong class="block text-[10px]">{s.account_holder || 'Non renseigné'}</strong>
                             </div>
                         </div>
 
@@ -615,6 +646,63 @@
                     {/if}
                 </div>
             {/each}
+        </div>
+    {/if}
+
+    {#if editingShop}
+        <div class="fixed inset-0 z-[99998] flex items-center justify-center bg-black/70 p-3 font-mono sm:p-5" role="presentation" onclick={(event) => event.target === event.currentTarget && (editingShop = null)} onkeydown={(event) => event.key === 'Escape' && (editingShop = null)}>
+            <section class="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden border-3 border-black bg-[#EDE9DF] p-1 shadow-[8px_8px_0px_0px_#000]" role="dialog" aria-modal="true" aria-labelledby="edit-shop-title">
+                <header class="flex items-center justify-between border-b-2 border-black bg-[#2B2D42] px-4 py-3 text-white">
+                    <div>
+                        <h2 id="edit-shop-title" class="text-sm font-black uppercase">Modifier {editingShop.name}</h2>
+                        <p class="mt-1 text-[10px] text-white/70">Les identifiants Stripe et les images sont affichés en lecture seule.</p>
+                    </div>
+                    <button type="button" onclick={() => editingShop = null} aria-label="Fermer" class="border border-black bg-[#FFAEC1] px-2 py-1 text-xs font-black text-black">Fermer</button>
+                </header>
+                <form onsubmit={handleEditShopSubmit} class="overflow-y-auto bg-white p-4 sm:p-6">
+                    <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="space-y-2">
+                            <span class="edit-shop-label">Avatar de la boutique</span>
+                            {#if editingShop.avatar_url}<img src={editingShop.avatar_url} alt={`Avatar de ${editingShop.name}`} class="h-24 w-24 border-2 border-black object-cover" />{:else}<p class="text-xs text-black/60">Aucun avatar enregistré</p>{/if}
+                        </div>
+                        <div class="space-y-2">
+                            <span class="edit-shop-label">Bannière de la boutique</span>
+                            {#if editingShop.banner_url}<img src={editingShop.banner_url} alt={`Bannière de ${editingShop.name}`} class="h-24 w-full border-2 border-black object-cover" />{:else}<p class="text-xs text-black/60">Aucune bannière enregistrée</p>{/if}
+                        </div>
+                        <div class="space-y-2">
+                            <span class="edit-shop-label">Compte Stripe Connect</span>
+                            <code class="block break-all border border-black/20 bg-[#F6F4EE] p-2 text-xs">{editingShop.stripe_connect_account_id || 'Non configuré'}</code>
+                        </div>
+                        <div class="space-y-2">
+                            <span class="edit-shop-label">État Stripe</span>
+                            <p class="border border-black/20 bg-[#F6F4EE] p-2 text-xs">{editingShop.stripe_connect_payouts_enabled ? 'Reversements activés' : 'Reversements non activés'} · {editingShop.stripe_connect_details_submitted ? 'Dossier soumis' : 'Dossier incomplet'}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <label class="edit-shop-field">Nom de la boutique<input required bind:value={editingShop.name} /></label>
+                        <label class="edit-shop-field">Type de vendeur<select bind:value={editingShop.seller_type}><option value="particulier">Particulier</option><option value="societe">Société</option></select></label>
+                        <label class="edit-shop-field sm:col-span-2">Description<textarea rows="3" bind:value={editingShop.description}></textarea></label>
+                        <label class="edit-shop-field">Rue<input bind:value={editingShop.street} /></label>
+                        <label class="edit-shop-field">Adresse complémentaire<input bind:value={editingShop.address} /></label>
+                        <label class="edit-shop-field">Code postal<input bind:value={editingShop.postal_code} /></label>
+                        <label class="edit-shop-field">Ville<input bind:value={editingShop.city} /></label>
+                        <label class="edit-shop-field">Pays<input bind:value={editingShop.country} /></label>
+                        <label class="edit-shop-field">N° TVA / entreprise<input bind:value={editingShop.tax_number} /></label>
+                        <label class="edit-shop-field">Titulaire du compte<input bind:value={editingShop.account_holder} /></label>
+                        <label class="edit-shop-field">IBAN<input autocomplete="off" bind:value={editingShop.iban} /></label>
+                        <label class="edit-shop-field">BIC<input autocomplete="off" bind:value={editingShop.bic} /></label>
+                        <label class="edit-shop-field">Formule<select bind:value={editingShop.type_abonnement}><option value="tier1">Tier 1</option><option value="tier2">Tier 2</option><option value="tier3">Tier 3</option><option value="tier4">Tier 4</option></select></label>
+                        <label class="flex items-center gap-3 border-2 border-black p-3 text-xs font-bold"><input type="checkbox" bind:checked={editingShop.abonnement_actif} /> Abonnement actif</label>
+                        <label class="edit-shop-field sm:col-span-2">Histoire<textarea rows="3" bind:value={editingShop.history}></textarea></label>
+                        <label class="edit-shop-field sm:col-span-2">Horaires<textarea rows="2" bind:value={editingShop.hours}></textarea></label>
+                        <label class="edit-shop-field sm:col-span-2">Liens<textarea rows="2" bind:value={editingShop.links}></textarea></label>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-3 border-t-2 border-black pt-4">
+                        <button type="button" onclick={() => editingShop = null} class="retro-btn bg-white px-4 py-2 text-xs font-black">Annuler</button>
+                        <button type="submit" disabled={isProcessing} class="retro-btn bg-[#86E2D5] px-5 py-2 text-xs font-black shadow-[2px_2px_0px_0px_#000]">{isProcessing ? "Enregistrement..." : "Enregistrer les modifications"}</button>
+                    </div>
+                </form>
+            </section>
         </div>
     {/if}
 
@@ -942,4 +1030,44 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .edit-shop-field {
+        display: grid;
+        gap: 0.4rem;
+        color: rgba(0, 0, 0, 0.7);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .edit-shop-field input,
+    .edit-shop-field select,
+    .edit-shop-field textarea {
+        width: 100%;
+        border: 2px solid #000;
+        border-radius: 0;
+        background: #fff;
+        padding: 0.65rem 0.75rem;
+        color: #000;
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: none;
+    }
+
+    .edit-shop-field input:focus,
+    .edit-shop-field select:focus,
+    .edit-shop-field textarea:focus {
+        outline: 3px solid #86e2d5;
+        outline-offset: 1px;
+    }
+
+    .edit-shop-label {
+        color: rgba(0, 0, 0, 0.7);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+</style>
 
