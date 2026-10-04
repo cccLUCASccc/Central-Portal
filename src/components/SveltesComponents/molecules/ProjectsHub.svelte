@@ -1,330 +1,122 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-
-    interface Props {
-        userName?: string;
-    }
-
-    let { userName = "Gestionnaire" }: Props = $props();
-
-    let isModalOpen = $state(false);
-    let selectedSlot = $state<string | null>(null);
-
-    function openSlotModal(slotName: string) {
-        selectedSlot = slotName;
-        isModalOpen = true;
-    }
-
-    function closeModal() {
-        isModalOpen = false;
-        selectedSlot = null;
-    }
+const services = [
+  {
+    name: "Inventaire",
+    description: "Ajouter, modifier et publier les antiquités et pièces de la boutique.",
+    href: "/antiquites",
+    icon: "inventory_2",
+    tint: "bg-[#FFF394]",
+    group: "Catalogue"
+  },
+  {
+    name: "Sous-catégories",
+    description: "Organiser les catégories et sous-catégories du catalogue.",
+    href: "/subcategories",
+    icon: "sell",
+    tint: "bg-[#FFD2A6]",
+    group: "Catalogue"
+  },
+  {
+    name: "Boutiques",
+    description: "Gérer les boutiques partenaires et leurs informations.",
+    href: "/shops",
+    icon: "storefront",
+    tint: "bg-[#86E2D5]",
+    group: "Ventes"
+  },
+  {
+    name: "Commandes",
+    description: "Consulter les achats, paiements et détails de commande.",
+    href: "/orders",
+    icon: "receipt_long",
+    tint: "bg-[#BFD7FE]",
+    group: "Ventes"
+  },
+  {
+    name: "eBay",
+    description: "Suivre les annonces et la synchronisation du catalogue eBay.",
+    href: "/ebay",
+    icon: "package_2",
+    tint: "bg-[#FFF394]",
+    group: "Canaux"
+  },
+  {
+    name: "Livraisons",
+    description: "Préparer les expéditions et suivre les livraisons en cours.",
+    href: "/Livraison",
+    icon: "local_shipping",
+    tint: "bg-[#FFAEC1]",
+    group: "Ventes"
+  },
+  {
+    name: "Avis clients",
+    description: "Modérer et publier les avis de la clientèle.",
+    href: "/reviews",
+    icon: "reviews",
+    tint: "bg-[#FFD166]",
+    group: "Relation client"
+  },
+  {
+    name: "Idées & bugs",
+    description: "Lire les retours et signalements envoyés par les utilisateurs.",
+    href: "/feedback",
+    icon: "rate_review",
+    tint: "bg-[#FFAEC1]",
+    group: "Relation client"
+  },
+  {
+    name: "QR Code & impression",
+    description: "Créer les QR codes et préparer les supports imprimables.",
+    href: "/qrcode",
+    icon: "qr_code_2",
+    tint: "bg-[#86E2D5]",
+    group: "Outils"
+  },
+  {
+    name: "Médias S3",
+    description: "Parcourir et gérer les images et fichiers du stockage cloud.",
+    href: "/storage",
+    icon: "cloud",
+    tint: "bg-[#BFD7FE]",
+    group: "Outils"
+  }
+];
 </script>
 
-<div class="space-y-8 font-mono">
-    
-    <!-- Hero / OS Hub Header -->
-    <div class="retro-card-yellow p-6 sm:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-3 border-black shadow-[6px_6px_0px_0px_#000]">
-        <div class="space-y-2">
-            <div class="flex items-center gap-2.5 flex-wrap">
-                <span class="retro-badge bg-black text-white text-xs px-2.5 py-0.5">HUB CENTRAL // MULTI-PROJETS</span>
-                <span class="retro-badge bg-[#86E2D5] text-black text-xs font-black">● 2 PROJETS ACTIFS</span>
-                <span class="retro-badge bg-white text-black text-xs">V3.2-STABLE</span>
-            </div>
-            <h1 class="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
-                Console de Gestion des Projets
-            </h1>
-            <p class="text-xs sm:text-sm text-black/80 font-medium max-w-2xl leading-relaxed">
-                Sélectionnez la station de travail à administrer. Chaque projet dispose de son inventaire, de ses connecteurs API et de son espace de stockage indépendant.
-            </p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-            <div class="bg-white border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] text-xs space-y-1">
-                <div class="text-[10px] text-black/60 font-bold uppercase">Passerelle Serveur</div>
-                <div class="font-black text-black flex items-center gap-1.5">
-                    <span class="w-2 h-2 bg-green-500 rounded-full inline-block animate-pulse"></span>
-                    RAILWAY CENTRAL-API
-                </div>
-            </div>
-            <div class="bg-[#FFD2A6] border-2 border-black p-3 shadow-[3px_3px_0px_0px_#000] text-xs space-y-1">
-                <div class="text-[10px] text-black/60 font-bold uppercase">Stockage Cloud</div>
-                <div class="font-black text-black flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[16px]">cloud</span> AWS S3 READY
-                </div>
-            </div>
-        </div>
+<section class="space-y-8 font-mono" aria-labelledby="dashboard-title">
+  <header class="flex flex-col gap-3 border-b-2 border-black pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="mb-2 text-xs font-black uppercase tracking-[0.14em] text-black/55">Daisy Brocante · Gestion</p>
+      <h1 id="dashboard-title" class="text-3xl font-black uppercase leading-tight tracking-tight text-black sm:text-4xl">Tableau de bord</h1>
+      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-black/65">Accédez directement aux outils de gestion de la boutique.</p>
     </div>
-
-    <!-- Section Title -->
-    <div class="flex items-center justify-between border-b-2 border-black pb-2">
-        <div class="flex items-center gap-2">
-            <span class="w-3 h-3 bg-[#FFAEC1] border border-black inline-block"></span>
-            <h2 class="text-lg font-black uppercase tracking-wider text-black">
-                Projets Disponibles & Stations
-            </h2>
-        </div>
-        <span class="text-xs font-bold text-black/60">2 sur 3 emplacements configurés</span>
+    <div class="inline-flex items-center gap-2 self-start border-2 border-black bg-white px-3 py-2 text-xs font-bold shadow-[3px_3px_0px_0px_#000] sm:self-auto">
+      <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+      Services en ligne
     </div>
+  </header>
 
-    <!-- Grid of Projects -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        <!-- PROJET #01 : DAISY BROCANTE (ACTIVE) -->
-        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] flex flex-col justify-between group overflow-hidden">
-            
-            <!-- Window Titlebar -->
-            <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[14px] text-[#86E2D5]">play_arrow</span>
-                    <span class="tracking-wider uppercase">PROJET_01.SYS</span>
-                </div>
-                <span class="retro-badge bg-[#86E2D5] text-black text-[10px] py-0 font-black">
-                    ● EN LIGNE
-                </span>
-            </div>
-
-            <!-- Card Body -->
-            <div class="p-6 space-y-5 flex-grow">
-                
-                <!-- Project Icon & Title -->
-                <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 bg-[#FFD2A6] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0">
-                        <span class="material-symbols-outlined text-3xl text-black">spa</span>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-black bg-black text-white px-1.5 py-0.5">E-COMMERCE</span>
-                            <span class="text-xs font-bold text-black/60">DAISYBROCANTE.COM</span>
-                        </div>
-                        <h3 class="text-xl font-black uppercase text-black tracking-tight">
-                            Daisy Brocante
-                        </h3>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <p class="text-xs text-black/75 leading-relaxed">
-                    Gestion de l'inventaire des antiquités et mobilier vintage, synchronisation automatique du catalogue avec eBay, module d'expéditions et galerie cloud S3.
-                </p>
-
-                <!-- Modules Badges -->
-                <div class="space-y-2 pt-2 border-t border-black/10">
-                    <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
-                    <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <a href="/antiquites" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Voir l'inventaire">
-                            <span class="material-symbols-outlined text-[14px]">inventory_2</span> Inventaire
-                        </a>
-                        <a href="/subcategories" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Gérer les catégories">
-                            <span class="material-symbols-outlined text-[14px]">label</span> Sous-catégories
-                        </a>
-                        <a href="/shops" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Gérer les vendeurs">
-                            <span class="material-symbols-outlined text-[14px]">storefront</span> Boutiques
-                        </a>
-                        <a href="/ebay" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Synchronisation eBay">
-                            <span class="material-symbols-outlined text-[14px]">package_2</span> eBay Sync
-                        </a>
-                        <a href="/Livraison" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Gestion des livraisons">
-                            <span class="material-symbols-outlined text-[14px]">local_shipping</span> Livraisons
-                        </a>
-                        <a href="/storage" class="retro-badge bg-[#EDE9DF] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Stockage S3">
-                            <span class="material-symbols-outlined text-[14px]">cloud</span> Médias S3
-                        </a>
-                        <a href="/reviews" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Avis & Témoignages">
-                            <span class="material-symbols-outlined text-[14px]">reviews</span> Avis
-                        </a>
-                        <a href="/feedback" class="retro-badge bg-[#FFAEC1] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Boîte à idées & Signalements de bugs">
-                            <span class="material-symbols-outlined text-[14px]">rate_review</span> Idées & Bugs
-                        </a>
-                        <a href="/qrcode" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1 font-bold" title="Générer et imprimer le QR Code">
-                            <span class="material-symbols-outlined text-[14px]">qr_code_2</span> QR Code Imprimable
-                        </a>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Card Action Footer -->
-            <div class="p-4 bg-[#F6F4EE] border-t-2 border-black flex items-center justify-between gap-3">
-                <span class="text-[11px] font-bold text-black/60">STATION #01</span>
-                <a 
-                    href="/antiquites" 
-                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000]"
-                >
-                    <span>OUVRIR LA STATION</span>
-                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </a>
-            </div>
-
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    {#each services as service, index}
+      <a
+        href={service.href}
+        class="group flex min-h-48 flex-col border-2 border-black bg-white p-5 shadow-[4px_4px_0px_0px_#000] transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-black"
+        aria-label={`Ouvrir ${service.name}`}
+      >
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <span class={`grid h-12 w-12 place-items-center border-2 border-black ${service.tint}`}>
+            <span class="material-symbols-outlined text-2xl" aria-hidden="true">{service.icon}</span>
+          </span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-black/45">{service.group}</span>
         </div>
-
-        <!-- PROJET #02 : MARTY (ACTIVE) -->
-        <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] flex flex-col justify-between group overflow-hidden">
-            
-            <!-- Window Titlebar -->
-            <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between font-mono text-xs font-bold">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[14px] text-[#FFD166]">play_arrow</span>
-                    <span class="tracking-wider uppercase">PROJET_02.SYS</span>
-                </div>
-                <span class="retro-badge bg-[#FFD166] text-black text-[10px] py-0 font-black">
-                    ● PROSPECTION
-                </span>
-            </div>
-
-            <!-- Card Body -->
-            <div class="p-6 space-y-5 flex-grow">
-                
-                <!-- Project Icon & Title -->
-                <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 bg-[#86E2D5] border-2 border-black flex items-center justify-center text-2xl shadow-[3px_3px_0px_0px_#000] flex-shrink-0">
-                        <span class="material-symbols-outlined text-3xl text-black">travel_explore</span>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-black bg-black text-white px-1.5 py-0.5">LEAD GEN</span>
-                            <span class="text-xs font-bold text-black/60">MARTY.SYS</span>
-                        </div>
-                        <h3 class="text-xl font-black uppercase text-black tracking-tight">
-                            Marty
-                        </h3>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <p class="text-xs text-black/75 leading-relaxed">
-                    Scrapper automatisé d'adresses emails de prospects et clients qualifiés via SearXNG, DuckDuckGo et Playwright Chromium avec export CSV.
-                </p>
-
-                <!-- Modules Badges -->
-                <div class="space-y-2 pt-2 border-t border-black/10">
-                    <div class="text-[10px] font-black uppercase text-black/60 tracking-wider">Modules Intégrés :</div>
-                    <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <a href="/marty" class="retro-badge bg-[#FFD166] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Lancer le scraping">
-                            <span class="material-symbols-outlined text-[14px]">bolt</span> Scrapper de Leads
-                        </a>
-                        <a href="/marty" class="retro-badge bg-[#BFD7FE] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Voir les prospects">
-                            <span class="material-symbols-outlined text-[14px]">mail</span> Table des Emails
-                        </a>
-                        <a href="/marty" class="retro-badge bg-[#86E2D5] hover:bg-white text-black transition-colors cursor-pointer flex items-center gap-1" title="Télécharger CSV">
-                            <span class="material-symbols-outlined text-[14px]">download</span> Export CSV
-                        </a>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Card Action Footer -->
-            <div class="p-4 bg-[#F6F4EE] border-t-2 border-black flex items-center justify-between gap-3">
-                <span class="text-[11px] font-bold text-black/60">STATION #02</span>
-                <a 
-                    href="/marty" 
-                    class="retro-btn retro-btn-primary py-2.5 px-4 text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_0px_#000]"
-                >
-                    <span>OUVRIR LA STATION</span>
-                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </a>
-            </div>
-
+        <div class="mt-auto flex items-end justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-black uppercase leading-tight text-black">{service.name}</h2>
+            <p class="mt-2 max-w-sm text-xs leading-relaxed text-black/65">{service.description}</p>
+          </div>
+          <span class="material-symbols-outlined shrink-0 text-xl transition-transform group-hover:translate-x-1" aria-hidden="true">arrow_forward</span>
         </div>
-
-
-        <!-- PROJET #03 : SLOT DISPONIBLE -->
-        <div class="border-3 border-dashed border-black/40 bg-[#EDE9DF]/60 p-1 flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-            
-            <div class="bg-[#2B2D42]/70 text-white px-4 py-2 border-b-2 border-black/30 flex items-center justify-between font-mono text-xs font-bold">
-                <span class="tracking-wider uppercase text-white/70">PROJET_03.SYS</span>
-                <span class="retro-badge bg-[#BFD7FE] text-black text-[10px] py-0 font-black">
-                    LIBRE
-                </span>
-            </div>
-
-            <div class="p-6 space-y-4 flex-grow flex flex-col justify-center items-center text-center">
-                <div class="w-14 h-14 bg-white/80 border-2 border-dashed border-black/40 flex items-center justify-center text-2xl">
-                    <span class="material-symbols-outlined text-3xl text-black/50">settings</span>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-lg font-black uppercase text-black/80">
-                        Connecteur API & Service
-                    </h3>
-                    <p class="text-xs text-black/60 max-w-xs">
-                        Architecture prête pour intégrer un micro-service, une API externe ou un tableau de bord analytique.
-                    </p>
-                </div>
-                <div class="flex items-center gap-2 text-[10px] text-black/50 font-bold">
-                    <span class="border border-black/30 px-2 py-0.5 bg-white">MICRO-SERVICE</span>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white/40 border-t-2 border-dashed border-black/30 flex items-center justify-center">
-                <button 
-                    type="button" 
-                    onclick={() => openSlotModal("Projet #03")}
-                    class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#86E2D5] font-black border border-black shadow-[2px_2px_0px_0px_#000] cursor-pointer"
-                >
-                    + CONNECTER UN SERVICE
-                </button>
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Retro System Info Box -->
-    <div class="p-4 bg-[#EDE9DF] border-2 border-black shadow-[3px_3px_0px_0px_#000] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-3">
-            <span class="retro-badge bg-black text-white text-[10px]">INFRA</span>
-            <span class="text-black/80 font-bold">Gestionnaire.SYS centralise tous vos projets e-commerce en un point d'accès unique.</span>
-        </div>
-        <div class="flex items-center gap-2 text-[11px] text-black/60">
-            <span>DAISY BROCANTE HUB</span>
-            <span>•</span>
-            <span>2026 EDITION</span>
-        </div>
-    </div>
-
-</div>
-
-<!-- Modal Slot Configuration -->
-{#if isModalOpen}
-    <div 
-        role="dialog"
-        aria-modal="true"
-        class="fixed inset-0 z-[99999] bg-black/70 flex items-center justify-center p-4 font-mono select-none animate-in fade-in duration-150"
-    >
-        <div class="w-full max-w-md bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] p-1">
-            <div class="bg-[#2B2D42] text-white px-3 py-1.5 border-b-2 border-black flex items-center justify-between text-xs font-bold mb-3">
-                <span>CONFIGURATION // {selectedSlot}</span>
-                <button 
-                    type="button"
-                    onclick={closeModal}
-                    class="w-4 h-4 bg-[#FFAEC1] border border-black hover:bg-white text-black text-[9px] flex items-center justify-center font-black cursor-pointer shadow-[1px_1px_0px_0px_#000]"
-                >
-                    ✕
-                </button>
-            </div>
-            <div class="p-4 bg-white border-2 border-black m-1 space-y-4">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-2xl text-black">package_2</span>
-                    <div>
-                        <h4 class="font-black text-sm uppercase text-black">Ajout d'un nouveau projet</h4>
-                        <p class="text-xs text-black/60">Emplacement {selectedSlot}</p>
-                    </div>
-                </div>
-                <p class="text-xs text-black/80 leading-relaxed">
-                    L'architecture multi-projets est prête. Pour lier un nouveau catalogue ou créer une base dédiée, ajoutez le sous-domaine ou la clé API correspondante dans la configuration backend.
-                </p>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button 
-                        type="button"
-                        onclick={closeModal}
-                        class="retro-btn text-xs py-1.5 px-4 bg-[#FFAEC1] font-black"
-                    >
-                        COMPRIS
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-{/if}
-
+      </a>
+    {/each}
+  </div>
+</section>

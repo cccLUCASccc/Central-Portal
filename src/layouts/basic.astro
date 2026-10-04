@@ -8,16 +8,7 @@ const token = await auth.getToken();
 const userId = auth.userId;
 
 const pathname = Astro.url.pathname;
-const isDaisyBrocante = pathname.startsWith('/antiquites') || 
-                        pathname.startsWith('/subcategories') || 
-                        pathname.startsWith('/shops') || 
-                        pathname.startsWith('/orders') || 
-                        pathname.startsWith('/ebay') || 
-                        pathname.startsWith('/Livraison') ||
-                        pathname.startsWith('/reviews') ||
-                        pathname.startsWith('/feedback') ||
-                        pathname.startsWith('/qrcode');
-const isMarty = pathname.startsWith('/marty');
+const isDaisyBrocante = true;
 ---
 
 <!doctype html>
@@ -28,7 +19,7 @@ const isMarty = pathname.startsWith('/marty');
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>{isMarty ? "Marty // Scrapper Leads" : pathname.startsWith('/qrcode') ? "QR Code & Impression // Daisy Brocante" : "Gestionnaire // Daisy Brocante"}</title>
+    <title>{pathname.startsWith('/qrcode') ? "QR Code & Impression // Daisy Brocante" : "Gestionnaire // Daisy Brocante"}</title>
     <!-- Google Fonts : Plus Jakarta Sans & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,13 +48,11 @@ const isMarty = pathname.startsWith('/marty');
             <div class="flex items-center gap-3">
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
               {pathname === '/' ? (
-                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> PORTAIL CENTRAL // GESTIONNAIRE.SYS — HUB MULTI-PROJETS</span>
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">spa</span> DAISY BROCANTE // GESTIONNAIRE.SYS — TABLEAU DE BORD</span>
               ) : pathname.startsWith('/qrcode') ? (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">qr_code_2</span> DAISY BROCANTE // GESTIONNAIRE.SYS — QR CODE & GABARITS D'IMPRESSION</span>
               ) : isDaisyBrocante ? (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
-              ) : isMarty ? (
-                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> MARTY // GESTIONNAIRE.SYS — STATION PROSPECTION & LEADS</span>
               ) : (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> PORTAIL CENTRAL // GESTIONNAIRE.SYS — SERVICE GLOBAL</span>
               )}
@@ -92,78 +81,16 @@ const isMarty = pathname.startsWith('/marty');
               <!-- Logo & System Badge -->
               <a href="/" class="flex items-center gap-2.5 group flex-shrink-0" title="Retour au Hub des Projets">
                 <div class="w-8 h-8 bg-[#FFD2A6] border-2 border-black flex items-center justify-center font-mono font-black text-base shadow-[2px_2px_0px_0px_#000] group-hover:bg-[#86E2D5] transition-colors">
-                  {isMarty ? 'M' : 'G'}
+                  G
                 </div>
                 <div class="flex flex-col">
                   <span class="font-black text-lg tracking-tight uppercase leading-none font-mono">GESTIONNAIRE<span class="text-[#FFAEC1]">.SYS</span></span>
                   <span class="text-[9px] font-mono font-bold tracking-widest text-black/60 uppercase">
-                    {isDaisyBrocante ? "Daisy Brocante" : isMarty ? "Marty // Lead Scrapper" : "Portail Multi-Projets"}
+                    {isDaisyBrocante ? "Daisy Brocante" : "Portail Multi-Projets"}
                   </span>
                 </div>
               </a>
             </div>
-
-            <!-- Desktop Nav Buttons -->
-            <nav class="hidden lg:flex items-center gap-1.5 font-mono flex-shrink-0">
-              <!-- Bouton Cross-Projet : Hub Projets -->
-              <a href="/" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                <span class="material-symbols-outlined text-[16px]">folder_open</span> Hub Projets
-              </a>
-
-              {isDaisyBrocante && (
-                <>
-                  <div class="h-5 w-px bg-black/30 mx-0.5"></div>
-
-                  <!-- Boutons Spécifiques Daisy Brocante -->
-                  <a href="/antiquites" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">inventory_2</span> Inventaire
-                  </a>
-                  <a href="/subcategories" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">label</span> Sous-catégories
-                  </a>
-                  <a href="/shops" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/shops') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">storefront</span> Boutiques
-                  </a>
-                  <a href="/orders" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#BFD7FE] {pathname.startsWith('/orders') ? '!bg-[#BFD7FE] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">receipt_long</span> Commandes
-                  </a>
-                  <a href="/ebay" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">package_2</span> eBay
-                  </a>
-                  <a href="/Livraison" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">local_shipping</span> Livraisons
-                  </a>
-                  <a href="/reviews" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD166] {pathname.startsWith('/reviews') ? '!bg-[#FFD166] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">reviews</span> Avis
-                  </a>
-                  <a href="/feedback" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFAEC1] {pathname.startsWith('/feedback') ? '!bg-[#FFAEC1] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">rate_review</span> Boîte à idées & Bugs
-                  </a>
-                  <a href="/qrcode" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/qrcode') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 font-black' : ''}" title="Générateur et impression du QR Code DaisyBrocante">
-                    <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR Code & Print
-                  </a>
-                </>
-              )}
-
-              {isMarty && (
-                <>
-                  <div class="h-5 w-px bg-black/30 mx-0.5"></div>
-
-                  <!-- Boutons Spécifiques Marty -->
-                  <a href="/marty" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#FFD166] {pathname.startsWith('/marty') ? '!bg-[#FFD166] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5 font-black' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">bolt</span> Scrapper & Leads
-                  </a>
-                </>
-              )}
-
-              <div class="h-5 w-px bg-black/30 mx-0.5"></div>
-
-              <!-- Bouton Cross-Projet : Fichiers S3 -->
-              <a href="/storage" class="retro-btn py-1.5 px-3 text-xs bg-white whitespace-nowrap hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5] shadow-[3px_3px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5' : ''}">
-                <span class="material-symbols-outlined text-[16px]">cloud</span> Fichiers S3
-              </a>
-            </nav>
-
 
             <!-- Actions Right (Clerk UserButton) -->
             <div class="flex items-center gap-2">
@@ -214,17 +141,13 @@ const isMarty = pathname.startsWith('/marty');
             </div>
 
             <nav class="flex flex-col gap-2.5">
-              <!-- Cross-projet -->
-              <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE]' : ''}">
-                <span class="material-symbols-outlined text-[16px]">folder_open</span> Hub des Projets
-              </a>
+              <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[14px]">spa</span> Services Daisy Brocante
+              </div>
 
-              {isDaisyBrocante && (
-                <>
-                  <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[14px]">spa</span> Projet Daisy Brocante
-                  </div>
-
+                  <a href="/" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname === '/' ? '!bg-[#BFD7FE]' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">dashboard</span> Tableau de bord
+                  </a>
                   <a href="/antiquites" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/antiquites') ? '!bg-[#FFF394]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">inventory_2</span> Inventaire
                   </a>
@@ -252,22 +175,6 @@ const isMarty = pathname.startsWith('/marty');
                   <a href="/qrcode" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/qrcode') ? '!bg-[#86E2D5] font-black' : ''}">
                     <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR Code Imprimable
                   </a>
-                </>
-              )}
-
-              {isMarty && (
-                <>
-                  <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2 flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[14px]">travel_explore</span> Projet Marty (Lead Gen)
-                  </div>
-
-                  <a href="/marty" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD166] {pathname.startsWith('/marty') ? '!bg-[#FFD166] font-black' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">bolt</span> Scrapper & Leads
-                  </a>
-                </>
-              )}
-
-              <div class="text-[10px] font-black uppercase text-black/60 px-1 pt-2">Services Globaux</div>
 
               <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5]' : ''}">
                 <span class="material-symbols-outlined text-[16px]">cloud</span> Fichiers S3
@@ -276,8 +183,8 @@ const isMarty = pathname.startsWith('/marty');
           </div>
 
           <div class="p-3 bg-white border-2 border-black text-[10px] text-black/70 shadow-[2px_2px_0px_0px_#000]">
-            <p class="font-bold uppercase text-black mb-1">Station Gestionnaire.SYS</p>
-            <p>Portail Multi-Projets Central</p>
+            <p class="font-bold uppercase text-black mb-1">Daisy Brocante</p>
+            <p>Console de gestion</p>
           </div>
         </div>
       </div>
