@@ -920,10 +920,12 @@
                                                 <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black">REJETÉ</span>
                                             {/if}
 
-                                            {#if item.subcategory?.name}
+                                            {#if item.subcategories?.length}
                                                 <span class="text-[10px] font-mono text-black/60 bg-[#F6F4EE] px-1 border border-black/20">
-                                                    {item.subcategory.name}
+                                                    {item.subcategories.map(subcategory => subcategory.name).join(', ')}
                                                 </span>
+                                            {:else if item.subcategory?.name}
+                                                <span class="text-[10px] font-mono text-black/60 bg-[#F6F4EE] px-1 border border-black/20">{item.subcategory.name}</span>
                                             {/if}
                                         </div>
 

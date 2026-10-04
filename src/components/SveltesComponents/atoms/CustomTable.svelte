@@ -462,7 +462,9 @@
                   <span class="retro-badge bg-[#D4E2FD] text-[10px]">
                     {antiquite.category || "Inconnu"}
                   </span>
-                  {#if antiquite.subcategory}
+                  {#if antiquite.subcategories?.length}
+                    <span class="max-w-44 text-[10px] text-black/60 italic">{antiquite.subcategories.map(subcategory => subcategory.name).join(', ')}</span>
+                  {:else if antiquite.subcategory}
                     <span class="text-[10px] text-black/60 italic">({antiquite.subcategory.name})</span>
                   {/if}
                 </div>

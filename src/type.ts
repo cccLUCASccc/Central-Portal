@@ -21,6 +21,7 @@ export interface Subcategory {
     id: number;
     name: string;
     category: string;
+    article_count?: number;
 }
 
 export interface Antiquite {
@@ -47,6 +48,8 @@ export interface Antiquite {
     next_id?: number;
     subcategory_id?: number;
     subcategory?: Subcategory;
+    subcategory_ids?: number[];
+    subcategories?: Subcategory[];
 }
 
 export interface Livraison {

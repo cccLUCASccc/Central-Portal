@@ -1,7 +1,6 @@
 <script lang="ts">
     import DataModifier from "../atoms/DataModifier.svelte";
     import ImagesContainer from "./ImagesContainer.svelte";
-    import RetroSelect from "../atoms/RetroSelect.svelte";
     import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
     import QRCode from 'qrcode';
@@ -23,7 +22,11 @@
     let price = $state(antiquite.price);
     let quantity = $state<number>(antiquite.quantity ?? 1);
     let category = $state(antiquite.category);
-    let subcategory_id = $state<number | null>(antiquite.subcategory_id ?? null);
+    let selectedSubcategoryIds = $state<number[]>(
+        antiquite.subcategories?.length
+            ? antiquite.subcategories.map(subcategory => Number(subcategory.id))
+            : antiquite.subcategory_id != null ? [Number(antiquite.subcategory_id)] : []
+    );
     let subcategories = $state<Subcategory[]>([]);
     let size = $state(antiquite.size);
     let images = $state(antiquite.images);
@@ -43,22 +46,21 @@
                 .then(data => {
                     subcategories = data;
                     untrack(() => {
-                        if (subcategory_id !== null && !subcategories.find(s => Number(s.id) === Number(subcategory_id))) {
-                            subcategory_id = null;
-                        }
+                        selectedSubcategoryIds = selectedSubcategoryIds.filter(id => subcategories.some(s => Number(s.id) === Number(id)));
                     });
                 })
                 .catch(err => console.error("Error fetching subcategories:", err));
         } else {
             subcategories = [];
-            subcategory_id = null;
+            selectedSubcategoryIds = [];
         }
     });
 
-    let subcatOptions = $derived([
-        { value: null, label: "Aucune sous-catégorie" },
-        ...subcategories.map(s => ({ value: s.id, label: s.name }))
-    ]);
+    function toggleSubcategory(id: number) {
+        selectedSubcategoryIds = selectedSubcategoryIds.includes(id)
+            ? selectedSubcategoryIds.filter(selectedId => selectedId !== id)
+            : [...selectedSubcategoryIds, id];
+    }
     
     let ebayTitle = $state(antiquite.ebay_title ?? "");
     let ebayDescription = $state(antiquite.ebay_description ?? "");
@@ -191,7 +193,8 @@
         formData.append("name", name || "");
         formData.append("description", description || "");
         formData.append("category", category || "");
-        formData.append("subcategory_id", subcategory_id !== null && subcategory_id !== undefined ? subcategory_id.toString() : "");
+        formData.append("subcategory_ids", selectedSubcategoryIds.join(","));
+        formData.append("subcategory_id", selectedSubcategoryIds[0]?.toString() || "");
         formData.append("size", size || "S");
         formData.append("price", (price !== null && price !== undefined ? price : 0).toString());
         formData.append("quantity", (quantity !== null && quantity !== undefined ? quantity : 1).toString());
@@ -410,11 +413,27 @@
                 
                 <DataModifier bind:data_string={category} type={5} type_name='Catégorie Principale'/>
                 
-                <RetroSelect
-                    label="Sous-catégorie"
-                    options={subcatOptions}
-                    bind:value={subcategory_id}
-                />
+                <fieldset class="space-y-2 border-2 border-black bg-white p-3">
+                    <legend class="px-1 text-xs font-black uppercase text-black">Sous-catégories</legend>
+                    {#if subcategories.length === 0}
+                        <p class="text-xs text-black/60">Aucune sous-catégorie pour cette catégorie.</p>
+                    {:else}
+                        <div class="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+                            {#each subcategories as subcategory (subcategory.id)}
+                                <label class="flex cursor-pointer items-center gap-2 border border-black/20 p-2 text-xs hover:bg-[#F6F4EE]">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedSubcategoryIds.includes(Number(subcategory.id))}
+                                        onchange={() => toggleSubcategory(Number(subcategory.id))}
+                                        class="accent-black"
+                                    />
+                                    <span>{subcategory.name}</span>
+                                </label>
+                            {/each}
+                        </div>
+                    {/if}
+                    <p class="text-[10px] text-black/60">{selectedSubcategoryIds.length} sélectionnée(s)</p>
+                </fieldset>
 
                 <DataModifier bind:data_string={size} type={8} type_name='Gabarit / Taille Livraison'/>
                 

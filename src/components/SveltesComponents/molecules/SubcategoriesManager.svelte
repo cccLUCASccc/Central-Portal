@@ -163,16 +163,23 @@
                                 <span class="retro-badge bg-white text-[10px]">{catSubs.length} élément(s)</span>
                             </div>
 
-                            <div class="flex flex-wrap gap-2">
+                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                                 {#each catSubs as sub}
-                                    <div class="flex items-center gap-2 bg-white px-3 py-1.5 border-2 border-black text-xs font-bold text-black shadow-[1.5px_1.5px_0px_0px_#000]">
-                                        <span>{sub.name}</span>
+                                    <div class="flex min-h-20 items-center justify-between gap-3 border-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
+                                        <div class="min-w-0">
+                                            <span class="block truncate text-sm font-black text-black">{sub.name}</span>
+                                            <span class="mt-1 inline-flex items-center gap-1 text-[10px] font-bold uppercase text-black/60">
+                                                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">inventory_2</span>
+                                                {sub.article_count ?? 0} article{sub.article_count === 1 ? '' : 's'}
+                                            </span>
+                                        </div>
                                         <button 
                                             onclick={() => deleteSubcategory(sub.id)}
-                                            class="w-4 h-4 border border-black bg-[#FFC2D1] hover:bg-[#fca2b4] flex items-center justify-center font-bold text-[10px]"
-                                            title="Supprimer"
+                                            class="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-black bg-[#FFC2D1] text-black hover:bg-[#fca2b4]"
+                                            title={`Supprimer ${sub.name}`}
+                                            aria-label={`Supprimer ${sub.name}`}
                                         >
-                                            ✕
+                                            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">delete</span>
                                         </button>
                                     </div>
                                 {/each}
