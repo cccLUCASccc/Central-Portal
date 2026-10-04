@@ -23,6 +23,7 @@
     let isLoading = $state(false);
     let is_visible : boolean = $state(false);
     let isMounted = $state(false);
+    let skipInitialFilterFetch = true;
 
     onMount(() => {
         filterStore.initFromUrl();
@@ -69,6 +70,10 @@
         const _nouv = filterStore.nouveaute_filter;
 
         if (isMounted) {
+            if (skipInitialFilterFetch) {
+                skipInitialFilterFetch = false;
+                return;
+            }
             untrack(() => {
                 fetchData(1);
             });
