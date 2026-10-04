@@ -59,6 +59,15 @@
     let newFiles = $state<File[]>([]); 
     let s3Keys = $state<string[]>([]); 
 
+    async function fileToBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
     async function enhanceDescription() {
         if (!name || !category) {
             alert("Veuillez renseigner le nom et la catégorie pour aider l'IA.");
@@ -69,12 +78,33 @@
         const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
         
         try {
+            // Collecter les photos (URLs S3 existantes ou fichiers locaux)
+            const imageUrls: string[] = [];
+            if (images && images.length > 0) {
+                for (const img of images) {
+                    if (img.url && (img.url.startsWith('http://') || img.url.startsWith('https://'))) {
+                        imageUrls.push(img.url);
+                    }
+                }
+            }
+            if (newFiles && newFiles.length > 0) {
+                for (const file of newFiles.slice(0, 3)) {
+                    try {
+                        const b64 = await fileToBase64(file);
+                        imageUrls.push(b64);
+                    } catch (e) {
+                        console.warn("Erreur lecture image locale:", e);
+                    }
+                }
+            }
+
             const response = await apiFetch(`${PUBLIC_API_URL}/api/ai/enhance`, {
                 method: "POST",
                 body: JSON.stringify({
                     name,
                     category,
-                    description
+                    description,
+                    images: imageUrls.slice(0, 3)
                 })
             });
 
