@@ -70,11 +70,24 @@ test("isolates drafts by user, network and article", () => {
   assert.equal(new Set(keys).size, keys.length);
 });
 
-test("restores text and photo, and rejects damaged or unrelated drafts", () => {
+test("migrates single-photo drafts and rejects damaged or unrelated drafts", () => {
   const draft = { version: 1, articleId: 12, text: "Mon texte\n#brocante", imageId: 4, savedAt: "2026-10-06T09:00:00.000Z" };
-  assert.deepEqual(readDraft(JSON.stringify(draft), 12), draft);
+  assert.deepEqual(readDraft(JSON.stringify(draft), 12), {
+    version: 2, articleId: 12, text: draft.text, imageIds: [4], savedAt: draft.savedAt
+  });
+  assert.deepEqual(readDraft(JSON.stringify({ ...draft, imageId: null }), 12).imageIds, []);
   assert.throws(() => readDraft(JSON.stringify(draft), 13), /invalide/);
   assert.throws(() => readDraft(JSON.stringify({ ...draft, imageId: "4" }), 12), /invalide/);
   assert.throws(() => readDraft(JSON.stringify({ ...draft, savedAt: "invalid" }), 12), /invalide/);
   assert.throws(() => readDraft("{invalid", 12));
+});
+
+test("restores multiple photos and rejects invalid selections", () => {
+  const draft = { version: 2, articleId: 12, text: "Publication avec plusieurs photos", imageIds: [4, 7, 9], savedAt: "2026-10-06T09:00:00.000Z" };
+  assert.deepEqual(readDraft(JSON.stringify(draft), 12), draft);
+  assert.deepEqual(readDraft(JSON.stringify({ ...draft, imageIds: [] }), 12).imageIds, []);
+  for (const imageIds of [[4, 4], ["4"], [0], [-1], null]) {
+    assert.throws(() => readDraft(JSON.stringify({ ...draft, imageIds }), 12), /invalides/);
+  }
+  assert.throws(() => readDraft(JSON.stringify({ ...draft, version: 3 }), 12), /invalides/);
 });

@@ -1,0 +1,11 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import { Show } from '@clerk/astro/components';
+import UsersManager from '../components/SveltesComponents/molecules/UsersManager.svelte';
+---
+
+<BasicLayout>
+  <Show when="signed-in">
+    <UsersManager client:load />
+  </Show>
+</BasicLayout>

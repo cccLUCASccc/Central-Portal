@@ -25,13 +25,14 @@
   let notice = $state("");
   let selected = $state<PublicationArticle | null>(null);
   let text = $state("");
-  let imageId = $state<number | null>(null);
+  let imageIds = $state<number[]>([]);
   let savedText = $state("");
-  let savedImageId = $state<number | null>(null);
+  let savedImageIds = $state<number[]>([]);
   let copying = $state(false);
   let controller: AbortController | undefined;
-  const dirty = $derived(selected !== null && (text !== savedText || imageId !== savedImageId));
-  const selectedImage = $derived(selected?.images.find((image) => image.id === imageId));
+  const dirty = $derived(selected !== null && (text !== savedText ||
+    imageIds.length !== savedImageIds.length || imageIds.some((id) => !savedImageIds.includes(id))));
+  const selectedImages = $derived(selected?.images.filter((image) => imageIds.includes(image.id)) ?? []);
   const hasText = $derived(text.trim().length > 0);
   const formattedPrice = (price: number) =>
     new Intl.NumberFormat("fr-BE", { style: "currency", currency: "EUR" }).format(price);
@@ -73,7 +74,7 @@
     if (dirty && !window.confirm("Le brouillon contient des modifications non enregistrées. Les abandonner pour choisir un autre article ?")) return;
     selected = article;
     text = initialPublicationText(article);
-    imageId = article.images[0]?.id ?? null;
+    imageIds = article.images[0] ? [article.images[0].id] : [];
     editorError = "";
     notice = "";
     try {
@@ -81,10 +82,9 @@
       if (raw !== null) {
         const draft = readDraft(raw, article.id);
         text = draft.text;
-        if (draft.imageId !== null && article.images.some((image) => image.id === draft.imageId)) {
-          imageId = draft.imageId;
-        } else if (draft.imageId !== null) {
-          notice = "La photo du brouillon n'est plus dans l'inventaire. La première photo disponible a été sélectionnée.";
+        imageIds = draft.imageIds.filter((id) => article.images.some((image) => image.id === id));
+        if (imageIds.length !== draft.imageIds.length) {
+          notice = "Certaines photos du brouillon ne sont plus dans l'inventaire et ont été retirées de la sélection. Vérifiez les photos avant d'enregistrer.";
         }
         if (!notice) notice = "Brouillon enregistré retrouvé dans ce navigateur.";
       }
@@ -92,7 +92,7 @@
       reportError(cause, "editor");
     }
     savedText = text;
-    savedImageId = imageId;
+    savedImageIds = [...imageIds];
   }
 
   function saveDraft() {
@@ -101,15 +101,15 @@
     notice = "";
     try {
       const draft: PublicationDraft = {
-        version: 1,
+        version: 2,
         articleId: selected.id,
         text,
-        imageId,
+        imageIds: [...imageIds],
         savedAt: new Date().toISOString()
       };
       localStorage.setItem(draftKey(userId, channel, selected.id), JSON.stringify(draft));
       savedText = text;
-      savedImageId = imageId;
+      savedImageIds = [...imageIds];
       notice = "Brouillon enregistré dans ce navigateur. Rien n'a été publié.";
     } catch (cause) {
       reportError(cause, "editor");
@@ -210,7 +210,12 @@
         <h3 id="editor-title" class="text-lg font-black uppercase">Rédiger · {selected.name}</h3>
         {#if selected.images.length > 0}
           <fieldset>
-            <legend class="mb-2 text-xs font-bold">Photo de la publication</legend>
+            <legend class="mb-2 text-xs font-bold">Photos de la publication</legend>
+            <p class="mb-3 text-xs text-black/65">Cochez les photos à inclure. Elles apparaîtront dans l'ordre de l'inventaire.</p>
+            <div class="mb-3 flex flex-wrap gap-3">
+              <button type="button" class="retro-btn bg-white px-3 py-1 text-xs" onclick={() => { imageIds = selected?.images.map((image) => image.id) ?? []; }}>Tout sélectionner</button>
+              <button type="button" class="retro-btn bg-white px-3 py-1 text-xs" onclick={() => { imageIds = []; }}>Tout désélectionner</button>
+            </div>
             <div class="flex flex-wrap gap-3">
               {#each selected.images as image, index (image.id)}
                 <label class="flex cursor-pointer flex-col gap-2 border-2 border-black p-2 text-xs">
@@ -218,12 +223,13 @@
                     <img src={image.url} alt={`${selected.name} — photo ${index + 1}`} class="h-16 w-16 object-cover" loading="lazy" />
                   {/if}
                   <span class="flex items-center gap-1">
-                    <input type="radio" name="publication-photo" value={image.id} bind:group={imageId} />
+                    <input type="checkbox" name="publication-photos" value={image.id} bind:group={imageIds} />
                     Photo {index + 1}
                   </span>
                 </label>
               {/each}
             </div>
+            <p class="mt-3 text-xs">{selectedImages.length} photo(s) sélectionnée(s) sur {selected.images.length}.</p>
           </fieldset>
         {:else}
           <p class="text-xs text-black/65">Cet article n'a pas de photo. Vous pouvez préparer son texte.</p>
@@ -251,12 +257,18 @@
       <section class="space-y-4 border-2 border-black bg-white p-5 shadow-[4px_4px_0px_0px_#000]" aria-labelledby="preview-title">
         <h3 id="preview-title" class="text-lg font-black uppercase">Aperçu · {definition.name}</h3>
         <p class="text-xs text-black/65">Aperçu indicatif, pas une publication envoyée.</p>
-        {#if selectedImage && import.meta.env.PUBLIC_DISABLE_IMAGES !== "true"}
-          <img src={selectedImage.url} alt={selected.name} class="max-h-96 w-full border-2 border-black object-contain" />
+        {#if selectedImages.length > 0 && import.meta.env.PUBLIC_DISABLE_IMAGES !== "true"}
+          <div class="grid gap-3 {selectedImages.length > 1 ? 'sm:grid-cols-2' : ''}">
+            {#each selectedImages as image, index (image.id)}
+              <img src={image.url} alt={`${selected.name} — photo sélectionnée ${index + 1}`} class="max-h-96 w-full border-2 border-black object-contain" />
+            {/each}
+          </div>
+        {:else if selectedImages.length === 0}
+          <p class="text-xs text-black/65">Aucune photo sélectionnée.</p>
         {/if}
         <p class="whitespace-pre-wrap break-words text-sm leading-relaxed">{text || "Votre texte apparaîtra ici."}</p>
         {#if channel === "tiktok"}
-          <p class="border-t-2 border-black pt-3 text-xs text-black/65">La photo sert de référence et le texte prépare votre légende TikTok. Aucune vidéo n'est créée ou envoyée.</p>
+          <p class="border-t-2 border-black pt-3 text-xs text-black/65">Les photos préparent votre publication et le texte votre légende TikTok. Aucun contenu n'est envoyé et aucune vidéo n'est créée.</p>
         {/if}
       </section>
     </div>

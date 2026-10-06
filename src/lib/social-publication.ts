@@ -5,10 +5,10 @@ export type SocialChannelID = Extract<ChannelID, "facebook" | "instagram" | "tik
 export type PublicationArticle = Pick<Antiquite, "id" | "name" | "description" | "price" | "status" | "images">;
 
 export interface PublicationDraft {
-  version: 1;
+  version: 2;
   articleId: number;
   text: string;
-  imageId: number | null;
+  imageIds: number[];
   savedAt: string;
 }
 
@@ -86,17 +86,26 @@ export function draftKey(userId: string, channel: SocialChannelID, articleId: nu
 
 export function readDraft(raw: string, articleId: number): PublicationDraft {
   const value: unknown = JSON.parse(raw);
-  if (!isRecord(value) || value.version !== 1 || value.articleId !== articleId ||
+  if (!isRecord(value) || value.articleId !== articleId ||
     typeof value.text !== "string" ||
-    !(value.imageId === null || isInteger(value.imageId, 1)) ||
     typeof value.savedAt !== "string" || !Number.isFinite(Date.parse(value.savedAt))) {
     throw new Error("Le brouillon enregistré est invalide. Il n'a pas été chargé ; vous pouvez en enregistrer un nouveau.");
   }
+  let imageIds: number[];
+  if (value.version === 1 && (value.imageId === null || isInteger(value.imageId, 1))) {
+    imageIds = value.imageId === null ? [] : [value.imageId];
+  } else if (value.version === 2 && Array.isArray(value.imageIds) &&
+    value.imageIds.every((id: unknown): id is number => isInteger(id, 1)) &&
+    new Set(value.imageIds).size === value.imageIds.length) {
+    imageIds = value.imageIds;
+  } else {
+    throw new Error("Les photos du brouillon enregistré sont invalides. Le brouillon n'a pas été chargé.");
+  }
   return {
-    version: 1,
+    version: 2,
     articleId,
     text: value.text,
-    imageId: value.imageId,
+    imageIds,
     savedAt: value.savedAt
   };
 }

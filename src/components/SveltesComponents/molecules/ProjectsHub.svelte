@@ -49,6 +49,14 @@ const services = [
     group: "Ventes"
   },
   {
+    name: "Users",
+    description: "Consulter les utilisateurs, leur newsletter, leurs ventes et leurs achats.",
+    href: "/users",
+    icon: "group",
+    tint: "bg-[#BFD7FE]",
+    group: "Relation client"
+  },
+  {
     name: "Avis clients",
     description: "Modérer et publier les avis de la clientèle.",
     href: "/reviews",
