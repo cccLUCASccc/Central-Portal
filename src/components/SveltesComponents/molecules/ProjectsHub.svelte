@@ -33,10 +33,10 @@ const services = [
     group: "Ventes"
   },
   {
-    name: "eBay",
-    description: "Suivre les annonces et la synchronisation du catalogue eBay.",
-    href: "/ebay",
-    icon: "package_2",
+    name: "Canaux de vente",
+    description: "Piloter vos canaux de vente : eBay, Facebook, Instagram, TikTok et Pinterest.",
+    href: "/canaux-vente",
+    icon: "storefront",
     tint: "bg-[#FFF394]",
     group: "Canaux"
   },
