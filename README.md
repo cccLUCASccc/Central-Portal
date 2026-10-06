@@ -48,8 +48,17 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 Sous le tableau, la section **Navigation · PostHog** présente huit KPI sur
 7 ou 30 jours. Le bouton **Sessions** d'une ligne ouvre les vingt dernières
 sessions publiques rattachées à ce compte et un lien vers leur replay.
-Les relectures restent privées dans PostHog Europe et nécessitent l'accès au
-projet. Les sessions anonymes ne sont pas systématiquement reliées aux comptes.
+Les vingt dernières sessions du site, anonymes comprises, sont aussi visibles
+sans sélection de compte. **Voir la session** affiche son parcours horodaté
+dans Users (200 premières actions), sans nécessiter une connexion PostHog.
+La lecture interactive s'intègre par iframe après confirmation explicite du
+partage : le lien PostHog est alors accessible à toute personne le possédant.
+Il reste actif après fermeture ; le bouton **Arrêter et désactiver le partage**
+ou **Désactiver un partage existant** le révoque. Ne pas diffuser ces liens.
+Configurer `sharing_configuration:write` sur la clé API et autoriser les
+partages dans PostHog. Les erreurs de permission et les replays indisponibles
+ne bloquent pas le parcours. Le lien privé PostHog reste disponible.
+Les sessions anonymes ne sont pas systématiquement reliées aux comptes.
 Les indicateurs couvrent exclusivement le trafic consenti depuis l'installation,
 pas l'historique ni l'intégralité des actions privées.
 Les paiements initiés ne représentent pas des ventes payées.

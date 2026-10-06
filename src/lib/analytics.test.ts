@@ -1,10 +1,25 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chartCoordinates, chartGroups, chartScale, readAnalyticsDaily, readAnalyticsSummary, readAnalyticsSessions } from "./analytics";
+import { chartCoordinates, chartGroups, chartScale, readAnalyticsDaily, readAnalyticsSummary, readAnalyticsSessions, readSessionEvents, readSessionReplay } from "./analytics";
 
 const metrics = { visitors: 10, sessions: 12, pageviews: 30, article_views: 15, cart_adds: 6, checkout_starts: 3, newsletter_signups: 2, favorites: 4 };
 const response = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
 
+test("validates session actions and safe embedded replay URLs", async () => {
+  const event = { at: "2026-10-06T12:00:00Z", event: "article_viewed", page: "/boutique/:article", article_id: 42, count: 0, percent: 0, element: "", destination: "" };
+  const value = { session_id: "test", events: [event], truncated: false };
+  assert.deepEqual(await readSessionEvents(response(value)), value);
+  for (const invalid of [{ ...event, event: "unknown" }, { ...event, percent: 101 }, { ...event, at: "bad" }, { ...event, article_id: -1 }]) {
+    await assert.rejects(readSessionEvents(response({ ...value, events: [invalid] })), /invalide/);
+  }
+  const replay = { session_id: "test", enabled: true, embed_url: "https://eu.posthog.com/embedded/abcdefghijklmnop012345" };
+  assert.deepEqual(await readSessionReplay(response(replay)), replay);
+  assert.deepEqual(await readSessionReplay(response({ ...replay, enabled: false, embed_url: "" })), { ...replay, enabled: false, embed_url: "" });
+  for (const embed_url of ["javascript:alert(1)", "https://evil.example/embedded/abcdefghijklmnop012345", replay.embed_url + "?secret=1"]) {
+    await assert.rejects(readSessionReplay(response({ ...replay, embed_url })), /invalide/);
+  }
+  await assert.rejects(readSessionReplay(response({ error: "Sharing Configuration Write requis" }, 502)), /Write/);
+});
 test("reads the exact eight metrics and period", async () => {
   assert.deepEqual(await readAnalyticsSummary(response({ days: 7, metrics })), { days: 7, metrics });
   assert.deepEqual(await readAnalyticsSummary(response({ days: 30, metrics })), { days: 30, metrics });

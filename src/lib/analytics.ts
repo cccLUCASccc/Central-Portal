@@ -51,6 +51,18 @@ export interface AnalyticsSession {
   replay_url: string;
 }
 export interface AnalyticsSessions { days: number; user_id: string; sessions: AnalyticsSession[] }
+export const eventLabels = {
+  "$pageview": "Page visitée", article_viewed: "Article consulté", cart_item_added: "Ajout au panier",
+  cart_item_removed: "Retrait du panier", favorite_added: "Ajout aux favoris",
+  favorite_removed: "Retrait des favoris", checkout_started: "Paiement initié",
+  newsletter_subscribed: "Inscription newsletter", public_click: "Clic", page_scrolled: "Défilement"
+} as const;
+export interface SessionEvent {
+  at: string; event: keyof typeof eventLabels; page: string; article_id: number;
+  count: number; percent: number; element: string; destination: string;
+}
+export interface SessionEvents { session_id: string; events: SessionEvent[]; truncated: boolean }
+export interface SessionReplay { session_id: string; enabled: boolean; embed_url: string }
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -112,4 +124,29 @@ export async function readAnalyticsSessions(response: Response): Promise<Analyti
     throw new Error("Sessions PostHog invalides.");
   }
   return { days: value.days, user_id: value.user_id, sessions: value.sessions };
+}
+
+function sessionEvent(value: unknown): value is SessionEvent {
+  return record(value) && typeof value.at === "string" && Number.isFinite(Date.parse(value.at)) &&
+    typeof value.event === "string" && Object.hasOwn(eventLabels, value.event) &&
+    typeof value.page === "string" && typeof value.destination === "string" &&
+    typeof value.element === "string" && ["", "a", "button"].includes(value.element) &&
+    count(value.article_id) && count(value.count) && count(value.percent) && value.percent <= 100;
+}
+export async function readSessionEvents(response: Response): Promise<SessionEvents> {
+  const value = await read(response);
+  if (!record(value) || typeof value.session_id !== "string" || typeof value.truncated !== "boolean" ||
+    !Array.isArray(value.events) || value.events.length > 200 || !value.events.every(sessionEvent)) {
+    throw new Error("Parcours de session PostHog invalide.");
+  }
+  return { session_id: value.session_id, events: value.events, truncated: value.truncated };
+}
+export async function readSessionReplay(response: Response): Promise<SessionReplay> {
+  const value = await read(response);
+  if (!record(value) || typeof value.session_id !== "string" || typeof value.enabled !== "boolean" ||
+    typeof value.embed_url !== "string" ||
+    (value.enabled ? !/^https:\/\/eu\.posthog\.com\/embedded\/[A-Za-z0-9_-]{16,200}$/.test(value.embed_url) : value.embed_url !== "")) {
+    throw new Error("Lien de relecture PostHog invalide.");
+  }
+  return { session_id: value.session_id, enabled: value.enabled, embed_url: value.embed_url };
 }
