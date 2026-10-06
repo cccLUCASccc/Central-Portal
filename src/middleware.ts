@@ -1,4 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/astro/server";
+import { sequence } from "astro:middleware";
+import { serverLogsMiddleware } from "./lib/server-logs";
 
 // On définit les routes qui ne nécessitent pas d'authentification
 const isPublicRoute = createRouteMatcher([
@@ -7,7 +9,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/(.*)'
 ]);
 
-export const onRequest = clerkMiddleware((auth, context) => {
+export const onRequest = sequence(serverLogsMiddleware, clerkMiddleware((auth, context) => {
   const { userId } = auth();
 
   // Si l'utilisateur est déjà connecté et qu'il se rend sur la page de connexion, rediriger vers l'accueil
@@ -20,4 +22,4 @@ export const onRequest = clerkMiddleware((auth, context) => {
     const returnBackPath = context.url.pathname + context.url.search;
     return auth().redirectToSignIn({ returnBackUrl: returnBackPath });
   }
-});
+}));

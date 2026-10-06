@@ -19,7 +19,7 @@ const isDaisyBrocante = true;
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>{pathname.startsWith('/qrcode') ? "QR Code & Impression // Daisy Brocante" : pathname.startsWith('/canaux-vente') ? "Canaux de vente // Daisy Brocante" : "Gestionnaire // Daisy Brocante"}</title>
+    <title>{pathname.startsWith('/posthog') ? "PostHog // Daisy Brocante" : pathname.startsWith('/qrcode') ? "QR Code & Impression // Daisy Brocante" : pathname.startsWith('/canaux-vente') ? "Canaux de vente // Daisy Brocante" : "Gestionnaire // Daisy Brocante"}</title>
     <!-- Google Fonts : Plus Jakarta Sans & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -171,6 +171,9 @@ const isDaisyBrocante = true;
                   </a>
                   <a href="/users" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname.startsWith('/users') ? '!bg-[#BFD7FE]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">group</span> Users
+                  </a>
+                  <a href="/posthog" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD166] {pathname.startsWith('/posthog') ? '!bg-[#FFD166]' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">monitoring</span> PostHog
                   </a>
                   <a href="/feedback" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/feedback') ? '!bg-[#FFAEC1]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">rate_review</span> Boîte à idées & Bugs

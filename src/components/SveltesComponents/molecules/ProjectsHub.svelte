@@ -81,6 +81,14 @@ const services = [
     group: "Outils"
   },
   {
+    name: "PostHog",
+    description: "Accéder aux statistiques, sessions, erreurs et logs du site.",
+    href: "/posthog",
+    icon: "monitoring",
+    tint: "bg-[#FFD166]",
+    group: "Outils"
+  },
+  {
     name: "Médias S3",
     description: "Parcourir et gérer les images et fichiers du stockage cloud.",
     href: "/storage",

@@ -45,40 +45,17 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 
 ## Users
 
-Sous le tableau, la section **Navigation · PostHog** présente huit KPI sur
-7 ou 30 jours. Le bouton **Sessions** d'une ligne ouvre les vingt dernières
-sessions publiques rattachées à ce compte et un lien vers leur replay.
-Les vingt dernières sessions du site, anonymes comprises, sont aussi visibles
-sans sélection de compte. **Voir la session** affiche son parcours horodaté
-dans Users (200 premières actions), sans nécessiter une connexion PostHog.
-La lecture interactive s'intègre par iframe après confirmation explicite du
-partage : le lien PostHog est alors accessible à toute personne le possédant.
-Il reste actif après fermeture ; le bouton **Arrêter et désactiver le partage**
-ou **Désactiver un partage existant** le révoque. Ne pas diffuser ces liens.
-Configurer `sharing_configuration:write` sur la clé API et autoriser les
-partages dans PostHog. Les erreurs de permission et les replays indisponibles
-ne bloquent pas le parcours. Le lien privé PostHog reste disponible.
-Les sessions anonymes ne sont pas systématiquement reliées aux comptes.
-Les indicateurs couvrent exclusivement le trafic consenti depuis l'installation,
-pas l'historique ni l'intégralité des actions privées.
-Les paiements initiés ne représentent pas des ventes payées.
+La carte **PostHog** du tableau de bord et le menu ouvrent `/posthog`, une page
+dédiée avec un lien vers le dashboard privé du projet Europe `295747` dans un
+nouvel onglet. Ce bloc n'est plus dans Users. Les KPI, graphiques, parcours et relectures
+intégrés ont été retirés ; le portail ne fait plus de requêtes analytiques
+ni n'active de liens de partage. Une connexion PostHog avec accès au projet
+reste nécessaire. Aucune clé PostHog n'est requise dans le portail.
 
-Trois graphiques quotidiens sous les cartes affichent visiteurs/sessions,
-vues d'articles/ajouts au panier/paiements initiés et favoris/newsletter.
-Les courbes SVG sont responsives, sans dépendance supplémentaire, avec légende,
-valeurs exactes par date et tableau accessible. Le sélecteur 7/30 jours et
-l'actualisation pilotent les trois graphiques. Une erreur quotidienne est
-affichée séparément pour préserver les KPI et le tableau Users.
-Les dates sont en UTC ; la fenêtre glissante couvre 8/31 dates, avec premier
-et dernier jour partiels. Les uniques quotidiens ne doivent pas être additionnés
-pour retrouver les uniques de toute la période. Déployer aussi Central-API
-pour activer la nouvelle route `/api/users/analytics/daily`.
-
-Aucune clé PostHog n'est nécessaire dans le portail : définir les deux secrets
-documentés dans [Central-API](../Central-API/README.md) et le jeton public sur
-Daisy Brocante. Les erreurs de configuration et les indisponibilités sont
-affichées dans un bloc, sans masquer le tableau des utilisateurs.
-Tests : `bun test src/lib/analytics.test.ts src/lib/users.test.ts`.
+Les partages activés auparavant ne sont pas automatiquement révoqués :
+les désactiver dans PostHog s'ils ne sont plus nécessaires.
+Le suivi des visiteurs et des erreurs reste configuré sur
+[Daisy Brocante](../Daisy_Brocanye_V2/README.md).
 
 La carte « Users » du tableau de bord et le menu ouvrent `/users`. Le tableau
 affiche les comptes du site, leur email, leur inscription newsletter, les
@@ -95,6 +72,36 @@ Voir [la configuration API](../Central-API/README.md) pour les clés Clerk et
 les règles d'accès administrateur.
 
 Tests : `bun test src/lib/users.test.ts`.
+
+## Logs serveur PostHog (OpenTelemetry)
+
+Définir `POSTHOG_LOGS_TOKEN` côté serveur au runtime : le jeton de projet
+`phc_…` du projet Europe `295747`, pas une clé personnelle `phx_…`.
+Sans jeton ou avec un format invalide, les logs distants sont désactivés avec
+un avertissement explicite ; le site reste disponible.
+
+Les packages OpenTelemetry Node exportent vers
+`https://eu.i.posthog.com/i/v1/logs` avec authentification Bearer.
+Le service est nommé `central-portal` (`daisy-storefront` sur Daisy Brocante).
+L'initialisation intervient à la première requête et émet un log de démarrage.
+Chaque requête traitée par Astro produit un log INFO, WARN (4xx) ou ERROR (5xx),
+avec méthode, modèle de route, statut et durée. Les exceptions non interceptées
+sont journalisées puis relancées sans modifier la réponse ni le flux Clerk.
+
+Aucun email, identifiant utilisateur, IP, cookie, header, corps, URL complète,
+paramètre de requête ou message brut d'exception n'est envoyé.
+Ce sont des logs techniques serveur, indépendants du consentement navigateur.
+Les fichiers statiques servis hors Astro et les `console.log/error` arbitraires
+ne sont pas capturés. Ni traces ni métriques automatiques ne sont activées.
+Les services restent indépendants : chaque dépôt embarque son middleware.
+
+Envoi par lots toutes les secondes, file bornée à 2048 logs, export limité à
+5 secondes. Les erreurs d'export sont signalées dans la console serveur.
+La file est vidée à l'arrêt normal/SIGTERM/SIGINT ; SIGKILL et les interruptions
+brutales peuvent perdre les derniers logs. Configurer la rétention dans PostHog.
+Après déploiement, ouvrir une page puis consulter **Logs** dans PostHog et filtrer
+sur `service.name = central-portal`. Aucun secret n'est nécessaire côté navigateur.
+Tests : `bun test src/lib/server-logs.test.ts` (collecteur OTLP local uniquement).
 
 ## Connexions des canaux de vente
 

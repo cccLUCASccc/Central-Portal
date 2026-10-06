@@ -1,0 +1,19 @@
+---
+import BasicLayout from "../layouts/basic.astro";
+import { Show } from "@clerk/astro/components";
+---
+
+<BasicLayout>
+  <Show when="signed-in">
+    <section class="space-y-6 font-mono" aria-labelledby="posthog-title">
+      <header class="border-b-2 border-black pb-6">
+        <h1 id="posthog-title" class="text-3xl font-black uppercase">PostHog</h1>
+        <p class="mt-2 text-sm text-black/65">Statistiques, sessions, erreurs et logs de Daisy Brocante.</p>
+      </header>
+      <div class="border-2 border-black bg-white p-5 space-y-3">
+        <p class="text-sm text-black/65">Consultez votre projet Europe directement dans PostHog. Une connexion avec accès au projet est nécessaire.</p>
+        <a href="https://eu.posthog.com/project/295747" target="_blank" rel="noopener noreferrer" class="retro-btn inline-block bg-[#BFD7FE] px-4 py-2 text-xs">Ouvrir mon dashboard PostHog <span class="sr-only">(nouvel onglet)</span></a>
+      </div>
+    </section>
+  </Show>
+</BasicLayout>
