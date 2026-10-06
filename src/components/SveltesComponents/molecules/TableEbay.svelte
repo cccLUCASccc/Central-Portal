@@ -5,6 +5,7 @@
     import { filterStore } from "../../../store.svelte";
     import type { Antiquite, Pagination } from "../../../type";
     import { apiFetch } from "../../../lib/api";
+    import ChannelConnection from "../atoms/ChannelConnection.svelte";
 
     interface Props {
         apiUrl: string;
@@ -84,29 +85,6 @@
         fetchData(1);
     }
 
-    let isRedirecting = $state(false);
-
-    async function handleConnectEbay() {
-        isRedirecting = true;
-        try {
-            const response = await apiFetch(`${apiUrl}/api/ebay/auth/login`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.url) {
-                    window.location.href = data.url;
-                } else {
-                    alert("URL d'authentification introuvable");
-                }
-            } else {
-                alert("Erreur lors de la récupération du lien de connexion eBay.");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Erreur réseau");
-        } finally {
-            isRedirecting = false;
-        }
-    }
 </script>
 
 <div class="flex flex-col gap-6 w-full max-w-7xl mx-auto font-mono">
@@ -125,19 +103,9 @@
             </p>
         </div>
 
-        <button 
-            onclick={handleConnectEbay} 
-            disabled={isRedirecting}
-            class="retro-btn py-2 px-4 text-xs bg-white hover:bg-[#99E7DC] font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5"
-        >
-            {#if isRedirecting}
-                <span class="loading loading-spinner loading-xs mr-1"></span>
-            {:else}
-                <span class="material-symbols-outlined text-[16px]">link</span>
-            {/if}
-            <span>Connexion Compte eBay</span>
-        </button>
     </div>
+
+    <ChannelConnection channel="ebay" {apiUrl} />
 
     <!-- Barre de Filtres Rétro -->
     <div class="retro-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">

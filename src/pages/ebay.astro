@@ -64,7 +64,7 @@ if (userId && token) {
     <Show when="signed-in">
         <TableEbay 
             client:load 
-            apiUrl={import.meta.env.API_URL}
+            apiUrl={import.meta.env.API_URL || import.meta.env.PUBLIC_API_URL}
             antiquites={antiquites} 
             pagination={antiquitesPagination}
         />

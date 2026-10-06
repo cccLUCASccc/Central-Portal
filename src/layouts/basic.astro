@@ -49,8 +49,6 @@ const isDaisyBrocante = true;
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
               {pathname === '/' ? (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">spa</span> DAISY BROCANTE // GESTIONNAIRE.SYS — TABLEAU DE BORD</span>
-              ) : pathname.startsWith('/canaux-vente') ? (
-                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">storefront</span> DAISY BROCANTE // GESTIONNAIRE.SYS — CANAUX DE VENTE</span>
               ) : pathname.startsWith('/qrcode') ? (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">qr_code_2</span> DAISY BROCANTE // GESTIONNAIRE.SYS — QR CODE & GABARITS D'IMPRESSION</span>
               ) : isDaisyBrocante ? (
@@ -162,8 +160,8 @@ const isDaisyBrocante = true;
                   <a href="/orders" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname.startsWith('/orders') ? '!bg-[#BFD7FE]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">receipt_long</span> Commandes
                   </a>
-                  <a href="/canaux-vente" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/canaux-vente') || pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">storefront</span> Canaux de vente
+                  <a href="/ebay" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/ebay') ? '!bg-[#FFF394]' : ''}">
+                    <span class="material-symbols-outlined text-[16px]">package_2</span> eBay (Annonces)
                   </a>
                   <a href="/Livraison" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/Livraison') ? '!bg-[#FFAEC1]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">local_shipping</span> Livraisons

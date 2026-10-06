@@ -34,7 +34,7 @@ const services = [
   },
   {
     name: "Canaux de vente",
-    description: "Piloter vos canaux de vente : eBay, Facebook, Instagram, TikTok et Pinterest.",
+    description: "Accéder à eBay, Facebook, Instagram, TikTok et Pinterest.",
     href: "/canaux-vente",
     icon: "storefront",
     tint: "bg-[#FFF394]",

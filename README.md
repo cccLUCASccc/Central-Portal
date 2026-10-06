@@ -42,3 +42,40 @@ All commands are run from the root of the project, from a terminal:
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
 # Central-Portal
+
+## Connexions des canaux de vente
+
+La page `/canaux-vente` ouvre les pages internes `/ebay`, `/facebook`,
+`/instagram`, `/tiktok` et `/pinterest`. Chaque page propose une connexion
+OAuth et affiche les échecs dans un bloc d'erreur détaillé.
+
+Configurer `API_URL` (ou `PUBLIC_API_URL`) avec l'adresse de Central-API.
+Les identifiants développeur, secrets et URL de retour doivent être configurés
+sur Central-API : voir [la configuration OAuth](../Central-API/README.md).
+Les pages restent protégées par Clerk. Le retour OAuth doit se faire dans
+le même onglet, avec la même session du portail. Après un déploiement de cette
+version, relancer les autorisations commencées avec l'ancien flux eBay.
+
+Tests ciblés du traitement des réponses : `bun test src/lib/channel-auth.test.ts`.
+Compilation : `npm run build` (ou `bun run --bun build`).
+
+### Préparation des publications
+
+Les pages Facebook, Instagram et TikTok permettent de choisir un article actif
+(`status=0`) dans le stock officiel Daisy Brocante (`shop_id=daisy`), de
+parcourir toutes les pages de l'inventaire, de choisir une photo, de rédiger
+le texte et de voir un aperçu indicatif. Aucun article vendu ou inactif n'est
+proposé. La préparation ne nécessite pas une connexion OAuth au réseau.
+
+Le bouton « Enregistrer le brouillon » conserve le texte et la photo dans
+le stockage local du navigateur, séparément pour l'utilisateur Clerk,
+le réseau et l'article. Choisir à nouveau l'article restaure son brouillon.
+Le stockage n'est pas synchronisé entre appareils ; effacer les données du
+navigateur supprime ces brouillons. Un avertissement protège les modifications
+non enregistrées lors d'un changement d'article ou de la fermeture de la page.
+
+Cette étape ne publie rien sur les réseaux. Le texte peut être copié pour une
+publication manuelle. Sur TikTok, il s'agit d'un brouillon de légende avec une
+photo de référence, pas d'une création ou d'un envoi de vidéo.
+
+Tests ciblés : `bun test src/lib/social-publication.test.ts src/lib/channel-auth.test.ts`.
