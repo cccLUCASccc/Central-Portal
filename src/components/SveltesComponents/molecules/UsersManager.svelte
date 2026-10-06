@@ -4,7 +4,9 @@
   import { readUsersResponse, type UserSummary } from "../../../lib/users";
   import type { Pagination } from "../../../type";
   import PaginationComponent from "../atoms/Pagination.svelte";
+  import UsersAnalytics from "./UsersAnalytics.svelte";
 
+  let selectedUser = $state<UserSummary | null>(null);
   let users = $state<UserSummary[]>([]);
   let pagination = $state<Pagination | null>(null);
   let loading = $state(true);
@@ -85,6 +87,7 @@
               <th scope="col" class="p-3 font-black">Vendeur</th>
               <th scope="col" class="p-3 text-right font-black whitespace-nowrap">Articles en vente</th>
               <th scope="col" class="p-3 text-right font-black">Achats</th>
+              <th scope="col" class="p-3 font-black">Navigation</th>
             </tr>
           </thead>
           <tbody>
@@ -100,6 +103,12 @@
                 <td class="p-3">{user.is_seller ? "Oui" : "Non"}</td>
                 <td class="p-3 text-right font-bold">{user.active_articles}</td>
                 <td class="p-3 text-right font-bold">{user.purchases}</td>
+                <td class="p-3">
+                  <button type="button" class="retro-btn bg-white px-3 py-2 text-xs" onclick={() => {
+                    selectedUser = user;
+                    document.getElementById("users-analytics")?.scrollIntoView({ behavior: "smooth" });
+                  }}>Sessions</button>
+                </td>
               </tr>
             {/each}
           </tbody>
@@ -117,3 +126,4 @@
     <p>Newsletter : inscriptions enregistrées depuis la mise en place du suivi, reliées aux emails vérifiés du compte. Les anciennes inscriptions non enregistrées ne sont pas récupérables.</p>
   </div>
 </section>
+<UsersAnalytics {selectedUser} />

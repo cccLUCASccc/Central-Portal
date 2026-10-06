@@ -45,6 +45,32 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 
 ## Users
 
+Sous le tableau, la section **Navigation · PostHog** présente huit KPI sur
+7 ou 30 jours. Le bouton **Sessions** d'une ligne ouvre les vingt dernières
+sessions publiques rattachées à ce compte et un lien vers leur replay.
+Les relectures restent privées dans PostHog Europe et nécessitent l'accès au
+projet. Les sessions anonymes ne sont pas systématiquement reliées aux comptes.
+Les indicateurs couvrent exclusivement le trafic consenti depuis l'installation,
+pas l'historique ni l'intégralité des actions privées.
+Les paiements initiés ne représentent pas des ventes payées.
+
+Trois graphiques quotidiens sous les cartes affichent visiteurs/sessions,
+vues d'articles/ajouts au panier/paiements initiés et favoris/newsletter.
+Les courbes SVG sont responsives, sans dépendance supplémentaire, avec légende,
+valeurs exactes par date et tableau accessible. Le sélecteur 7/30 jours et
+l'actualisation pilotent les trois graphiques. Une erreur quotidienne est
+affichée séparément pour préserver les KPI et le tableau Users.
+Les dates sont en UTC ; la fenêtre glissante couvre 8/31 dates, avec premier
+et dernier jour partiels. Les uniques quotidiens ne doivent pas être additionnés
+pour retrouver les uniques de toute la période. Déployer aussi Central-API
+pour activer la nouvelle route `/api/users/analytics/daily`.
+
+Aucune clé PostHog n'est nécessaire dans le portail : définir les deux secrets
+documentés dans [Central-API](../Central-API/README.md) et le jeton public sur
+Daisy Brocante. Les erreurs de configuration et les indisponibilités sont
+affichées dans un bloc, sans masquer le tableau des utilisateurs.
+Tests : `bun test src/lib/analytics.test.ts src/lib/users.test.ts`.
+
 La carte « Users » du tableau de bord et le menu ouvrent `/users`. Le tableau
 affiche les comptes du site, leur email, leur inscription newsletter, les
 indicateurs client/vendeur, les articles actifs approuvés et le nombre de
