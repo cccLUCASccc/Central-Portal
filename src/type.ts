@@ -52,13 +52,18 @@ export interface Antiquite {
     subcategories?: Subcategory[];
 }
 
-export interface Livraison {
-    id?: number;
-    providername: string;
+export interface DeliveryRates {
     pricesmall: number | null;
     pricemedium: number | null;
     pricelarge: number | null;
     pricextralarge: number | null;
+}
+
+export interface Livraison extends DeliveryRates {
+    id?: number;
+    providername: string;
+    countries: string[] | null;
+    country_rates?: Record<string, DeliveryRates> | null;
 }
 
 export interface Prospect {

@@ -47,6 +47,8 @@
         total_amount: number;
         delivery_price: number;
         delivery_provider: string;
+        delivery_cost: number;
+        delivery_provider_id: number | null;
         status: string;
         created_at: string;
         items: OrderItem[];
@@ -413,7 +415,8 @@
                                 <!-- Transporteur -->
                                 <td class="p-3 border-r border-black">
                                     <div class="font-black text-xs">{order.delivery_provider || "Standard"}</div>
-                                    <div class="text-[10px] font-mono text-black/60">Frais: {order.delivery_price?.toFixed(2)} €</div>
+                                    <div class="text-[10px] font-mono text-black/60">Client : {order.delivery_price?.toFixed(2)} €</div>
+                                    <div class="text-[10px] font-mono text-black/60">Coût plateforme : {order.delivery_provider_id ? `${order.delivery_cost.toFixed(2)} €` : 'Non renseigné'}</div>
                                 </td>
 
                                 <!-- Statut Logistique 3 Étapes -->
@@ -539,6 +542,10 @@
                     <div class="flex justify-between py-0.5">
                         <span class="text-black/70 font-bold">Frais de port ({selectedOrder.delivery_provider}) :</span>
                         <span class="font-mono font-black text-black">{selectedOrder.delivery_price.toFixed(2)} €</span>
+                    </div>
+                    <div class="flex justify-between py-0.5">
+                        <span class="text-black/70 font-bold">Coût livraison pris en charge par Daisy :</span>
+                        <span class="font-mono font-black text-black">{selectedOrder.delivery_provider_id ? `${selectedOrder.delivery_cost.toFixed(2)} €` : 'Non renseigné'}</span>
                     </div>
                     <div class="flex justify-between py-1 border-t-2 border-black font-black text-sm">
                         <span>Total Payé :</span>

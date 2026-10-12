@@ -43,6 +43,28 @@ All commands are run from the root of the project, from a terminal:
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
 # Central-Portal
 
+## Livraison automatique
+
+Dans Logistique, renseigner pour chaque transporteur ses pays desservis et son
+coût par objet **pour chaque pays** et chaque gabarit S/M/L/XL.
+Cliquer sur Modifier, cocher les pays desservis, puis compléter la ligne
+Belgique, France, etc. dans la grille et enregistrer le transporteur.
+Un tarif vide ou nul exclut ce gabarit uniquement pour le pays correspondant ;
+aucun pays sélectionné désactive le transporteur pour les nouvelles commandes.
+Les transporteurs existants doivent donc être complétés après migration.
+Configurer uniquement des services à domicile/sur rendez-vous, sans point relais.
+
+L'API attribue un seul transporteur à la commande, compatible avec tous les
+objets et le pays de l'adresse saisie dans Stripe. Elle choisit le coût total
+le plus faible (somme des coûts par objet aux tarifs du pays de livraison).
+Les anciens tarifs communs sont préremplis lors de l'édition pour conserver
+la configuration existante ; les nouvelles grilles pays sont stockées dans
+`country_rates`. Déployer l'API avec la migration avant le portail.
+Une modification ne change ni les commandes ni les sessions Stripe déjà créées.
+Le gestionnaire de commandes distingue les frais client (zéro pour les nouvelles
+sessions) du coût de livraison pris en charge par Daisy.
+La sélection ne réserve pas de transport ni n'achète d'étiquette transporteur.
+
 ## Users
 
 La carte **PostHog** du tableau de bord et le menu ouvrent `/posthog`, une page
