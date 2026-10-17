@@ -4,6 +4,7 @@
     import type { Antiquite, Subcategory } from "../../../type";
     import { apiFetch } from "../../../lib/api";
     import QRCode from 'qrcode';
+    import { isPublished, siteItemUrl } from "../../../lib/siteLink";
     import { untrack, onMount } from "svelte";
 
     interface Props {
@@ -76,9 +77,8 @@
     let qrCodeDataUrl = $state("");
 
     $effect(() => {
-        if (antiquite.id) {
-            const currentUrl = window.location.origin;
-            const url = `${currentUrl}/inventoryt5hr4hr85g48412r/${antiquite.id}`;
+        if (antiquite.id && isPublished({ name: antiquite.name, status: antiquite.status, approval_status: antiquite.approval_status })) {
+            const url = siteItemUrl({ name: antiquite.name });
             QRCode.toDataURL(url, { margin: 1, width: 200 })
                 .then(url => {
                     qrCodeDataUrl = url;
@@ -468,12 +468,18 @@
                     {/if}
                     <div>
                         <span class="retro-badge bg-black text-white text-[9px]">TAGGING</span>
-                        <h4 class="text-sm font-black uppercase text-black mt-1">QR Code d'Inventaire</h4>
-                        <p class="text-xs text-black/70">Scannable sur smartphone pour ouvrir directement la fiche en atelier.</p>
+                        <h4 class="text-sm font-black uppercase text-black mt-1">QR Code du site</h4>
+                        <p class="text-xs text-black/70">
+                            {#if isPublished({ name: antiquite.name, status: antiquite.status, approval_status: antiquite.approval_status })}
+                                Scannable sur smartphone : ouvre la page de l'objet sur daisybrocante.com.
+                            {:else}
+                                Indisponible : l'objet n'est pas publié sur le site.
+                            {/if}
+                        </p>
                     </div>
                 </div>
 
-                <button onclick={printQRCode} type="button" class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] font-black flex items-center gap-1.5">
+                <button onclick={printQRCode} type="button" disabled={!qrCodeDataUrl} class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] font-black flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-[16px]">print</span>
                     <span>Imprimer l'Étiquette</span>
                 </button>
