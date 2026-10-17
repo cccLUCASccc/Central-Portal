@@ -43,8 +43,7 @@
 
     let shops = $state<Shop[]>([]);
     let isLoading = $state(true);
-    let activeFilter = $state<'pending' | 'approved' | 'rejected' | 'all' | 'pending_items'>('approved');
-    let searchQuery = $state("");
+    let activeFilter = $state<'pending' | 'approved' | 'rejected'>('approved');
 
     // Modal de rejet
     let rejectingShop = $state<Shop | null>(null);
@@ -296,18 +295,6 @@
                 if (shopState(s) !== 'active') return false;
             } else if (activeFilter === 'rejected') {
                 if (shopState(s) !== 'disabled') return false;
-            } else if (activeFilter === 'pending_items') {
-                if (!s.pending_items_count || s.pending_items_count <= 0) return false;
-            }
-
-            // Filtre par recherche
-            if (searchQuery.trim() !== "") {
-                const q = searchQuery.toLowerCase();
-                const matchName = s.name?.toLowerCase().includes(q);
-                const matchCity = s.city?.toLowerCase().includes(q);
-                const matchHolder = s.account_holder?.toLowerCase().includes(q);
-                const matchIBAN = s.iban?.toLowerCase().includes(q);
-                return matchName || matchCity || matchHolder || matchIBAN;
             }
 
             return true;
@@ -317,7 +304,6 @@
     let pendingCount = $derived(shops.filter(s => shopState(s) === 'pending').length);
     let approvedCount = $derived(shops.filter(s => shopState(s) === 'active').length);
     let rejectedCount = $derived(shops.filter(s => shopState(s) === 'disabled').length);
-    let pendingItemsShopsCount = $derived(shops.filter(s => s.pending_items_count && s.pending_items_count > 0).length);
 </script>
 
 <div class="space-y-6 font-mono">
@@ -355,61 +341,6 @@
         </button>
     </div>
 
-    <!-- Barre d'actions & Filtres -->
-    <div class="bg-white border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        
-        <!-- Onglets Filtres -->
-        <div class="flex flex-wrap gap-2">
-            <button 
-                onclick={() => activeFilter = 'pending'}
-                class="retro-btn text-xs font-black {activeFilter === 'pending' ? 'bg-[#FFD166] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
-            >
-                <span class="material-symbols-outlined text-[14px]">hourglass_empty</span>
-                <span>En Attente ({pendingCount})</span>
-            </button>
-            <button 
-                onclick={() => activeFilter = 'pending_items'}
-                class="retro-btn text-xs font-black {activeFilter === 'pending_items' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1.5"
-            >
-                <span class="w-2 h-2 rounded-full bg-red-600 inline-block animate-pulse"></span>
-                <span>Objets à vérifier ({pendingItemsShopsCount})</span>
-            </button>
-            <button 
-                onclick={() => activeFilter = 'approved'}
-                class="retro-btn text-xs font-black {activeFilter === 'approved' ? 'bg-[#86E2D5] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
-            >
-                <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                <span>Actives ({approvedCount})</span>
-            </button>
-            <button 
-                onclick={() => activeFilter = 'rejected'}
-                class="retro-btn text-xs font-black {activeFilter === 'rejected' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
-            >
-                <span class="material-symbols-outlined text-[14px]">warning</span>
-                <span>Désactivées ({rejectedCount})</span>
-            </button>
-            <button 
-                onclick={() => activeFilter = 'all'}
-                class="retro-btn text-xs font-black {activeFilter === 'all' ? 'bg-black text-white shadow-[2px_2px_0px_0px_#000]' : 'bg-white'}"
-            >
-                Toutes ({shops.length})
-            </button>
-        </div>
-
-        <!-- Recherche -->
-        <div class="relative min-w-[240px]">
-            <input 
-                type="text" 
-                bind:value={searchQuery}
-                placeholder="Rechercher nom, ville, IBAN..."
-                class="retro-input text-xs w-full pl-8"
-            />
-            <span class="absolute left-2.5 top-2.5 text-black/40 flex items-center">
-                <span class="material-symbols-outlined text-[16px]">search</span>
-            </span>
-        </div>
-    </div>
-
     <!-- Liste des Boutiques -->
     {#if isLoading}
         <div class="bg-white border-3 border-black p-12 text-center shadow-[4px_4px_0px_0px_#000] space-y-3">
@@ -424,67 +355,69 @@
     {:else}
         <div class="grid grid-cols-1 gap-6">
             {#each filteredShops as s}
-                <div class="bg-white border-3 border-black shadow-[6px_6px_0px_0px_#000] p-6 space-y-6">
+                <article class="overflow-hidden border border-slate-300 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span>Daisy Brocante <span class="mx-1 text-slate-300">/</span> Dossier vendeur</span>
+                        <span class="font-mono tracking-normal">Référence boutique : DB-{s.id}</span>
+                    </div>
                     {#if s.banner_url}
-                        <img src={s.banner_url} alt={`Bannière de ${s.name}`} class="h-36 w-full border-2 border-black object-cover" loading="lazy" />
+                        <img src={s.banner_url} alt={`Bannière de ${s.name}`} class="h-36 w-full border-0 border-b border-slate-200 object-cover" loading="lazy" />
                     {/if}
                     
                     <!-- Ligne 1 : En-tête Boutique & Statuts -->
-                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-2 border-black pb-4">
+                    <div class="flex flex-col gap-5 border-b border-slate-200 px-5 py-5 lg:flex-row lg:items-center lg:justify-between">
                         <div class="flex flex-col items-start gap-3">
                             {#if s.pending_items_count && s.pending_items_count > 0}
-                                <div class="bg-[#FFAEC1] border-2 border-black shadow-[2px_2px_0px_0px_#000] px-2 py-1 text-[10px] font-black uppercase text-black flex items-center gap-2">
+                                <div class="flex items-center gap-2 border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-bold uppercase text-rose-800">
                                     <span class="relative flex h-2 w-2">
-                                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                      <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                      <span class="relative inline-flex h-2 w-2 rounded-full bg-rose-600"></span>
                                     </span>
                                     {s.pending_items_count} objet{s.pending_items_count > 1 ? 's' : ''} en attente
                                 </div>
                             {/if}
                             <div class="flex items-center gap-4">
-                            <div class="w-16 h-16 border-2 border-black bg-[#EDE9DF] overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_#000]">
+                            <div class="h-20 w-20 flex-shrink-0 overflow-hidden border border-slate-300 bg-slate-100">
                                 {#if s.avatar_url}
-                                    <img src={s.avatar_url} alt={s.name} class="w-full h-full object-cover" />
+                                    <img src={s.avatar_url} alt={`Logo de ${s.name}`} class="h-full w-full object-cover" loading="lazy" />
                                 {:else}
                                     <div class="w-full h-full flex items-center justify-center text-xl font-bold">
-                                        <span class="material-symbols-outlined text-2xl text-black/40">storefront</span>
+                                        <span class="material-symbols-outlined text-2xl text-slate-400">storefront</span>
                                     </div>
                                 {/if}
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     {#if s.approval_status === 'approved' && s.is_approved}
-                                        <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black">VALIDÉE</span>
+                                        <span class="border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-emerald-800">Validée</span>
                                     {:else if s.approval_status === 'rejected'}
-                                        <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black">REJETÉE</span>
+                                        <span class="border border-rose-200 bg-rose-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-rose-800">Rejetée</span>
                                     {:else if s.approval_status === 'suspended'}
-                                        <span class="retro-badge bg-black text-white text-[9px] font-black">SUSPENDUE</span>
+                                        <span class="border border-slate-300 bg-slate-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">Suspendue</span>
                                     {:else}
-                                        <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black animate-pulse">EN ATTENTE DE VALIDATION</span>
+                                        <span class="border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-800">En attente de validation</span>
                                     {/if}
 
-                                    <span class="retro-badge bg-[#EDE9DF] text-black text-[9px] font-bold">
+                                    <span class="border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-600">
                                         {s.seller_type === 'societe' ? 'SOCIÉTÉ' : 'PARTICULIER'}
                                     </span>
 
-                                    <span class="retro-badge bg-[#BFD7FE] text-black text-[9px]">
+                                    <span class="border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-600">
                                         FORMULE {s.type_abonnement?.toUpperCase()}
                                     </span>
                                 </div>
 
-                                <h3 class="text-xl font-black uppercase text-black mt-1">{s.name}</h3>
-                                <p class="text-xs text-black/60 flex items-center gap-1 flex-wrap">
-                                    <span>Slug: <code class="bg-[#F6F4EE] px-1 border border-black/20">{s.slug}</code></span>
-                                    <span>•</span>
-                                    <span class="material-symbols-outlined text-[14px]">location_on</span>
-                                    <strong>{s.address || (s.street ? `${s.street}, ${s.postal_code} ${s.city} (${s.country || 'BE'})` : s.city || 'Non renseignée')}</strong>
+                                <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{s.name}</h3>
+                                <p class="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
+                                    <span>{s.address || (s.street ? `${s.street}, ${s.postal_code} ${s.city} (${s.country || 'BE'})` : s.city || 'Adresse non renseignée')}</span>
+                                    <span class="text-slate-300">|</span>
+                                    <span class="font-mono text-slate-500">/{s.slug}</span>
                                 </p>
                             </div>
                         </div>
                         </div>
 
                         <!-- Actions Rapides de Modération -->
-                        <div class="flex items-center gap-2 flex-wrap self-end lg:self-center">
+                        <div class="flex flex-wrap items-center gap-2 self-end lg:self-center">
                             <button 
                                 onclick={() => editingShop = JSON.parse(JSON.stringify(s))}
                                 class="retro-btn bg-[#FFD166] hover:bg-[#F0C055] text-xs font-black py-2 px-3 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
@@ -541,122 +474,133 @@
                     </div>
 
                     <!-- Ligne 2 : Détails Bancaires & Fiscaux -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="grid grid-cols-1 gap-0 divide-y divide-slate-200 text-xs md:grid-cols-3 md:divide-x md:divide-y-0">
                         <!-- Bloc Coordonnées Bancaires Stripe Connect -->
-                        <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">credit_card</span>
+                        <div class="space-y-3 p-5">
+                            <span class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                                <span class="material-symbols-outlined text-[16px]">credit_card</span>
                                 <span>Paiements Stripe Connect</span>
                             </span>
                             <div>
-                                <span class="text-black/60 block text-[10px]">Statut Reversements :</span>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Statut des reversements</span>
                                 {#if s.stripe_connect_payouts_enabled}
-                                    <span class="retro-badge bg-[#86E2D5] text-black text-[9px] font-black inline-flex items-center gap-1 mt-0.5">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span> ACTIF & VÉRIFIÉ
+                                    <span class="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase text-emerald-800">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-700"></span> Actif et vérifié
                                     </span>
                                 {:else if s.stripe_connect_account_id}
-                                    <span class="retro-badge bg-[#FFD166] text-black text-[9px] font-black inline-flex items-center gap-1 mt-0.5">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> ONBOARDING EN ATTENTE
+                                    <span class="inline-flex items-center gap-1.5 border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase text-amber-800">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-amber-600"></span> Configuration en attente
                                     </span>
                                 {:else}
-                                    <span class="retro-badge bg-[#FFAEC1] text-black text-[9px] font-black inline-flex items-center gap-1 mt-0.5">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span> NON CONFIGURÉ
+                                    <span class="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2 py-1 text-[9px] font-bold uppercase text-slate-600">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Non configuré
                                     </span>
                                 {/if}
                             </div>
                             <div>
-                                <span class="text-black/60 block text-[10px]">Compte Stripe ID :</span>
-                                <code class="font-mono bg-white px-1.5 py-0.5 border border-black block mt-0.5 font-bold text-[10px] truncate">{s.stripe_connect_account_id || 'Aucun compte associé'}</code>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Compte Stripe Connect</span>
+                                <code class="block break-all border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-[10px] text-slate-800">{s.stripe_connect_account_id || 'Aucun compte associé'}</code>
                             </div>
                             {#if s.stripe_customer_id || s.stripe_subscription_id}
                                 <div>
-                                    <span class="text-black/60 block text-[10px]">Client Stripe :</span>
-                                    <code class="block truncate font-mono text-[10px]">{s.stripe_customer_id || '—'}</code>
+                                    <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Client Stripe</span>
+                                    <code class="block break-all font-mono text-[10px] text-slate-700">{s.stripe_customer_id || '—'}</code>
                                 </div>
                                 <div>
-                                    <span class="text-black/60 block text-[10px]">Abonnement Stripe :</span>
-                                    <code class="block truncate font-mono text-[10px]">{s.stripe_subscription_id || '—'}</code>
+                                    <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Abonnement Stripe</span>
+                                    <code class="block break-all font-mono text-[10px] text-slate-700">{s.stripe_subscription_id || '—'}</code>
                                 </div>
                             {/if}
                             <div>
-                                <span class="text-black/60 block text-[10px]">Détails validés :</span>
-                                <strong class="font-mono text-[10px]">{s.stripe_connect_details_submitted ? 'Soumis' : 'Incomplet'}</strong>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Dossier Stripe</span>
+                                <strong class="font-medium text-slate-800">{s.stripe_connect_details_submitted ? 'Informations soumises' : 'Informations incomplètes'}</strong>
+                            </div>
+                            <div class="border-t border-slate-100 pt-3">
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">IBAN / BIC de versement</span>
+                                {#if s.iban || s.bic}
+                                    <code class="block break-all font-mono text-[10px] text-slate-800">{s.iban || 'IBAN non renseigné'}{s.bic ? ` · ${s.bic}` : ''}</code>
+                                {:else}
+                                    <p class="text-[10px] leading-relaxed text-slate-500">Aucune coordonnée bancaire enregistrée sur le profil Daisy Brocante.</p>
+                                {/if}
                             </div>
                             <div>
-                                <span class="text-black/60 block text-[10px]">IBAN / BIC :</span>
-                                <code class="block break-all font-mono text-[10px]">{s.iban || 'IBAN absent'}{s.bic ? ` · ${s.bic}` : ''}</code>
-                            </div>
-                            <div>
-                                <span class="text-black/60 block text-[10px]">Titulaire du compte :</span>
-                                <strong class="block text-[10px]">{s.account_holder || 'Non renseigné'}</strong>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Titulaire du compte</span>
+                                <strong class="block font-medium text-slate-800">{s.account_holder || 'Non renseigné'}</strong>
                             </div>
                         </div>
 
                         <!-- Bloc Juridique & Formule -->
-                        <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">description</span>
+                        <div class="space-y-3 p-5">
+                            <span class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                                <span class="material-symbols-outlined text-[16px]">description</span>
                                 <span>Données Administratives</span>
                             </span>
                             <div>
-                                <span class="text-black/60 block text-[10px]">Statut Vendeur :</span>
-                                <strong class="uppercase">{s.seller_type}</strong>
-                            </div>
-                            {#if s.seller_type === 'societe'}
-                                <div>
-                                    <span class="text-black/60 block text-[10px]">N° TVA / Entreprise :</span>
-                                    <strong class="font-mono bg-white px-1 border border-black">{s.tax_number || 'Non renseigné'}</strong>
-                                </div>
-                            {/if}
-                            <div>
-                                <span class="text-black/60 block text-[10px]">Email :</span>
-                                <strong class="text-black text-xs block">{s.email || 'Non trouvé'}</strong>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Type de vendeur</span>
+                                <strong class="font-medium uppercase text-slate-800">{s.seller_type || 'Non renseigné'}</strong>
                             </div>
                             <div>
-                                <span class="text-black/60 block text-[10px]">ID Clerk :</span>
-                                <code class="text-[10px] text-black/60 truncate block">{s.user_id}</code>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">N° TVA / entreprise</span>
+                                <strong class="block break-all font-mono font-medium text-slate-800">{s.tax_number || 'Non renseigné'}</strong>
+                            </div>
+                            <div>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Email de contact</span>
+                                {#if s.email}
+                                    <a class="block break-all font-medium text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950" href={`mailto:${s.email}`}>{s.email}</a>
+                                {:else}
+                                    <span class="text-slate-500">Email non disponible</span>
+                                {/if}
+                            </div>
+                            <div>
+                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Identifiant vendeur</span>
+                                <code class="block break-all font-mono text-[10px] text-slate-600">{s.user_id || 'Non renseigné'}</code>
                             </div>
                         </div>
 
                         <!-- Bloc Activité & Statistiques -->
-                        <div class="p-4 bg-[#F6F4EE] border-2 border-black space-y-2">
-                            <span class="text-[10px] font-black uppercase text-black/60 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">bar_chart</span>
+                        <div class="space-y-3 p-5">
+                            <span class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                                <span class="material-symbols-outlined text-[16px]">bar_chart</span>
                                 <span>Activité Catalogue</span>
                             </span>
-                            <div class="flex justify-between border-b border-black/10 pb-1">
-                                <span class="text-black/60">Annonces actives :</span>
-                                <strong class="font-black">{s.active_items_count ?? 0}</strong>
+                            <div class="flex justify-between border-b border-slate-100 pb-2">
+                                <span class="text-slate-500">Annonces actives</span>
+                                <strong class="font-semibold text-slate-900">{s.active_items_count ?? 0}</strong>
                             </div>
-                            <div class="flex justify-between border-b border-black/10 pb-1">
-                                <span class="text-black/60">Pièces vendues :</span>
-                                <strong class="font-black">{s.sold_items_count ?? 0}</strong>
+                            <div class="flex justify-between border-b border-slate-100 pb-2">
+                                <span class="text-slate-500">Pièces vendues</span>
+                                <strong class="font-semibold text-slate-900">{s.sold_items_count ?? 0}</strong>
                             </div>
-                            <div class="flex justify-between pt-1">
-                                <span class="text-black/60">Date d'inscription :</span>
-                                <span class="text-[11px] font-bold">{new Date(s.created_at).toLocaleDateString('fr-FR')}</span>
+                            <div class="flex justify-between gap-3 pt-1">
+                                <span class="text-slate-500">Inscription</span>
+                                <span class="text-right font-medium text-slate-800">{new Date(s.created_at).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            <div class="flex justify-between gap-3">
+                                <span class="text-slate-500">Objets à vérifier</span>
+                                <strong class="font-semibold text-slate-900">{s.pending_items_count ?? 0}</strong>
                             </div>
                         </div>
                     </div>
 
                     <!-- Motif du rejet (si applicable) -->
                     {#if s.rejection_reason}
-                        <div class="p-3 bg-[#FFAEC1] border-2 border-black text-xs space-y-1">
-                            <strong class="uppercase block font-black flex items-center gap-1">
+                        <div class="m-5 border border-rose-200 bg-rose-50 p-4 text-xs text-rose-950">
+                            <strong class="mb-1 flex items-center gap-1 font-semibold uppercase">
                                 <span class="material-symbols-outlined text-[14px]">warning</span>
                                 <span>Motif du refus communiqué au vendeur :</span>
                             </strong>
-                            <p class="text-black/90">{s.rejection_reason}</p>
+                            <p>{s.rejection_reason}</p>
                         </div>
                     {/if}
 
                     <!-- Description de la boutique -->
                     {#if s.description}
-                        <div class="text-xs text-black/75 bg-white border border-black/20 p-3 italic">
-                            "{s.description}"
+                        <div class="border-t border-slate-200 bg-slate-50 px-5 py-4 text-xs leading-relaxed text-slate-600">
+                            <span class="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Présentation de la boutique</span>
+                            <p>{s.description}</p>
                         </div>
                     {/if}
-                </div>
+                </article>
             {/each}
         </div>
     {/if}
@@ -1084,4 +1028,3 @@
         text-transform: uppercase;
     }
 </style>
-
