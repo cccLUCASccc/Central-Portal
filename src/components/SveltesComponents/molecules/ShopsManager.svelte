@@ -43,7 +43,7 @@
 
     let shops = $state<Shop[]>([]);
     let isLoading = $state(true);
-    let activeFilter = $state<'pending' | 'approved' | 'rejected' | 'all' | 'pending_items'>('pending');
+    let activeFilter = $state<'pending' | 'approved' | 'rejected' | 'all' | 'pending_items'>('approved');
     let searchQuery = $state("");
 
     // Modal de rejet
@@ -280,15 +280,22 @@
         }
     }
 
+    // États exclusifs : désactivée > en attente > active
+    function shopState(s: Shop): 'active' | 'pending' | 'disabled' {
+        if (s.approval_status === 'rejected' || s.approval_status === 'suspended' || (s.approval_status === 'approved' && !s.is_active)) return 'disabled';
+        if (s.approval_status === 'approved' && s.is_approved) return 'active';
+        return 'pending';
+    }
+
     let filteredShops = $derived(
         shops.filter(s => {
             // Filtre par statut
             if (activeFilter === 'pending') {
-                if (s.approval_status !== 'pending' && s.is_approved) return false;
+                if (shopState(s) !== 'pending') return false;
             } else if (activeFilter === 'approved') {
-                if (s.approval_status !== 'approved' || !s.is_approved) return false;
+                if (shopState(s) !== 'active') return false;
             } else if (activeFilter === 'rejected') {
-                if (s.approval_status !== 'rejected' && s.approval_status !== 'suspended' && s.is_active) return false;
+                if (shopState(s) !== 'disabled') return false;
             } else if (activeFilter === 'pending_items') {
                 if (!s.pending_items_count || s.pending_items_count <= 0) return false;
             }
@@ -307,9 +314,9 @@
         })
     );
 
-    let pendingCount = $derived(shops.filter(s => s.approval_status === 'pending' || !s.is_approved).length);
-    let approvedCount = $derived(shops.filter(s => s.approval_status === 'approved' && s.is_approved).length);
-    let rejectedCount = $derived(shops.filter(s => s.approval_status === 'rejected' || s.approval_status === 'suspended').length);
+    let pendingCount = $derived(shops.filter(s => shopState(s) === 'pending').length);
+    let approvedCount = $derived(shops.filter(s => shopState(s) === 'active').length);
+    let rejectedCount = $derived(shops.filter(s => shopState(s) === 'disabled').length);
     let pendingItemsShopsCount = $derived(shops.filter(s => s.pending_items_count && s.pending_items_count > 0).length);
 </script>
 
@@ -330,17 +337,22 @@
                 Validez les demandes d'ouverture de boutique, vérifiez les coordonnées bancaires (IBAN) pour les reversements et contrôlez les quotas d'annonces.
             </p>
         </div>
+    </div>
 
-        <div class="flex items-center gap-3">
-            <div class="bg-white border-2 border-black p-4 shadow-[3px_3px_0px_0px_#000] text-center min-w-[120px]">
-                <span class="text-[10px] uppercase font-bold text-black/60 block">En attente</span>
-                <span class="text-2xl font-black {pendingCount > 0 ? 'text-[#D1495B] animate-pulse' : 'text-black'}">{pendingCount}</span>
-            </div>
-            <div class="bg-[#86E2D5] border-2 border-black p-4 shadow-[3px_3px_0px_0px_#000] text-center min-w-[120px]">
-                <span class="text-[10px] uppercase font-bold text-black/60 block">Validées</span>
-                <span class="text-2xl font-black text-black">{approvedCount}</span>
-            </div>
-        </div>
+    <!-- KPIs boutiques -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <button onclick={() => activeFilter = 'approved'} class="bg-[#86E2D5] border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000] text-left cursor-pointer">
+            <span class="text-[10px] uppercase font-bold text-black/60 block">Boutiques actives</span>
+            <span class="text-3xl font-black text-black">{approvedCount}</span>
+        </button>
+        <button onclick={() => activeFilter = 'pending'} class="bg-[#FFD166] border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000] text-left cursor-pointer">
+            <span class="text-[10px] uppercase font-bold text-black/60 block">En attente</span>
+            <span class="text-3xl font-black text-black">{pendingCount}</span>
+        </button>
+        <button onclick={() => activeFilter = 'rejected'} class="bg-[#FFAEC1] border-3 border-black p-4 shadow-[4px_4px_0px_0px_#000] text-left cursor-pointer">
+            <span class="text-[10px] uppercase font-bold text-black/60 block">Désactivées</span>
+            <span class="text-3xl font-black text-black">{rejectedCount}</span>
+        </button>
     </div>
 
     <!-- Barre d'actions & Filtres -->
@@ -367,14 +379,14 @@
                 class="retro-btn text-xs font-black {activeFilter === 'approved' ? 'bg-[#86E2D5] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
             >
                 <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                <span>Validées ({approvedCount})</span>
+                <span>Actives ({approvedCount})</span>
             </button>
             <button 
                 onclick={() => activeFilter = 'rejected'}
                 class="retro-btn text-xs font-black {activeFilter === 'rejected' ? 'bg-[#FFAEC1] shadow-[2px_2px_0px_0px_#000]' : 'bg-white'} flex items-center gap-1"
             >
                 <span class="material-symbols-outlined text-[14px]">warning</span>
-                <span>Refusées / Suspendues ({rejectedCount})</span>
+                <span>Désactivées ({rejectedCount})</span>
             </button>
             <button 
                 onclick={() => activeFilter = 'all'}
