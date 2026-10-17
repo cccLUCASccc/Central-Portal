@@ -96,6 +96,27 @@
         }
     }
     let rejectionReason = $state("");
+
+    // Horaires saisis par le vendeur (JSON structuré côté boutique, ou ancien texte libre)
+    const HOUR_DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    function formatShopHours(raw: string | undefined): string[] {
+        const text = (raw || "").trim();
+        if (!text) return [];
+        try {
+            const data = JSON.parse(text);
+            if (data?.v === 1 && Array.isArray(data.days)) {
+                const lines = data.days.map((d: any, i: number) => {
+                    if (d?.mode === "open") return `${HOUR_DAYS[i]} : ${(d.slots || []).map((s: any) => `${s.from} – ${s.to}`).join(" et ")}`;
+                    return `${HOUR_DAYS[i]} : ${d?.mode === "appointment" ? "Sur rendez-vous" : "Fermé"}`;
+                });
+                if (data.note) lines.push(data.note);
+                return lines;
+            }
+        } catch {
+            // ancien texte libre
+        }
+        return [text];
+    }
     // 'changes' = demande de corrections (dossier conservé), 'reject' = refus définitif (Stripe purgé, réinscription complète)
     let reviewMode = $state<'reject' | 'changes'>('reject');
     let isProcessing = $state(false);
@@ -703,7 +724,16 @@
                         <label class="edit-shop-field">Formule<select bind:value={editingShop.type_abonnement}><option value="tier1">Tier 1</option><option value="tier2">Tier 2</option><option value="tier3">Tier 3</option><option value="tier4">Tier 4</option></select></label>
                         <label class="flex items-center gap-3 border-2 border-black p-3 text-xs font-bold"><input type="checkbox" bind:checked={editingShop.abonnement_actif} /> Abonnement actif</label>
                         <label class="edit-shop-field sm:col-span-2">Histoire<textarea rows="3" bind:value={editingShop.history}></textarea></label>
-                        <label class="edit-shop-field sm:col-span-2">Horaires<textarea rows="2" bind:value={editingShop.hours}></textarea></label>
+                        <div class="edit-shop-field sm:col-span-2">
+                            <span>Horaires (modifiables par le vendeur)</span>
+                            {#if formatShopHours(editingShop.hours).length}
+                                <ul class="border border-black/20 bg-[#F6F4EE] p-2 text-xs font-normal">
+                                    {#each formatShopHours(editingShop.hours) as line}<li>{line}</li>{/each}
+                                </ul>
+                            {:else}
+                                <p class="border border-black/20 bg-[#F6F4EE] p-2 text-xs font-normal text-black/60">Non renseignés</p>
+                            {/if}
+                        </div>
                         <label class="edit-shop-field sm:col-span-2">Liens<textarea rows="2" bind:value={editingShop.links}></textarea></label>
                     </div>
                     <div class="mt-5 flex justify-end gap-3 border-t-2 border-black pt-4">
