@@ -20,6 +20,7 @@
         account_holder?: string;
         seller_type: string;
         tax_number: string;
+        contact_email?: string;
         stripe_customer_id?: string;
         stripe_subscription_id?: string;
         stripe_connect_account_id?: string;
@@ -76,6 +77,7 @@
                     bic: editingShop.bic,
                     account_holder: editingShop.account_holder,
                     tax_number: editingShop.tax_number,
+                    contact_email: editingShop.contact_email ?? "",
                     type_abonnement: editingShop.type_abonnement,
                     abonnement_actif: editingShop.abonnement_actif
                 })
@@ -694,6 +696,7 @@
                         <label class="edit-shop-field">Ville<input bind:value={editingShop.city} /></label>
                         <label class="edit-shop-field">Pays<input bind:value={editingShop.country} /></label>
                         <label class="edit-shop-field">N° TVA / entreprise<input bind:value={editingShop.tax_number} /></label>
+                        <label class="edit-shop-field">Email de contact<input type="email" autocomplete="off" placeholder={editingShop.email || "Repris du compte Stripe"} bind:value={editingShop.contact_email} /></label>
                         <label class="edit-shop-field">Titulaire du compte<input bind:value={editingShop.account_holder} /></label>
                         <label class="edit-shop-field">IBAN<input autocomplete="off" bind:value={editingShop.iban} /></label>
                         <label class="edit-shop-field">BIC<input autocomplete="off" bind:value={editingShop.bic} /></label>
