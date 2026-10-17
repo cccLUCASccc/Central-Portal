@@ -39,6 +39,9 @@
         sold_items_count?: number;
         pending_items_count?: number;
         email?: string;
+        is_official?: boolean;
+        is_complete?: boolean;
+        missing_fields?: string[];
     }
 
     let shops = $state<Shop[]>([]);
@@ -228,7 +231,9 @@
             if (res.ok) {
                 await fetchShops();
             } else {
-                alert("Erreur lors de l'approbation.");
+                const err = await res.json().catch(() => null);
+                const missing: string[] = err?.missing_fields || [];
+                alert(`${err?.error || "Erreur lors de l'approbation."}${missing.length ? `\n\nÉléments manquants :\n- ${missing.join("\n- ")}` : ""}`);
             }
         } catch (e) {
             alert("Erreur de connexion.");
@@ -320,7 +325,7 @@
                 Modération & Gestion des Boutiques
             </h1>
             <p class="text-xs sm:text-sm text-black/80 font-medium max-w-2xl leading-relaxed">
-                Validez les demandes d'ouverture de boutique, vérifiez les coordonnées bancaires (IBAN) pour les reversements et contrôlez les quotas d'annonces.
+                Validez les demandes d'ouverture de boutique, vérifiez la complétude des dossiers (Stripe Connect, TVA, coordonnées) et contrôlez les quotas d'annonces.
             </p>
         </div>
     </div>
@@ -441,8 +446,9 @@
                             {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
                                 <button 
                                     onclick={() => approveShop(s.id)}
-                                    disabled={isProcessing}
-                                    class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
+                                    disabled={isProcessing || s.is_complete === false}
+                                    title={s.is_complete === false ? 'Dossier incomplet : validation impossible' : undefined}
+                                    class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <span class="material-symbols-outlined text-[16px]">check</span>
                                     <span>Valider la boutique</span>
@@ -473,6 +479,26 @@
                         </div>
                     </div>
 
+                    <!-- Contrôle de complétude du dossier -->
+                    {#if s.missing_fields && s.missing_fields.length > 0}
+                        <div class="border-b border-rose-200 bg-rose-50 px-5 py-3 text-xs text-rose-900">
+                            <strong class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                                <span class="material-symbols-outlined text-[16px]">report</span>
+                                Dossier incomplet — {s.missing_fields.length} élément{s.missing_fields.length > 1 ? 's' : ''} manquant{s.missing_fields.length > 1 ? 's' : ''}
+                            </strong>
+                            <ul class="mt-2 flex flex-wrap gap-1.5">
+                                {#each s.missing_fields as field}
+                                    <li class="border border-rose-200 bg-white px-2 py-0.5 text-[10px] font-semibold">{field}</li>
+                                {/each}
+                            </ul>
+                        </div>
+                    {:else if s.is_complete}
+                        <div class="flex items-center gap-1.5 border-b border-emerald-200 bg-emerald-50 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-800">
+                            <span class="material-symbols-outlined text-[16px]">task_alt</span>
+                            Dossier complet{s.is_official ? ' — boutique officielle Daisy Brocante' : ''}
+                        </div>
+                    {/if}
+
                     <!-- Ligne 2 : Détails Bancaires & Fiscaux -->
                     <div class="grid grid-cols-1 gap-0 divide-y divide-slate-200 text-xs md:grid-cols-3 md:divide-x md:divide-y-0">
                         <!-- Bloc Coordonnées Bancaires Stripe Connect -->
@@ -483,7 +509,11 @@
                             </span>
                             <div>
                                 <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Statut des reversements</span>
-                                {#if s.stripe_connect_payouts_enabled}
+                                {#if s.is_official}
+                                    <span class="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2 py-1 text-[9px] font-bold uppercase text-slate-600">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Non applicable — encaissement direct
+                                    </span>
+                                {:else if s.stripe_connect_payouts_enabled}
                                     <span class="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase text-emerald-800">
                                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-700"></span> Actif et vérifié
                                     </span>
@@ -513,20 +543,19 @@
                             {/if}
                             <div>
                                 <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Dossier Stripe</span>
-                                <strong class="font-medium text-slate-800">{s.stripe_connect_details_submitted ? 'Informations soumises' : 'Informations incomplètes'}</strong>
+                                <strong class="font-medium text-slate-800">{s.is_official ? 'Non applicable (boutique officielle)' : s.stripe_connect_details_submitted ? 'Informations soumises' : 'Informations incomplètes'}</strong>
                             </div>
-                            <div class="border-t border-slate-100 pt-3">
-                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">IBAN / BIC de versement</span>
-                                {#if s.iban || s.bic}
+                            {#if s.iban || s.bic || s.account_holder}
+                                <div class="border-t border-slate-100 pt-3">
+                                    <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">IBAN / BIC saisis par l'administration</span>
                                     <code class="block break-all font-mono text-[10px] text-slate-800">{s.iban || 'IBAN non renseigné'}{s.bic ? ` · ${s.bic}` : ''}</code>
-                                {:else}
-                                    <p class="text-[10px] leading-relaxed text-slate-500">Aucune coordonnée bancaire enregistrée sur le profil Daisy Brocante.</p>
-                                {/if}
-                            </div>
-                            <div>
-                                <span class="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Titulaire du compte</span>
-                                <strong class="block font-medium text-slate-800">{s.account_holder || 'Non renseigné'}</strong>
-                            </div>
+                                    {#if s.account_holder}
+                                        <span class="mt-1 block text-[10px] text-slate-600">Titulaire : {s.account_holder}</span>
+                                    {/if}
+                                </div>
+                            {:else}
+                                <p class="border-t border-slate-100 pt-3 text-[10px] leading-relaxed text-slate-500">Les coordonnées bancaires (IBAN) sont détenues par Stripe et ne sont pas stockées par Daisy Brocante.</p>
+                            {/if}
                         </div>
 
                         <!-- Bloc Juridique & Formule -->
