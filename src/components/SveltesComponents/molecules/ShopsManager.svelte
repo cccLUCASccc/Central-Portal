@@ -94,6 +94,8 @@
         }
     }
     let rejectionReason = $state("");
+    // 'changes' = demande de corrections (dossier conservé), 'reject' = refus définitif (Stripe purgé, réinscription complète)
+    let reviewMode = $state<'reject' | 'changes'>('reject');
     let isProcessing = $state(false);
 
     // Modal gestion de l'inventaire d'une boutique
@@ -247,16 +249,22 @@
         if (!rejectingShop) return;
         isProcessing = true;
         try {
-            const res = await apiFetch(`${PUBLIC_API_URL}/api/shops/${rejectingShop.id}/reject`, {
+            const endpoint = reviewMode === 'changes' ? 'request-changes' : 'reject';
+            const res = await apiFetch(`${PUBLIC_API_URL}/api/shops/${rejectingShop.id}/${endpoint}`, {
                 method: "PATCH",
                 body: JSON.stringify({ reason: rejectionReason })
             });
+            const data = await res.json().catch(() => null);
             if (res.ok) {
                 rejectingShop = null;
                 rejectionReason = "";
+                const warnings: string[] = data?.stripe_warnings || [];
+                if (warnings.length) {
+                    alert(`Boutique refusée, mais le nettoyage Stripe est incomplet (il sera retenté lors de la réinscription) :\n- ${warnings.join("\n- ")}`);
+                }
                 await fetchShops();
             } else {
-                alert("Erreur lors du rejet.");
+                alert(data?.error || (reviewMode === 'changes' ? "Erreur lors de la demande de modifications." : "Erreur lors du rejet."));
             }
         } catch (e) {
             alert("Erreur de connexion.");
@@ -396,6 +404,8 @@
                                         <span class="border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-emerald-800">Validée</span>
                                     {:else if s.approval_status === 'rejected'}
                                         <span class="border border-rose-200 bg-rose-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-rose-800">Rejetée</span>
+                                    {:else if s.approval_status === 'changes_requested'}
+                                        <span class="border border-orange-200 bg-orange-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-orange-800">Modifications demandées</span>
                                     {:else if s.approval_status === 'suspended'}
                                         <span class="border border-slate-300 bg-slate-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">Suspendue</span>
                                     {:else}
@@ -443,7 +453,7 @@
                                     </span>
                                 {/if}
                             </button>
-                            {#if (s.approval_status !== 'approved' || !s.is_approved) && s.approval_status !== 'rejected'}
+                            {#if s.approval_status === 'pending' || s.approval_status === 'suspended'}
                                 <button 
                                     onclick={() => approveShop(s.id)}
                                     disabled={isProcessing || s.is_complete === false}
@@ -451,13 +461,24 @@
                                     class="retro-btn bg-[#86E2D5] hover:bg-[#65C4B5] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <span class="material-symbols-outlined text-[16px]">check</span>
-                                    <span>Valider la boutique</span>
+                                    <span>{s.approval_status === 'suspended' ? 'Réactiver la boutique' : 'Valider la boutique'}</span>
                                 </button>
                             {/if}
 
-                            {#if s.approval_status !== 'rejected'}
+                            {#if s.approval_status === 'pending'}
                                 <button 
-                                    onclick={() => { rejectingShop = s; rejectionReason = ""; }}
+                                    onclick={() => { rejectingShop = s; rejectionReason = ""; reviewMode = 'changes'; }}
+                                    disabled={isProcessing}
+                                    class="retro-btn bg-[#FFB87B] hover:bg-[#F5A462] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
+                                >
+                                    <span class="material-symbols-outlined text-[16px]">edit_note</span>
+                                    <span>Demander des modifications</span>
+                                </button>
+                            {/if}
+
+                            {#if s.approval_status === 'pending' || s.approval_status === 'changes_requested'}
+                                <button 
+                                    onclick={() => { rejectingShop = s; rejectionReason = ""; reviewMode = 'reject'; }}
                                     disabled={isProcessing}
                                     class="retro-btn bg-[#FFAEC1] hover:bg-[#FF8CA4] text-xs font-black py-2 px-4 shadow-[2px_2px_0px_0px_#000] flex items-center gap-1.5"
                                 >
@@ -611,12 +632,12 @@
                         </div>
                     </div>
 
-                    <!-- Motif du rejet (si applicable) -->
-                    {#if s.rejection_reason}
-                        <div class="m-5 border border-rose-200 bg-rose-50 p-4 text-xs text-rose-950">
+                    <!-- Motif du rejet / des modifications demandées (si applicable) -->
+                    {#if s.rejection_reason && (s.approval_status === 'rejected' || s.approval_status === 'changes_requested')}
+                        <div class="m-5 border p-4 text-xs {s.approval_status === 'changes_requested' ? 'border-orange-200 bg-orange-50 text-orange-950' : 'border-rose-200 bg-rose-50 text-rose-950'}">
                             <strong class="mb-1 flex items-center gap-1 font-semibold uppercase">
                                 <span class="material-symbols-outlined text-[14px]">warning</span>
-                                <span>Motif du refus communiqué au vendeur :</span>
+                                <span>{s.approval_status === 'changes_requested' ? 'Corrections demandées au vendeur (en attente de resoumission) :' : 'Motif du refus communiqué au vendeur :'}</span>
                             </strong>
                             <p>{s.rejection_reason}</p>
                         </div>
@@ -696,7 +717,7 @@
         <div class="fixed inset-0 z-[99999] bg-black/70 flex items-center justify-center p-4 font-mono">
             <div class="w-full max-w-lg bg-[#EDE9DF] border-3 border-black shadow-[8px_8px_0px_0px_#000] p-1">
                 <div class="bg-[#2B2D42] text-white px-4 py-2 border-b-2 border-black flex items-center justify-between text-xs font-bold mb-3">
-                    <span>REJET DE LA BOUTIQUE // {rejectingShop.name}</span>
+                    <span>{reviewMode === 'changes' ? 'DEMANDE DE MODIFICATIONS' : 'REFUS DÉFINITIF'} // {rejectingShop.name}</span>
                     <button 
                         type="button" 
                         onclick={() => rejectingShop = null}
@@ -707,9 +728,19 @@
                 </div>
 
                 <form onsubmit={handleRejectSubmit} class="p-6 bg-white border-2 border-black m-1 space-y-4">
+                    {#if reviewMode === 'reject'}
+                        <div class="p-3 bg-[#FFAEC1] border-2 border-black text-[11px] font-bold text-black leading-relaxed">
+                            Refus définitif : l'abonnement et le compte Stripe Connect du vendeur seront supprimés. Le vendeur ne pourra plus accéder à cette boutique et devra refaire toute l'inscription.
+                            Pour de simples corrections, utilisez plutôt « Demander des modifications ».
+                        </div>
+                    {:else}
+                        <div class="p-3 bg-[#FFD166] border-2 border-black text-[11px] font-bold text-black leading-relaxed">
+                            Le vendeur conserve son dossier et son compte Stripe : il corrige ses informations dans ses paramètres puis resoumet la boutique.
+                        </div>
+                    {/if}
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase text-black" for="reason_text">
-                            Motif du rejet (transmis au vendeur) *
+                            {reviewMode === 'changes' ? 'Modifications attendues (transmises au vendeur)' : 'Motif du refus (transmis au vendeur)'} *
                         </label>
                         <textarea 
                             id="reason_text" 
@@ -734,7 +765,7 @@
                             disabled={isProcessing}
                             class="retro-btn bg-[#FFAEC1] text-xs font-black py-2 px-6 shadow-[2px_2px_0px_0px_#000]"
                         >
-                            {isProcessing ? "Traitement..." : "Confirmer le Rejet"}
+                            {isProcessing ? "Traitement..." : reviewMode === 'changes' ? "Envoyer la demande" : "Confirmer le refus définitif"}
                         </button>
                     </div>
                 </form>
