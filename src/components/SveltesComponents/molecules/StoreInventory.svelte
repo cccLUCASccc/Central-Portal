@@ -50,6 +50,22 @@
 
     onMount(load);
 
+    let isImporting = $state(false);
+    async function importSite() {
+        isImporting = true;
+        try {
+            const res = await apiFetch("/api/store-items/import-site", { method: "POST" });
+            if (res.ok) {
+                const { created } = await res.json();
+                await load();
+                alert(created ? `${created} objet(s) du site ajouté(s) et lié(s).` : "Tous les objets publiés ont déjà une ligne.");
+            } else {
+                error = "Import impossible.";
+            }
+        } finally {
+            isImporting = false;
+        }
+    }
     async function addItem(e: Event) {
         e.preventDefault();
         if (!newName.trim()) return;
@@ -132,6 +148,10 @@
         <p class="text-xs text-black/80 mt-1">
             {items.length} référence(s) · {totalUnits} unité(s). Liez un article à un objet du site s'il y est publié.
         </p>
+        <button type="button" onclick={importSite} disabled={isImporting} class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3.5 mt-3 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">sync_alt</span>
+            <span>{isImporting ? "Import..." : "Importer les objets du site"}</span>
+        </button>
     </div>
 
     <form onsubmit={addItem} class="retro-card p-4 flex flex-wrap items-end gap-3">

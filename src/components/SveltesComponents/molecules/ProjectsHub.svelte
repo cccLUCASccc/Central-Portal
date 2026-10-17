@@ -1,11 +1,19 @@
 <script lang="ts">
 const services = [
   {
-    name: "Inventaire",
+    name: "Inventaire Site",
     description: "Ajouter, modifier et publier les antiquités et pièces de la boutique.",
     href: "/antiquites",
     icon: "inventory_2",
     tint: "bg-[#FFF394]",
+    group: "Catalogue"
+  },
+  {
+    name: "Inventaire Magasin",
+    description: "Suivre rapidement le stock du magasin et le lier aux objets du site.",
+    href: "/inventaire-magasin",
+    icon: "store",
+    tint: "bg-[#D4E2FD]",
     group: "Catalogue"
   },
   {
