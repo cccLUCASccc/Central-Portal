@@ -3,6 +3,7 @@
   import { apiFetch } from '../../../lib/api';
   import { onMount } from 'svelte';
   import QRCode from 'qrcode';
+  import { isPublished, siteItemUrl } from '../../../lib/siteLink';
 
   interface Props {
       antiquites?: Antiquite[];
@@ -189,7 +190,14 @@
   async function printBulkQRCodes() {
     if (selectedIds.length === 0) return;
     
-    const selectedItems = current_antiquites.filter(a => selectedIds.includes(a.id));
+    const selectedItems = current_antiquites.filter(a => selectedIds.includes(a.id) && isPublished(a));
+    if (selectedItems.length === 0) {
+      alert("Aucun objet publié dans la sélection : les QR codes sont réservés aux objets du site.");
+      return;
+    }
+    if (selectedItems.length < selectedIds.length) {
+      alert(`${selectedIds.length - selectedItems.length} objet(s) non publié(s) ignoré(s).`);
+    }
     
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -218,8 +226,7 @@
     `;
     
     for (const item of selectedItems) {
-      const currentUrl = window.location.origin;
-      const url = `${currentUrl}/inventoryt5hr4hr85g48412r/${item.id}`;
+      const url = siteItemUrl(item);
       try {
         const qrUrl = await QRCode.toDataURL(url, { margin: 1, width: 130 });
         htmlContent += `

@@ -35,6 +35,7 @@ export interface Antiquite {
     category: string;
     tags ?: string;
     status : number;
+    approval_status ?: string;
     quantity ?: number;
     size: string;
     images_urls ?: string;
