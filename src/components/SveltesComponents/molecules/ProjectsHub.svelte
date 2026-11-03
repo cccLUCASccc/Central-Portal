@@ -65,6 +65,14 @@ const services = [
     group: "Relation client"
   },
   {
+    name: "Rédaction de mail",
+    description: "Composer et envoyer un mail aux prospects avec une sélection d'objets et un aperçu en direct.",
+    href: "/mails",
+    icon: "mail",
+    tint: "bg-[#FFAEC1]",
+    group: "Relation client"
+  },
+  {
     name: "Avis clients",
     description: "Modérer et publier les avis de la clientèle.",
     href: "/reviews",

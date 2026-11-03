@@ -95,6 +95,30 @@ les règles d'accès administrateur.
 
 Tests : `bun test src/lib/users.test.ts`.
 
+## Rédaction de mail
+
+La carte « Rédaction de mail » et le menu ouvrent `/mails`, pour écrire un
+mail aux prospects avec un aperçu en temps réel (bureau ou mobile) :
+
+- **Texte** : objet, pré-en-tête, titre, introduction, conclusion, bouton,
+  signature et pied de page. `**gras**` et les liens sont reconnus.
+- **Objets** : recherche dans l'inventaire en vente, 12 objets maximum,
+  ordre modifiable, choix des photos, du prix et du lien par objet.
+- **Mise en page** : images (une seule, galerie, slider, grande image et
+  vignettes, aucune), objets (empilés, liste, zig-zag, cartes, slider),
+  texte (classique, centré, deux colonnes, encadré, lettre), alignement,
+  police et couleur d'accent.
+- **Envoi** : destinataires (50 max.), adresse de réponse, envoi d'un test
+  à sa propre adresse et historique.
+
+Le slider fonctionne sans JavaScript (Apple Mail, iOS, Thunderbird…). Les
+clients qui ne le gèrent pas (Gmail, Outlook) affichent automatiquement une
+grande image avec des vignettes ; l'aperçu permet de basculer sur ce rendu.
+Le brouillon est enregistré dans le navigateur. L'envoi exige la configuration
+SMTP et `MAIL_ALLOWED_SENDERS` de [Central-API](../Central-API/README.md).
+
+Tests : `bun test src/lib/mail-composer.test.ts`.
+
 ## Logs serveur PostHog (OpenTelemetry)
 
 Définir `POSTHOG_LOGS_TOKEN` côté serveur au runtime : le jeton de projet
