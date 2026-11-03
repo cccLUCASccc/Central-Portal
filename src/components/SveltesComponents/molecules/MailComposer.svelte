@@ -23,6 +23,10 @@
   import { readInventoryResponse } from "../../../lib/social-publication";
   import type { Pagination } from "../../../type";
   import PaginationComponent from "../atoms/Pagination.svelte";
+  import {
+    assistantOptions, assistantRequest, currentCopy, readMailCopy,
+    type AssistantSettings, type MailCopy
+  } from "../../../lib/mail-assistant";
 
   let { apiUrl, userId }: { apiUrl?: string; userId: string } = $props();
 
@@ -73,6 +77,80 @@
   let historyError = $state("");
   let historyLoading = $state(false);
   let exportNotice = $state("");
+  let assistant = $state<AssistantSettings>({
+    objective: "partnership", audience: "decorator", tone: "warm", length: "short", instructions: ""
+  });
+  let assistantLoading = $state(false);
+  let assistantError = $state("");
+  let assistantNotice = $state("");
+  let suggestion = $state<MailCopy | null>(null);
+  let suggestionSource = "";
+  let previousCopy = $state<MailCopy | null>(null);
+  let appliedCopy = "";
+  let assistantController: AbortController | undefined;
+  const assistantLabels = {
+    subject: "Objet", preheader: "Texte d'aperçu", title: "Titre",
+    intro: "Introduction", outro: "Conclusion", ctaLabel: "Libellé du bouton"
+  };
+
+  async function generateCopy(mode: "draft" | "improve") {
+    if (assistantLoading) return;
+    assistantError = "";
+    assistantNotice = "";
+    if (mode === "draft" && !assistant.instructions.trim()) {
+      assistantError = "Indiquez votre proposition et les avantages réels dans les consignes.";
+      return;
+    }
+    if (mode === "improve" && !(doc.intro + doc.outro).trim()) {
+      assistantError = "Rédigez d'abord une introduction ou une conclusion.";
+      return;
+    }
+    assistantLoading = true;
+    suggestion = null;
+    const controller = new AbortController();
+    assistantController = controller;
+    const source = JSON.stringify(currentCopy(doc));
+    try {
+      const response = await apiFetch(`${base}/api/mails/assist`, {
+        method: "POST",
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(55000)]),
+        body: JSON.stringify(assistantRequest(doc, assistant, mode))
+      });
+      const body: unknown = await readJSON(response);
+      if (controller.signal.aborted) return;
+      if (!response.ok) {
+        const message = typeof body === "object" && body !== null && "error" in body && typeof body.error === "string"
+          ? body.error : `Rédaction indisponible (HTTP ${response.status}).`;
+        throw new Error(message);
+      }
+      suggestion = readMailCopy(body);
+      suggestionSource = source;
+    } catch (cause) {
+      if (!controller.signal.aborted) assistantError = errorMessage(cause);
+    } finally {
+      if (assistantController === controller) assistantLoading = false;
+    }
+  }
+
+  function applySuggestion() {
+    if (!suggestion) return;
+    if (JSON.stringify(currentCopy(doc)) !== suggestionSource &&
+      !window.confirm("Le texte a changé depuis cette demande. Remplacer les six champs de rédaction par la proposition IA ?")) return;
+    previousCopy = currentCopy(doc);
+    doc = { ...doc, ...suggestion };
+    appliedCopy = JSON.stringify(currentCopy(doc));
+    suggestion = null;
+    assistantNotice = "Proposition appliquée. Vérifiez le texte et la destination du bouton avant l'envoi.";
+  }
+
+  function undoSuggestion() {
+    if (!previousCopy) return;
+    if (JSON.stringify(currentCopy(doc)) !== appliedCopy &&
+      !window.confirm("Le texte a été modifié. Restaurer la version précédant l'application de l'IA ?")) return;
+    doc = { ...doc, ...previousCopy };
+    previousCopy = null;
+    assistantNotice = "Texte précédent restauré.";
+  }
 
   const rendered = $derived(renderMail(doc));
   const parsedRecipients = $derived(parseRecipients(recipients));
@@ -164,6 +242,14 @@
 
   function resetMail() {
     if (!window.confirm("Effacer le mail en cours et repartir d'un mail vierge ?")) return;
+    assistantController?.abort();
+    assistantController = undefined;
+    assistantLoading = false;
+    suggestion = null;
+    previousCopy = null;
+    assistantError = "";
+    assistantNotice = "";
+    assistant.instructions = "";
     doc = defaultDocument();
     recipients = "";
     replyTo = "";
@@ -323,6 +409,7 @@
     loadDraft();
     void loadStatus();
     return () => {
+      assistantController?.abort();
       inventoryController?.abort();
       clearTimeout(previewTimer);
       clearTimeout(draftTimer);
@@ -381,6 +468,65 @@
       <div class="border-2 border-black bg-white p-5 shadow-[4px_4px_0px_0px_#000]">
         {#if tab === "content"}
           <div id="mail-panel-content" role="tabpanel" aria-labelledby="mail-tab-content" class="space-y-4">
+            <section aria-labelledby="mail-ai-title" class="space-y-3 border-2 border-black bg-[#F4F1EA] p-4">
+              <h2 id="mail-ai-title" class="font-bold">Assistant de rédaction IA</h2>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label for="mail-ai-objective" class={labelClass}>Objectif</label>
+                  <select id="mail-ai-objective" class={inputClass} bind:value={assistant.objective}>
+                    {#each assistantOptions.objective as option}<option value={option.id}>{option.label}</option>{/each}
+                  </select>
+                </div>
+                <div>
+                  <label for="mail-ai-audience" class={labelClass}>Public visé</label>
+                  <select id="mail-ai-audience" class={inputClass} bind:value={assistant.audience}>
+                    {#each assistantOptions.audience as option}<option value={option.id}>{option.label}</option>{/each}
+                  </select>
+                </div>
+                <div>
+                  <label for="mail-ai-tone" class={labelClass}>Ton</label>
+                  <select id="mail-ai-tone" class={inputClass} bind:value={assistant.tone}>
+                    {#each assistantOptions.tone as option}<option value={option.id}>{option.label}</option>{/each}
+                  </select>
+                </div>
+                <div>
+                  <label for="mail-ai-length" class={labelClass}>Longueur</label>
+                  <select id="mail-ai-length" class={inputClass} bind:value={assistant.length}>
+                    {#each assistantOptions.length as option}<option value={option.id}>{option.label}</option>{/each}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label for="mail-ai-instructions" class={labelClass}>Votre proposition et vos consignes</label>
+                <textarea id="mail-ai-instructions" class={inputClass} rows="4" maxlength="4000" bind:value={assistant.instructions}
+                  placeholder="Ex. : Présenter notre sélection de pièces anciennes à des décorateurs et proposer un échange sur leurs projets. Ne pas proposer de remise."></textarea>
+              </div>
+              <p class="text-[11px]">En cliquant, vous transmettez à Gemini vos consignes, les six champs de rédaction ci-dessous et les noms des objets sélectionnés. Ni destinataires, ni historique, ni photos, ni signature ne sont transmis. N'incluez pas d'informations confidentielles. Relisez les engagements proposés ; l'IA ne doit inventer aucun avantage commercial.</p>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" class="retro-btn bg-[#86E2D5] text-xs" disabled={assistantLoading || !status?.authorized} onclick={() => generateCopy("draft")}>
+                  {assistantLoading ? "Rédaction en cours…" : "Rédiger une proposition"}
+                </button>
+                <button type="button" class="retro-btn bg-white text-xs" disabled={assistantLoading || !status?.authorized} onclick={() => generateCopy("improve")}>Améliorer mon texte</button>
+              </div>
+              {#if status && !status.authorized}<p class="text-xs">Votre compte doit être autorisé dans MAIL_ALLOWED_SENDERS pour utiliser l'assistant.</p>{/if}
+              {#if statusError}<p role="alert" class="text-xs">{statusError}</p><button type="button" class="retro-btn bg-white text-xs" onclick={loadStatus}>Vérifier l'accès</button>{/if}
+              {#if assistantError}<p role="alert" class="text-xs text-red-800">{assistantError}</p>{/if}
+              {#if assistantNotice}<p role="status" class="text-xs">{assistantNotice}</p>{/if}
+              {#if suggestion}
+                <div class="space-y-3 border-2 border-black bg-white p-3" aria-label="Proposition IA à relire">
+                  <h3 class="font-bold">Proposition — brouillon inchangé</h3>
+                  {#each Object.entries(assistantLabels) as [key, label]}
+                    <div><h4 class="text-xs font-bold">{label}</h4><p class="whitespace-pre-wrap break-words text-sm">{suggestion[key as keyof MailCopy] || "(vide)"}</p></div>
+                  {/each}
+                  <p class="text-[11px]">Appliquer remplace ces six champs seulement. Objets, mise en page, signature, pied de page et lien du bouton restent inchangés. Aucun mail n'est envoyé.</p>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" class="retro-btn bg-[#86E2D5] text-xs" onclick={applySuggestion}>Appliquer au brouillon</button>
+                    <button type="button" class="retro-btn bg-white text-xs" onclick={() => suggestion = null}>Ignorer</button>
+                  </div>
+                </div>
+              {/if}
+              {#if previousCopy}<button type="button" class="retro-btn bg-white text-xs" onclick={undoSuggestion}>Restaurer le texte précédent</button>{/if}
+            </section>
             <div>
               <label for="mail-subject" class={labelClass}>Objet du mail *</label>
               <input id="mail-subject" class={inputClass} bind:value={doc.subject} maxlength="200" placeholder="Ex. : Nouveautés de la semaine chez Daisy Brocante" />

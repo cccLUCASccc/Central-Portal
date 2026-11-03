@@ -128,6 +128,27 @@ finaux : la boutique utilise ce nom pour retrouver l'objet.
 
 Tests : `bun test src/lib/mail-composer.test.ts`.
 
+### Assistant IA pour les propositions professionnelles
+
+L'onglet Texte propose un assistant Gemini : objectif (premier contact,
+partenariat, sélection pour un projet ou relance), public professionnel,
+quatre tons, trois longueurs indicatives et consignes libres.
+« Rédiger une proposition » part des consignes ; « Améliorer mon texte »
+reformule les textes existants. Seuls les six champs de rédaction et les noms
+des objets sélectionnés sont transmis, sans destinataires, photos ni historique.
+Ne pas inclure de données confidentielles dans les textes ou les consignes.
+
+La suggestion est affichée séparément avant application explicite au brouillon.
+Signature, pied de page, lien du bouton, objets et mise en page restent inchangés.
+Il est possible de restaurer le texte précédent tant que la page reste ouverte ;
+les modifications intervenues entre-temps font l'objet d'une confirmation.
+Relire les faits, engagements commerciaux et destination du bouton avant l'envoi :
+les instructions IA interdisent d'inventer une remise, un service ou une exclusivité,
+mais ne remplacent pas cette vérification. Aucun envoi automatique.
+L'API exige `GEMINI_API_KEY` et l'autorisation `MAIL_ALLOWED_SENDERS`.
+
+Tests : `bun test src/lib/mail-assistant.test.ts src/lib/mail-composer.test.ts`.
+
 ## Logs serveur PostHog (OpenTelemetry)
 
 Définir `POSTHOG_LOGS_TOKEN` côté serveur au runtime : le jeton de projet
