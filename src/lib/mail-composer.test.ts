@@ -163,6 +163,26 @@ test("parses recipient lists", () => {
   assert.deepEqual(invalid, ["foo"]);
 });
 
+test("appointment booking is opt-in and uses a separate safe button in HTML and text", () => {
+  const url = "https://calendar.google.com/calendar/appointments/test?a=1&b=2";
+  const doc = documentWith({ appointmentUrl: url });
+  assert.ok(!renderMail(doc).html.includes("Prendre rendez-vous"));
+  doc.showAppointment = true;
+  const rendered = renderMail(doc);
+  assert.ok(rendered.html.includes('href="https://calendar.google.com/calendar/appointments/test?a=1&amp;b=2"'));
+  assert.ok(rendered.html.includes("Prendre rendez-vous en visioconférence"));
+  assert.ok(rendered.html.includes("Voir la boutique"));
+  assert.ok(rendered.text.includes(`Prendre rendez-vous en visioconférence : ${url}`));
+  const restored = readDraft(JSON.stringify({ version: 1, document: doc })).document;
+  assert.equal(restored.showAppointment, true);
+  assert.equal(restored.appointmentUrl, url);
+  for (const appointmentUrl of ["", "javascript:alert(1)"]) {
+    const invalid = renderMail({ ...doc, appointmentUrl });
+    assert.ok(!invalid.html.includes("Prendre rendez-vous"));
+    assert.ok(!invalid.text.includes("Prendre rendez-vous"));
+  }
+});
+
 test("global price visibility covers every layout without changing individual preferences", () => {
   for (const objectLayout of objectLayouts.map((option) => option.id)) {
     const doc = documentWith({ objectLayout, showPrices: false });

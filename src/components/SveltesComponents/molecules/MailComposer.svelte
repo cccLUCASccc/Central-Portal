@@ -157,10 +157,16 @@
   const selectedIds = $derived(new Set(doc.items.map((item) => item.article.id)));
   const canSend = $derived(
     !!status?.authorized && !!status?.configured && !sending &&
+    !appointmentError &&
     doc.subject.trim().length > 0 && parsedRecipients.valid.length > 0 &&
     parsedRecipients.valid.length <= MAX_RECIPIENTS && parsedRecipients.invalid.length === 0
   );
   let testAddress = $state("");
+  const appointmentError = $derived(
+    doc.showAppointment && (!URL.canParse(doc.appointmentUrl.trim()) ||
+      !["https:", "http:"].includes(new URL(doc.appointmentUrl.trim()).protocol))
+      ? "Ajoutez un lien de réservation Google Agenda valide avant l'envoi, ou désactivez le rendez-vous." : ""
+  );
 
   function errorMessage(cause: unknown): string {
     if (cause instanceof TypeError) {
@@ -370,6 +376,10 @@
     sendError = "";
     sendNotice = "";
     sendResults = [];
+    if (appointmentError) {
+      sendError = appointmentError;
+      return;
+    }
     if (!doc.subject.trim()) {
       sendError = "Ajoutez un objet au mail avant de l'envoyer (onglet Texte).";
       return;
@@ -556,6 +566,18 @@
                 <label for="mail-professional-terms" class={labelClass}>Mention professionnelle (avant la signature)</label>
                 <textarea id="mail-professional-terms" class={inputClass} rows="3" bind:value={doc.professionalTerms}></textarea>
                 <p class="text-[11px]">À activer uniquement si ces conditions existent. Indiquez uniquement vos engagements réels ; aucune remise n'est ajoutée automatiquement.</p>
+              {/if}
+            </div>
+            <div class="space-y-2 border-2 border-black bg-[#F4F1EA] p-3">
+              <label class="flex items-center gap-2 text-xs font-bold">
+                <input type="checkbox" bind:checked={doc.showAppointment} /> Proposer un rendez-vous en visioconférence
+              </label>
+              {#if doc.showAppointment}
+                <label for="mail-appointment-url" class={labelClass}>Lien de votre page de réservation Google Agenda</label>
+                <input id="mail-appointment-url" type="url" class={inputClass} bind:value={doc.appointmentUrl} placeholder="https://calendar.google.com/calendar/appointments/…" />
+                <p class="text-[11px]">Dans Google Agenda, créez un planning de rendez-vous, choisissez Google Meet comme lieu de réunion, puis copiez le lien de la page de réservation. Le destinataire choisira son créneau sur cette page ; l'invitation Meet sera gérée par Google Agenda.</p>
+                <p class="text-[11px]">Le bouton « Prendre rendez-vous en visioconférence » est ajouté avant la signature, sans remplacer le bouton de la boutique. Le portail ne crée pas lui-même de réunion.</p>
+                {#if appointmentError}<p role="alert" class="text-xs text-red-800">{appointmentError}</p>{/if}
               {/if}
             </div>
             <div class="grid gap-4 sm:grid-cols-2">

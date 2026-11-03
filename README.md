@@ -137,6 +137,14 @@ sauvegardés dans le brouillon et appliqués au HTML et à la version texte.
 Ils ne modifient pas les prix du catalogue et ne retirent pas les montants
 éventuellement saisis manuellement dans les textes.
 
+L'onglet Texte permet aussi d'activer un bouton de prise de rendez-vous
+indépendant du bouton de la boutique. Renseigner le lien de la page de réservation
+d'un planning de rendez-vous Google Agenda configuré avec Google Meet.
+Le destinataire réserve son créneau chez Google, qui gère l'invitation Meet :
+le portail n'accède pas au calendrier et ne crée pas de réunion.
+Le lien est sauvegardé dans le brouillon, sans transmission à l'assistant IA.
+Si l'option est activée sans URL HTTP(S) valide, l'envoi est bloqué avec un message.
+
 Tests : `bun test src/lib/mail-composer.test.ts`.
 
 ### Assistant IA pour les propositions professionnelles

@@ -61,6 +61,8 @@ export interface MailDocument {
   showPrices: boolean;
   showProfessionalTerms: boolean;
   professionalTerms: string;
+  showAppointment: boolean;
+  appointmentUrl: string;
   textLayout: TextLayout;
   textAlign: TextAlign;
   font: FontStyle;
@@ -94,6 +96,8 @@ export function defaultDocument(): MailDocument {
     showPrices: true,
     showProfessionalTerms: false,
     professionalTerms: "Des conditions dédiées aux professionnels sont disponibles sur demande. Contactez-nous pour en savoir plus.",
+    showAppointment: false,
+    appointmentUrl: "",
     textLayout: "classic",
     textAlign: "left",
     font: "sans",
@@ -210,6 +214,8 @@ export function readDraft(raw: string): MailDraft {
     showPrices: source.showPrices !== false,
     showProfessionalTerms: source.showProfessionalTerms === true,
     professionalTerms: text(source.professionalTerms, defaults.professionalTerms),
+    showAppointment: source.showAppointment === true,
+    appointmentUrl: text(source.appointmentUrl, defaults.appointmentUrl),
     textLayout: oneOf(source.textLayout, textLayouts.map((item) => item.id), defaults.textLayout),
     textAlign: oneOf(source.textAlign, ["left", "center", "justify"] as const, defaults.textAlign),
     font: oneOf(source.font, ["sans", "serif"] as const, defaults.font),
@@ -575,6 +581,9 @@ export function renderMail(doc: MailDocument): RenderedMail {
     cta ? `<tr><td>${cta}</td></tr>${spacer(20)}` : "",
     textBlockHtml(doc.outro, doc, theme),
     doc.showProfessionalTerms ? textBlockHtml(doc.professionalTerms, doc, theme, false) : "",
+    doc.showAppointment && safeUrl(doc.appointmentUrl)
+      ? `<tr><td>${button("Prendre rendez-vous en visioconférence", doc.appointmentUrl, theme, ctaAlign)}</td></tr>${spacer(20)}`
+      : "",
     signature
   ].join("");
 
@@ -623,6 +632,8 @@ export function renderPlainText(doc: MailDocument): string {
   if (doc.ctaLabel.trim() && ctaUrl) blocks.push(`${doc.ctaLabel.trim()} : ${ctaUrl}`);
   if (doc.outro.trim()) blocks.push(stripMarkup(doc.outro));
   if (doc.showProfessionalTerms && doc.professionalTerms.trim()) blocks.push(stripMarkup(doc.professionalTerms));
+  const appointmentUrl = safeUrl(doc.appointmentUrl);
+  if (doc.showAppointment && appointmentUrl) blocks.push(`Prendre rendez-vous en visioconférence : ${appointmentUrl}`);
   if (doc.signature.trim()) blocks.push(stripMarkup(doc.signature));
   if (doc.footer.trim()) blocks.push(`--\n${stripMarkup(doc.footer)}`);
   return blocks.join("\n\n");
