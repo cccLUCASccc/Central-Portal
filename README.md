@@ -174,6 +174,32 @@ L'API exige `GEMINI_API_KEY` et l'autorisation `MAIL_ALLOWED_SENDERS`.
 
 Tests : `bun test src/lib/mail-assistant.test.ts src/lib/mail-composer.test.ts`.
 
+## Suivi des contacts
+
+La carte du tableau de bord, le menu et un lien du rédacteur de mails ouvrent
+`/contacts`. Cette page est partagée entre les comptes de `MAIL_ALLOWED_SENDERS`.
+Elle regroupe automatiquement toutes les adresses de l'historique déjà enregistré,
+y compris les échecs et les tests, sans importer les abonnés newsletter ni les
+comptes du site. Une adresse n'apparaît qu'une fois.
+
+Le tableau paginé (25 contacts par page) permet la recherche par email, nom,
+entreprise ou métier et le filtrage par statut et blocage. Il affiche les
+première et dernière tentatives, les nombres de messages acceptés par SMTP,
+d'échecs et de blocages. La fiche permet de renseigner nom, entreprise, métier
+et statut manuel : à contacter, contacté, à relancer, intéressé, partenaire, refus.
+Le détail propose l'historique paginé (date, objet, résultat et erreur).
+Les réponses, lectures, livraisons finales et rendez-vous ne sont pas détectés.
+
+L'option « Ne plus contacter » est indépendante du statut. Après confirmation
+et enregistrement, l'API bloque cette adresse pour tous les expéditeurs,
+y compris les tests. Un lot contenant une adresse bloquée est refusé avant
+envoi ; retirez-la puis relancez. Les messages déjà transmis au SMTP ne peuvent
+pas être rappelés. Le blocage ne supprime pas l'historique.
+Les modifications non enregistrées ne sont pas appliquées.
+
+Déployer Central-API avant le portail (nouvelle table `mail_contacts`).
+Tests : `bun test src/lib/mail-contacts.test.ts`.
+
 ## Logs serveur PostHog (OpenTelemetry)
 
 Définir `POSTHOG_LOGS_TOKEN` côté serveur au runtime : le jeton de projet

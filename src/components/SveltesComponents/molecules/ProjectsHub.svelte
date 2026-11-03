@@ -73,6 +73,14 @@ const services = [
     group: "Relation client"
   },
   {
+    name: "Suivi des contacts",
+    description: "Suivre les contacts professionnels, leurs envois et les demandes de ne plus être contacté.",
+    href: "/contacts",
+    icon: "contact_page",
+    tint: "bg-[#86E2D5]",
+    group: "Relation client"
+  },
+  {
     name: "Avis clients",
     description: "Modérer et publier les avis de la clientèle.",
     href: "/reviews",

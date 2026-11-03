@@ -1,0 +1,18 @@
+---
+import BasicLayout from '../layouts/basic.astro';
+import { Show } from '@clerk/astro/components';
+import MailContacts from '../components/SveltesComponents/molecules/MailContacts.svelte';
+
+const userId = Astro.locals.auth().userId;
+---
+
+<BasicLayout>
+  <Show when="signed-in">
+    {userId && (
+      <MailContacts
+        apiUrl={import.meta.env.API_URL || import.meta.env.PUBLIC_API_URL}
+        client:only="svelte"
+      />
+    )}
+  </Show>
+</BasicLayout>

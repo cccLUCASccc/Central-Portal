@@ -442,6 +442,7 @@
       </p>
     </div>
     <div class="flex flex-wrap gap-2">
+      <a href="/contacts" class="retro-btn bg-[#86E2D5] px-3 py-2 text-xs">Suivi des contacts</a>
       <button type="button" class="retro-btn bg-white px-3 py-2 text-xs" onclick={resetMail}>
         <span class="material-symbols-outlined text-[16px]" aria-hidden="true">note_add</span> Nouveau mail
       </button>
