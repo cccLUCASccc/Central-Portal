@@ -117,6 +117,12 @@ grande image avec des vignettes ; l'aperçu permet de basculer sur ce rendu.
 Le brouillon est enregistré dans le navigateur. L'envoi exige la configuration
 SMTP et `MAIL_ALLOWED_SENDERS` de [Central-API](../Central-API/README.md).
 
+L'introduction reste en pleine largeur en mode « deux colonnes » ; ce mode
+répartit les paragraphes de la conclusion. Les photos WebP de l'inventaire
+sont servies en JPEG avec la transparence composée sur blanc, y compris les
+vignettes et les versions de repli. Déployer l'API avant le portail pour cette
+conversion. Les mails déjà reçus ne sont pas modifiés.
+
 Tests : `bun test src/lib/mail-composer.test.ts`.
 
 ## Logs serveur PostHog (OpenTelemetry)

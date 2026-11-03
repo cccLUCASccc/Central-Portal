@@ -307,8 +307,20 @@ function button(label: string, url: string, theme: Theme, align = "left"): strin
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="${align === "center" ? "center" : "left"}" style="margin:8px ${align === "center" ? "auto" : "0"};"><tr><td bgcolor="${theme.accent}" style="border-radius:4px;background:${theme.accent};"><a href="${escapeHtml(href)}" target="_blank" style="display:inline-block;padding:12px 24px;font-family:${theme.fontFamily};font-size:15px;font-weight:bold;color:${theme.accentText};text-decoration:none;border-radius:4px;">${escapeHtml(label.trim())}</a></td></tr></table>`;
 }
 
+function mailImageUrl(value: string): string {
+  if (!URL.canParse(value)) return value;
+  const url = new URL(value);
+  if (url.pathname.includes("/api/antiquites/images/") && url.pathname.toLowerCase().endsWith(".webp")) {
+    url.searchParams.set("format", "jpg");
+    // Une URL distincte évite les anciens JPEG à fond noir déjà en cache.
+    url.searchParams.set("background", "white");
+    return url.href;
+  }
+  return value;
+}
+
 function imageTag(image: Image, alt: string, width: number, href: string | null, extraStyle = ""): string {
-  const img = `<img src="${escapeHtml(image.url)}" alt="${escapeHtml(alt)}" width="${width}" class="mc-img" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;outline:none;text-decoration:none;${extraStyle}">`;
+  const img = `<img src="${escapeHtml(mailImageUrl(image.url))}" alt="${escapeHtml(alt)}" width="${width}" class="mc-img" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;outline:none;text-decoration:none;background-color:#FFFFFF;${extraStyle}">`;
   return href ? `<a href="${escapeHtml(href)}" target="_blank" style="text-decoration:none;">${img}</a>` : img;
 }
 
@@ -364,7 +376,7 @@ function carouselHtml(slides: Slide[], fallback: string, key: string): string {
     return `<div class="mc-slide mc-s${index + 1}" style="position:relative;">${slide.content}${arrow(prev, "&#8249;", "left")}${arrow(next, "&#8250;", "right")}</div>`;
   }).join("");
   const nav = items.map((slide, index) => slide.thumb
-    ? `<label for="${id}-${index + 1}" class="mc-thumb mc-d${index + 1}" style="display:inline-block;width:56px;height:56px;margin:6px 3px 0 3px;cursor:pointer;border:2px solid transparent;overflow:hidden;"><img src="${escapeHtml(slide.thumb.url)}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:cover;border:0;"></label>`
+    ? `<label for="${id}-${index + 1}" class="mc-thumb mc-d${index + 1}" style="display:inline-block;width:56px;height:56px;margin:6px 3px 0 3px;cursor:pointer;border:2px solid transparent;overflow:hidden;"><img src="${escapeHtml(mailImageUrl(slide.thumb.url))}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:cover;border:0;background-color:#FFFFFF;"></label>`
     : `<label for="${id}-${index + 1}" class="mc-dot mc-d${index + 1}" style="display:inline-block;width:10px;height:10px;margin:10px 4px 0 4px;border-radius:5px;background:#CCCCCC;cursor:pointer;"></label>`
   ).join("");
   // Le carrousel ne s'affiche que si le client conserve les boutons radio et gère :checked ;
@@ -469,12 +481,12 @@ function itemsHtml(doc: MailDocument, theme: Theme): string {
   }).join("");
 }
 
-function textBlockHtml(value: string, doc: MailDocument, theme: Theme): string {
+function textBlockHtml(value: string, doc: MailDocument, theme: Theme, allowColumns = true): string {
   if (!value.trim()) return "";
   if (doc.textLayout === "boxed") {
     return `<tr><td style="padding:20px 22px 6px 22px;background:${theme.accentSoft};border-left:4px solid ${theme.accent};border-radius:4px;">${paragraphHtml(value, theme)}</td></tr>${spacer(24)}`;
   }
-  if (doc.textLayout === "two-columns") {
+  if (doc.textLayout === "two-columns" && allowColumns) {
     const parts = paragraphs(value);
     if (parts.length > 1) {
       const middle = Math.ceil(parts.length / 2);
@@ -545,7 +557,7 @@ export function renderMail(doc: MailDocument): RenderedMail {
   const body = [
     logo,
     title,
-    textBlockHtml(doc.intro, doc, theme),
+    textBlockHtml(doc.intro, doc, theme, false),
     doc.items.length ? spacer(8) : "",
     itemsHtml(doc, theme),
     cta ? `<tr><td>${cta}</td></tr>${spacer(20)}` : "",

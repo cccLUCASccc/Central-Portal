@@ -90,7 +90,10 @@ test("slider renders an interactive carousel with a fallback", () => {
 });
 
 test("text layouts change the arrangement", () => {
-  const columns = renderMail(documentWith({ textLayout: "two-columns", intro: "Un.\n\nDeux." })).html;
+  const intro = renderMail(documentWith({ textLayout: "two-columns", intro: "Un.\n\nDeux.", outro: "" })).html;
+  assert.equal((intro.match(/class="mc-col" width="264"/g) ?? []).length, 0);
+  assert.match(intro, /<tr><td><p[^>]*>Un\.<\/p><p[^>]*>Deux\.<\/p><\/td><\/tr>/);
+  const columns = renderMail(documentWith({ textLayout: "two-columns", intro: "Un.\n\nDeux.", outro: "Suite.\n\nFin." })).html;
   assert.equal((columns.match(/class="mc-col" width="264"/g) ?? []).length, 2);
   const boxed = renderMail(documentWith({ textLayout: "boxed" })).html;
   assert.ok(boxed.includes("border-left:4px solid #C2185B"));
@@ -98,6 +101,34 @@ test("text layouts change the arrangement", () => {
   assert.ok(centered.includes("text-align:center;\">Notre sélection pour vous</h1>"));
   const letter = renderMail(documentWith({ textLayout: "letter" })).html;
   assert.ok(letter.includes("text-align:right;font-style:italic;"));
+});
+
+test("all object photos use white-background JPEGs, including slider thumbnails and fallbacks", () => {
+  for (const imageLayout of imageLayouts.map((item) => item.id)) {
+    for (const objectLayout of objectLayouts.map((item) => item.id)) {
+      const html = renderMail(documentWith({ imageLayout, objectLayout })).html;
+      const images = [...html.matchAll(/<img\b[^>]*src="([^"]+)"[^>]*>/g)];
+      if (imageLayout !== "none") {
+        assert.ok(images.some(([, source]) => source.includes("/api/antiquites/images/")), `${imageLayout}/${objectLayout}`);
+      }
+      for (const [tag, source] of images) {
+        if (!source.includes("/api/antiquites/images/")) continue;
+        const url = new URL(source.replace(/&amp;/g, "&"));
+        assert.equal(url.searchParams.get("format"), "jpg", `${imageLayout}/${objectLayout}`);
+        assert.equal(url.searchParams.get("background"), "white");
+        assert.ok(tag.includes("background-color:#FFFFFF;"));
+      }
+      const fallback = fallbackPreview(html);
+      assert.ok(!fallback.includes('src="https://api.example.com/api/antiquites/images/a.webp"'));
+    }
+  }
+  const customArticle = {
+    ...article,
+    images: [{ id: 1, url: "https://api.example.com/api/antiquites/images/a.webp?existing=1&format=jpg" }]
+  };
+  const html = renderMail(documentWith({ items: [itemFromArticle(customArticle)] })).html;
+  assert.ok(html.includes("existing=1&amp;format=jpg&amp;background=white"));
+  assert.ok(renderMail(documentWith({ imageLayout: "single" })).html.includes('src="https://api.example.com/v.webp"'));
 });
 
 test("omits unsafe call to action links", () => {
