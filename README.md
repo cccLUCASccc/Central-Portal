@@ -122,6 +122,8 @@ répartit les paragraphes de la conclusion. Les photos WebP de l'inventaire
 sont servies en JPEG avec la transparence composée sur blanc, y compris les
 vignettes et les versions de repli. Déployer l'API avant le portail pour cette
 conversion. Les mails déjà reçus ne sont pas modifiés.
+Les contours semi-transparents sont composés sur blanc avant l'encodage JPEG ;
+les URLs de conversion sont versionnées pour éviter les anciennes images en cache.
 
 Les liens vers les objets conservent leur nom exact, y compris les points
 finaux : la boutique utilise ce nom pour retrouver l'objet.

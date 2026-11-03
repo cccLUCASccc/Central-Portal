@@ -312,8 +312,9 @@ function mailImageUrl(value: string): string {
   const url = new URL(value);
   if (url.pathname.includes("/api/antiquites/images/") && url.pathname.toLowerCase().endsWith(".webp")) {
     url.searchParams.set("format", "jpg");
-    // Une URL distincte évite les anciens JPEG à fond noir déjà en cache.
+    // Versionner la conversion pour ne pas réutiliser les anciens JPEG en cache.
     url.searchParams.set("background", "white");
+    url.searchParams.set("v", "2");
     return url.href;
   }
   return value;

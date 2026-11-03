@@ -116,6 +116,7 @@ test("all object photos use white-background JPEGs, including slider thumbnails 
         const url = new URL(source.replace(/&amp;/g, "&"));
         assert.equal(url.searchParams.get("format"), "jpg", `${imageLayout}/${objectLayout}`);
         assert.equal(url.searchParams.get("background"), "white");
+        assert.equal(url.searchParams.get("v"), "2");
         assert.ok(tag.includes("background-color:#FFFFFF;"));
       }
       const fallback = fallbackPreview(html);
@@ -127,7 +128,7 @@ test("all object photos use white-background JPEGs, including slider thumbnails 
     images: [{ id: 1, url: "https://api.example.com/api/antiquites/images/a.webp?existing=1&format=jpg" }]
   };
   const html = renderMail(documentWith({ items: [itemFromArticle(customArticle)] })).html;
-  assert.ok(html.includes("existing=1&amp;format=jpg&amp;background=white"));
+  assert.ok(html.includes("existing=1&amp;format=jpg&amp;background=white&amp;v=2"));
   assert.ok(renderMail(documentWith({ imageLayout: "single" })).html.includes('src="https://api.example.com/v.webp"'));
 });
 
