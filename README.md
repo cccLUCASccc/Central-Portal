@@ -145,6 +145,12 @@ le portail n'accède pas au calendrier et ne crée pas de réunion.
 Le lien est sauvegardé dans le brouillon, sans transmission à l'assistant IA.
 Si l'option est activée sans URL HTTP(S) valide, l'envoi est bloqué avec un message.
 
+La fin du mail suit une hiérarchie commune aux mises en page : conclusion,
+bloc de contact sur fond teinté regroupant les conditions professionnelles
+et le bouton de réservation activés, puis signature séparée par un filet.
+Le bloc de contact reste en pleine largeur et disparaît si son contenu est vide.
+Le pied de page de désinscription reste à l'extérieur du corps du mail.
+
 Tests : `bun test src/lib/mail-composer.test.ts`.
 
 ### Assistant IA pour les propositions professionnelles

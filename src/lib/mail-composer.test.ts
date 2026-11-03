@@ -213,6 +213,35 @@ test("professional terms are opt-in, escaped, full width and included in plain t
   assert.ok(!renderMail(doc).html.includes("Conditions &lt;pro&gt;"));
 });
 
+test("mail ending groups enabled contact options before a separated signature", () => {
+  for (const textLayout of textLayouts.map((option) => option.id)) {
+    const doc = documentWith({
+      textLayout, outro: "Conclusion unique.", showProfessionalTerms: true,
+      professionalTerms: "Mention professionnelle unique.", showAppointment: true,
+      appointmentUrl: "https://calendar.google.com/calendar/appointments/test",
+      signature: "Signature unique."
+    });
+    const { html, text } = renderMail(doc);
+    const start = html.indexOf('class="mc-contact"');
+    const signature = html.indexOf('class="mc-signature"');
+    assert.ok(start > html.indexOf("Conclusion unique."));
+    assert.ok(start < html.indexOf("Mention professionnelle unique."));
+    assert.ok(signature > html.indexOf("Prendre rendez-vous en visioconférence"));
+    const contact = html.slice(start, signature);
+    assert.ok(contact.includes("Échangeons sur votre projet"));
+    assert.ok(contact.includes("bgcolor="));
+    assert.ok(!contact.includes('class="mc-col"'));
+    assert.ok(text.indexOf(doc.outro) < text.indexOf(doc.professionalTerms));
+    assert.ok(text.indexOf("Prendre rendez-vous") < text.indexOf(doc.signature));
+    doc.showAppointment = false;
+    assert.ok(renderMail(doc).html.includes(">Conditions professionnelles</h2>"));
+    doc.professionalTerms = "";
+    assert.ok(!renderMail(doc).html.includes('class="mc-contact"'));
+    doc.signature = "";
+    assert.ok(!renderMail(doc).html.includes('class="mc-signature"'));
+  }
+});
+
 test("drafts preserve professional terms and global prices and migrate older drafts", () => {
   const doc = documentWith({ showPrices: false, showProfessionalTerms: true, professionalTerms: "Conditions sur demande." });
   const restored = readDraft(JSON.stringify({ version: 1, document: doc })).document;
