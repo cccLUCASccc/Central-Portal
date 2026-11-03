@@ -7,4 +7,4 @@ export const isPublished = (item: Publishable) =>
     item.status === 0 && (!item.approval_status || item.approval_status === "approved");
 
 export const siteItemUrl = (item: Pick<Publishable, "name">) =>
-    `${SITE_URL}/boutique/${encodeURIComponent(item.name.replace(/\.+$/, "").trim())}`;
+    `${SITE_URL}/boutique/${encodeURIComponent(item.name)}`;

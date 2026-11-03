@@ -123,6 +123,9 @@ sont servies en JPEG avec la transparence composée sur blanc, y compris les
 vignettes et les versions de repli. Déployer l'API avant le portail pour cette
 conversion. Les mails déjà reçus ne sont pas modifiés.
 
+Les liens vers les objets conservent leur nom exact, y compris les points
+finaux : la boutique utilise ce nom pour retrouver l'objet.
+
 Tests : `bun test src/lib/mail-composer.test.ts`.
 
 ## Logs serveur PostHog (OpenTelemetry)

@@ -137,6 +137,25 @@ test("omits unsafe call to action links", () => {
   assert.ok(!text.includes("Cliquez"));
 });
 
+test("preserves trailing punctuation in photo, button and plain-text object links", () => {
+  const name = "Colonne en majolique décor au héron.";
+  const expected = `https://daisybrocante.com/boutique/${encodeURIComponent(name)}`;
+  for (const objectLayout of objectLayouts.map((item) => item.id)) {
+    for (const imageLayout of imageLayouts.map((item) => item.id)) {
+      const { html, text } = renderMail(documentWith({
+        objectLayout, imageLayout,
+        items: [itemFromArticle({ ...article, name }), itemFromArticle(second)]
+      }));
+      const links = [...html.matchAll(/href="([^"]+)"/g)]
+        .map(([, href]) => href)
+        .filter((href) => href.includes("Colonne"));
+      assert.ok(links.length > 0);
+      assert.ok(links.every((href) => href === expected), `${objectLayout}/${imageLayout}`);
+      assert.ok(text.split("\n").includes(expected));
+    }
+  }
+});
+
 test("parses recipient lists", () => {
   const { valid, invalid } = parseRecipients("A@example.com, b@example.com;\nfoo\na@example.com  c@example.org");
   assert.deepEqual(valid, ["a@example.com", "b@example.com", "c@example.org"]);
