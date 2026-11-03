@@ -555,7 +555,7 @@ function contactBlockHtml(doc: MailDocument, theme: Theme): string {
   const heading = appointmentUrl ? "Échangeons sur votre projet" : "Conditions professionnelles";
   const align = theme.align === "justify" ? "left" : theme.align;
   const appointment = appointmentUrl
-    ? `<tr><td align="${align}" style="padding-top:${terms ? 8 : 0}px;">${button("Prenons rendez-vous", appointmentUrl, theme, align)}</td></tr>`
+    ? `<tr><td align="${align}" style="padding-top:${terms ? 8 : 0}px;">${button("Planifier un appel", appointmentUrl, theme, align)}</td></tr>`
     : "";
   return `<tr><td class="mc-contact" bgcolor="${theme.accentSoft}" style="padding:24px;background-color:${theme.accentSoft};border-radius:6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td><h2 style="margin:0 0 12px;font-family:${theme.fontFamily};font-size:19px;line-height:1.35;color:#111111;text-align:${align};">${heading}</h2>${terms ? paragraphHtml(terms, theme, theme.align, "font-size:14px;") : ""}</td></tr>${appointment}</table></td></tr>${spacer(24)}`;
 }
@@ -642,7 +642,7 @@ export function renderPlainText(doc: MailDocument): string {
   if (doc.outro.trim()) blocks.push(stripMarkup(doc.outro));
   if (doc.showProfessionalTerms && doc.professionalTerms.trim()) blocks.push(stripMarkup(doc.professionalTerms));
   const appointmentUrl = safeUrl(doc.appointmentUrl);
-  if (doc.showAppointment && appointmentUrl) blocks.push(`Prenons rendez-vous : ${appointmentUrl}`);
+  if (doc.showAppointment && appointmentUrl) blocks.push(`Planifier un appel : ${appointmentUrl}`);
   if (doc.signature.trim()) blocks.push(stripMarkup(doc.signature));
   if (doc.footer.trim()) blocks.push(`--\n${stripMarkup(doc.footer)}`);
   return blocks.join("\n\n");
