@@ -166,20 +166,20 @@ test("parses recipient lists", () => {
 test("appointment booking is opt-in and uses a separate safe button in HTML and text", () => {
   const url = "https://calendar.google.com/calendar/appointments/test?a=1&b=2";
   const doc = documentWith({ appointmentUrl: url });
-  assert.ok(!renderMail(doc).html.includes("Prendre rendez-vous"));
+  assert.ok(!renderMail(doc).html.includes("Prenons rendez-vous"));
   doc.showAppointment = true;
   const rendered = renderMail(doc);
   assert.ok(rendered.html.includes('href="https://calendar.google.com/calendar/appointments/test?a=1&amp;b=2"'));
-  assert.ok(rendered.html.includes("Prendre rendez-vous en visioconférence"));
+  assert.match(rendered.html, /<a[^>]*style="[^"]*text-align:center;[^"]*">Prenons rendez-vous<\/a>/);
   assert.ok(rendered.html.includes("Voir la boutique"));
-  assert.ok(rendered.text.includes(`Prendre rendez-vous en visioconférence : ${url}`));
+  assert.ok(rendered.text.includes(`Prenons rendez-vous : ${url}`));
   const restored = readDraft(JSON.stringify({ version: 1, document: doc })).document;
   assert.equal(restored.showAppointment, true);
   assert.equal(restored.appointmentUrl, url);
   for (const appointmentUrl of ["", "javascript:alert(1)"]) {
     const invalid = renderMail({ ...doc, appointmentUrl });
-    assert.ok(!invalid.html.includes("Prendre rendez-vous"));
-    assert.ok(!invalid.text.includes("Prendre rendez-vous"));
+    assert.ok(!invalid.html.includes("Prenons rendez-vous"));
+    assert.ok(!invalid.text.includes("Prenons rendez-vous"));
   }
 });
 
@@ -226,13 +226,13 @@ test("mail ending groups enabled contact options before a separated signature", 
     const signature = html.indexOf('class="mc-signature"');
     assert.ok(start > html.indexOf("Conclusion unique."));
     assert.ok(start < html.indexOf("Mention professionnelle unique."));
-    assert.ok(signature > html.indexOf("Prendre rendez-vous en visioconférence"));
+    assert.ok(signature > html.indexOf("Prenons rendez-vous"));
     const contact = html.slice(start, signature);
     assert.ok(contact.includes("Échangeons sur votre projet"));
     assert.ok(contact.includes("bgcolor="));
     assert.ok(!contact.includes('class="mc-col"'));
     assert.ok(text.indexOf(doc.outro) < text.indexOf(doc.professionalTerms));
-    assert.ok(text.indexOf("Prendre rendez-vous") < text.indexOf(doc.signature));
+    assert.ok(text.indexOf("Prenons rendez-vous") < text.indexOf(doc.signature));
     doc.showAppointment = false;
     assert.ok(renderMail(doc).html.includes(">Conditions professionnelles</h2>"));
     doc.professionalTerms = "";

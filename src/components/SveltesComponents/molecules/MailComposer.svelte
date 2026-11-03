@@ -576,7 +576,7 @@
                 <label for="mail-appointment-url" class={labelClass}>Lien de votre page de réservation Google Agenda</label>
                 <input id="mail-appointment-url" type="url" class={inputClass} bind:value={doc.appointmentUrl} placeholder="https://calendar.google.com/calendar/appointments/…" />
                 <p class="text-[11px]">Dans Google Agenda, créez un planning de rendez-vous, choisissez Google Meet comme lieu de réunion, puis copiez le lien de la page de réservation. Le destinataire choisira son créneau sur cette page ; l'invitation Meet sera gérée par Google Agenda.</p>
-                <p class="text-[11px]">Le bouton « Prendre rendez-vous en visioconférence » est ajouté avant la signature, sans remplacer le bouton de la boutique. Le portail ne crée pas lui-même de réunion.</p>
+                <p class="text-[11px]">Le bouton « Prenons rendez-vous » est ajouté avant la signature, sans remplacer le bouton de la boutique. Le portail ne crée pas lui-même de réunion.</p>
                 {#if appointmentError}<p role="alert" class="text-xs text-red-800">{appointmentError}</p>{/if}
               {/if}
             </div>
