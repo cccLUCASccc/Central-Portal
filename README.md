@@ -128,6 +128,15 @@ les URLs de conversion sont versionnées pour éviter les anciennes images en ca
 Les liens vers les objets conservent leur nom exact, y compris les points
 finaux : la boutique utilise ce nom pour retrouver l'objet.
 
+L'onglet Objets permet de masquer globalement les prix (également pour les
+objets ajoutés ensuite), sans perdre les choix individuels. L'onglet Texte
+permet d'activer une mention modifiable sur les conditions pour professionnels,
+affichée avant la signature, en pleine largeur. Elle est désactivée par défaut :
+ne l'activer que si ces conditions existent réellement. Ces réglages sont
+sauvegardés dans le brouillon et appliqués au HTML et à la version texte.
+Ils ne modifient pas les prix du catalogue et ne retirent pas les montants
+éventuellement saisis manuellement dans les textes.
+
 Tests : `bun test src/lib/mail-composer.test.ts`.
 
 ### Assistant IA pour les propositions professionnelles

@@ -34,7 +34,7 @@ export const objectLayouts: { id: ObjectLayout; label: string; hint: string }[] 
 export const textLayouts: { id: TextLayout; label: string; hint: string }[] = [
   { id: "classic", label: "Classique", hint: "Une colonne." },
   { id: "centered", label: "Centré", hint: "Titres et textes centrés." },
-  { id: "two-columns", label: "Deux colonnes", hint: "Le texte d'introduction réparti sur deux colonnes." },
+  { id: "two-columns", label: "Deux colonnes", hint: "La conclusion sur deux colonnes ; l'introduction reste en pleine largeur." },
   { id: "boxed", label: "Encadré", hint: "Introduction et conclusion dans un encadré coloré." },
   { id: "letter", label: "Lettre", hint: "Style courrier, signature à droite." }
 ];
@@ -58,6 +58,9 @@ export interface MailDocument {
   ctaLabel: string;
   ctaUrl: string;
   showLogo: boolean;
+  showPrices: boolean;
+  showProfessionalTerms: boolean;
+  professionalTerms: string;
   textLayout: TextLayout;
   textAlign: TextAlign;
   font: FontStyle;
@@ -88,6 +91,9 @@ export function defaultDocument(): MailDocument {
     ctaLabel: "Voir la boutique",
     ctaUrl: `${SITE_URL}/boutique`,
     showLogo: true,
+    showPrices: true,
+    showProfessionalTerms: false,
+    professionalTerms: "Des conditions dédiées aux professionnels sont disponibles sur demande. Contactez-nous pour en savoir plus.",
     textLayout: "classic",
     textAlign: "left",
     font: "sans",
@@ -201,6 +207,9 @@ export function readDraft(raw: string): MailDraft {
     ctaLabel: text(source.ctaLabel, defaults.ctaLabel),
     ctaUrl: text(source.ctaUrl, defaults.ctaUrl),
     showLogo: source.showLogo !== false,
+    showPrices: source.showPrices !== false,
+    showProfessionalTerms: source.showProfessionalTerms === true,
+    professionalTerms: text(source.professionalTerms, defaults.professionalTerms),
     textLayout: oneOf(source.textLayout, textLayouts.map((item) => item.id), defaults.textLayout),
     textAlign: oneOf(source.textAlign, ["left", "center", "justify"] as const, defaults.textAlign),
     font: oneOf(source.font, ["sans", "serif"] as const, defaults.font),
@@ -275,6 +284,7 @@ export function paragraphs(value: string): string[] {
 }
 
 interface Theme {
+  showPrices: boolean;
   accent: string;
   accentText: string;
   accentSoft: string;
@@ -285,6 +295,7 @@ interface Theme {
 function themeFor(doc: MailDocument): Theme {
   const accent = safeColor(doc.accentColor);
   return {
+    showPrices: doc.showPrices,
     accent,
     accentText: contrastColor(accent),
     accentSoft: tint(accent, 0.9),
@@ -409,7 +420,7 @@ function imagesHtml(item: MailItem, doc: MailDocument, theme: Theme, width: numb
 function itemTextHtml(item: MailItem, theme: Theme, align: string): string {
   const href = item.showLink ? siteItemUrl(item.article) : null;
   const name = `<h3 style="margin:0 0 6px 0;font-family:${theme.fontFamily};font-size:19px;line-height:1.3;color:#111111;text-align:${align};">${escapeHtml(item.article.name)}</h3>`;
-  const price = item.showPrice
+  const price = theme.showPrices && item.showPrice
     ? `<p style="margin:0 0 10px 0;font-family:${theme.fontFamily};font-size:17px;font-weight:bold;color:${theme.accent};text-align:${align};">${escapeHtml(formatPrice(item.article.price))}</p>`
     : "";
   const body = item.text.trim()
@@ -563,6 +574,7 @@ export function renderMail(doc: MailDocument): RenderedMail {
     itemsHtml(doc, theme),
     cta ? `<tr><td>${cta}</td></tr>${spacer(20)}` : "",
     textBlockHtml(doc.outro, doc, theme),
+    doc.showProfessionalTerms ? textBlockHtml(doc.professionalTerms, doc, theme, false) : "",
     signature
   ].join("");
 
@@ -602,7 +614,7 @@ export function renderPlainText(doc: MailDocument): string {
   if (doc.intro.trim()) blocks.push(stripMarkup(doc.intro));
   for (const item of doc.items) {
     const lines = [`— ${item.article.name}`];
-    if (item.showPrice) lines.push(formatPrice(item.article.price));
+    if (doc.showPrices && item.showPrice) lines.push(formatPrice(item.article.price));
     if (item.text.trim()) lines.push(stripMarkup(item.text));
     if (item.showLink) lines.push(siteItemUrl(item.article));
     blocks.push(lines.join("\n"));
@@ -610,6 +622,7 @@ export function renderPlainText(doc: MailDocument): string {
   const ctaUrl = safeUrl(doc.ctaUrl);
   if (doc.ctaLabel.trim() && ctaUrl) blocks.push(`${doc.ctaLabel.trim()} : ${ctaUrl}`);
   if (doc.outro.trim()) blocks.push(stripMarkup(doc.outro));
+  if (doc.showProfessionalTerms && doc.professionalTerms.trim()) blocks.push(stripMarkup(doc.professionalTerms));
   if (doc.signature.trim()) blocks.push(stripMarkup(doc.signature));
   if (doc.footer.trim()) blocks.push(`--\n${stripMarkup(doc.footer)}`);
   return blocks.join("\n\n");

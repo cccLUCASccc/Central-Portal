@@ -548,6 +548,16 @@
               <textarea id="mail-outro" class={inputClass} rows="4" bind:value={doc.outro}></textarea>
             </div>
             <p class="text-[11px] text-black/60">Astuce : laissez une ligne vide entre deux paragraphes, entourez un mot de **doubles astérisques** pour le mettre en gras ; les liens https:// deviennent cliquables.</p>
+            <div class="space-y-2 border-2 border-black bg-[#F4F1EA] p-3">
+              <label class="flex items-center gap-2 text-xs font-bold">
+                <input type="checkbox" bind:checked={doc.showProfessionalTerms} /> Mentionner les conditions pour professionnels
+              </label>
+              {#if doc.showProfessionalTerms}
+                <label for="mail-professional-terms" class={labelClass}>Mention professionnelle (avant la signature)</label>
+                <textarea id="mail-professional-terms" class={inputClass} rows="3" bind:value={doc.professionalTerms}></textarea>
+                <p class="text-[11px]">À activer uniquement si ces conditions existent. Indiquez uniquement vos engagements réels ; aucune remise n'est ajoutée automatiquement.</p>
+              {/if}
+            </div>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
                 <label for="mail-cta-label" class={labelClass}>Bouton : libellé</label>
@@ -575,6 +585,10 @@
           <div id="mail-panel-objects" role="tabpanel" aria-labelledby="mail-tab-objects" class="space-y-6">
             <section aria-labelledby="mail-selected-title" class="space-y-3">
               <h2 id="mail-selected-title" class="text-sm font-black uppercase">Objets du mail ({doc.items.length}/{MAX_MAIL_ITEMS})</h2>
+              <label class="flex items-center gap-2 text-xs font-bold">
+                <input type="checkbox" bind:checked={doc.showPrices} /> Afficher les prix des objets dans le mail
+              </label>
+              <p class="text-[11px] text-black/60">Décochez pour masquer tous les prix, y compris ceux des objets ajoutés ensuite. Les choix individuels sont conservés.</p>
               {#if doc.items.length === 0}
                 <p class="border-2 border-dashed border-black/40 p-4 text-xs text-black/60">Aucun objet. Choisissez-en dans l'inventaire ci-dessous.</p>
               {/if}
@@ -614,7 +628,7 @@
                     <textarea id={`mail-item-text-${item.article.id}`} class={inputClass} rows="3" bind:value={item.text}></textarea>
                   </div>
                   <div class="flex flex-wrap gap-4 text-xs">
-                    <label class="flex items-center gap-1"><input type="checkbox" bind:checked={item.showPrice} /> Afficher le prix</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" bind:checked={item.showPrice} disabled={!doc.showPrices} /> Afficher le prix</label>
                     <label class="flex items-center gap-1"><input type="checkbox" bind:checked={item.showLink} /> Bouton « Voir l'objet »</label>
                   </div>
                 </article>

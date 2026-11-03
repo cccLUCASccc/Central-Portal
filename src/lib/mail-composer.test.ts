@@ -163,6 +163,52 @@ test("parses recipient lists", () => {
   assert.deepEqual(invalid, ["foo"]);
 });
 
+test("global price visibility covers every layout without changing individual preferences", () => {
+  for (const objectLayout of objectLayouts.map((option) => option.id)) {
+    const doc = documentWith({ objectLayout, showPrices: false });
+    const hidden = renderMail(doc);
+    assert.ok(!hidden.html.includes("245,00"));
+    assert.ok(!hidden.text.includes("245,00"));
+    assert.equal(doc.items[0].showPrice, true);
+    doc.items.push(itemFromArticle({ ...article, id: 99, price: 789 }));
+    assert.ok(!renderMail(doc).html.includes("789,00"));
+    doc.showPrices = true;
+    assert.ok(renderMail(doc).html.includes("245,00"));
+    assert.ok(renderMail(doc).text.includes("245,00"));
+    doc.items.forEach((item) => item.showPrice = false);
+    assert.ok(!renderMail(doc).html.includes("245,00"));
+  }
+});
+
+test("professional terms are opt-in, escaped, full width and included in plain text", () => {
+  const doc = documentWith({ textLayout: "two-columns", outro: "", professionalTerms: "Conditions <pro>.\n\nContactez-nous." });
+  assert.ok(!renderMail(doc).text.includes("Conditions <pro>"));
+  doc.showProfessionalTerms = true;
+  const { html, text } = renderMail(doc);
+  assert.ok(html.includes("Conditions &lt;pro&gt;."));
+  assert.ok(text.includes("Conditions <pro>."));
+  assert.ok(!html.includes('class="mc-col" width="264"'));
+  assert.ok(text.indexOf("Conditions <pro>.") < text.indexOf(doc.signature));
+  doc.professionalTerms = "";
+  assert.ok(!renderMail(doc).html.includes("Conditions &lt;pro&gt;"));
+});
+
+test("drafts preserve professional terms and global prices and migrate older drafts", () => {
+  const doc = documentWith({ showPrices: false, showProfessionalTerms: true, professionalTerms: "Conditions sur demande." });
+  const restored = readDraft(JSON.stringify({ version: 1, document: doc })).document;
+  assert.equal(restored.showPrices, false);
+  assert.equal(restored.showProfessionalTerms, true);
+  assert.equal(restored.professionalTerms, doc.professionalTerms);
+  const old = { ...doc };
+  Reflect.deleteProperty(old, "showPrices");
+  Reflect.deleteProperty(old, "showProfessionalTerms");
+  Reflect.deleteProperty(old, "professionalTerms");
+  const migrated = readDraft(JSON.stringify({ version: 1, document: old })).document;
+  assert.equal(migrated.showPrices, true);
+  assert.equal(migrated.showProfessionalTerms, false);
+  assert.equal(migrated.professionalTerms, defaultDocument().professionalTerms);
+});
+
 test("builds inventory URLs with an optional search", () => {
   const url = new URL(inventorySearchURL("https://api.example.com/", 2, " miroir "));
   assert.equal(url.pathname, "/api/antiquites");
