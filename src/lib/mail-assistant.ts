@@ -1,4 +1,4 @@
-import type { MailDocument } from "./mail-composer";
+import { selectedPlans, type MailDocument } from "./mail-composer";
 
 export const assistantOptions = {
   objective: [
@@ -43,7 +43,10 @@ export function currentCopy(doc: MailCopy): MailCopy {
 export function assistantRequest(doc: MailDocument, settings: AssistantSettings, mode: "draft" | "improve") {
   return {
     ...settings, mode, current: currentCopy(doc),
-    items: doc.items.map((item) => item.article.name)
+    content_mode: doc.contentMode,
+    items: doc.contentMode === "subscriptions"
+      ? selectedPlans(doc).map((plan) => `Formule ${plan.name} : ${plan.price}, commission ${plan.commission}. ${plan.features}`)
+      : doc.items.map((item) => item.article.name)
   };
 }
 

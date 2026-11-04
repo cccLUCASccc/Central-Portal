@@ -4,6 +4,9 @@
   import {
     MAX_MAIL_ITEMS,
     MAX_RECIPIENTS,
+    SELLER_PRICING_URL,
+    SELLER_URL,
+    contentModes,
     defaultDocument,
     draftKey,
     fallbackPreview,
@@ -15,11 +18,18 @@
     parseRecipients,
     readDraft,
     renderMail,
+    subscriptionPlans,
+    switchContentMode,
     textLayouts,
     type MailArticle,
     type MailDocument,
-    type MailDraft
+    type MailDraft,
+    type SavedMailRef
   } from "../../../lib/mail-composer";
+  import {
+    defaultSavedName, readSavedJSON, readSavedList, readSavedMail, readSavedWrite, savedMailPath, savedMailPayload,
+    type SavedMailSummary
+  } from "../../../lib/mail-saved";
   import { readInventoryResponse } from "../../../lib/social-publication";
   import type { Pagination } from "../../../type";
   import PaginationComponent from "../atoms/Pagination.svelte";
@@ -37,7 +47,7 @@
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "content", label: "Texte", icon: "edit_note" },
-    { id: "objects", label: "Objets", icon: "inventory_2" },
+    { id: "objects", label: "Objets / offres", icon: "inventory_2" },
     { id: "layout", label: "Mise en page", icon: "dashboard_customize" },
     { id: "send", label: "Envoi", icon: "send" }
   ];
@@ -52,6 +62,17 @@
   let draftReady = $state(false);
   let draftNotice = $state("");
   let draftError = $state("");
+
+  let savedRef = $state<SavedMailRef | null>(null);
+  let savedName = $state("");
+  let savedContent = $state("");
+  let savedList = $state<SavedMailSummary[]>([]);
+  let savedListOpen = $state(false);
+  let savedListLoaded = $state(false);
+  let savedLoading = $state(false);
+  let savedBusy = $state(false);
+  let savedError = $state("");
+  let savedNotice = $state("");
 
   let articles = $state<MailArticle[]>([]);
   let pagination = $state<Pagination | null>(null);
@@ -155,17 +176,23 @@
   const rendered = $derived(renderMail(doc));
   const parsedRecipients = $derived(parseRecipients(recipients));
   const selectedIds = $derived(new Set(doc.items.map((item) => item.article.id)));
-  const canSend = $derived(
-    !!status?.authorized && !!status?.configured && !sending &&
-    !appointmentError &&
-    doc.subject.trim().length > 0 && parsedRecipients.valid.length > 0 &&
-    parsedRecipients.valid.length <= MAX_RECIPIENTS && parsedRecipients.invalid.length === 0
+  const contentError = $derived(
+    doc.contentMode === "subscriptions" && doc.plans.length === 0
+      ? "Sélectionnez au moins une formule d'abonnement (onglet Objets / offres), ou revenez aux objets." : ""
   );
+  const currentContent = $derived(JSON.stringify({ document: $state.snapshot(doc), recipients, replyTo }));
+  const savedDirty = $derived(savedRef !== null && currentContent !== savedContent);
   let testAddress = $state("");
   const appointmentError = $derived(
     doc.showAppointment && (!URL.canParse(doc.appointmentUrl.trim()) ||
       !["https:", "http:"].includes(new URL(doc.appointmentUrl.trim()).protocol))
       ? "Ajoutez un lien de réservation Google Agenda valide avant l'envoi, ou désactivez le rendez-vous." : ""
+  );
+  const canSend = $derived(
+    !!status?.authorized && !!status?.configured && !sending &&
+    !appointmentError && !contentError &&
+    doc.subject.trim().length > 0 && parsedRecipients.valid.length > 0 &&
+    parsedRecipients.valid.length <= MAX_RECIPIENTS && parsedRecipients.invalid.length === 0
   );
 
   function errorMessage(cause: unknown): string {
@@ -212,14 +239,18 @@
   let draftTimer: ReturnType<typeof setTimeout> | undefined;
   let lastSavedContent = "";
   $effect(() => {
-    const content = JSON.stringify({ document: $state.snapshot(doc), recipients, replyTo });
-    if (!draftReady || content === lastSavedContent) return;
+    const content = currentContent;
+    // savedRef et savedContent font partie de la clé : relier/délier un mail sauvegardé réécrit aussi le brouillon.
+    if (!draftReady || content + JSON.stringify(savedRef) + (content === savedContent) === lastSavedContent) return;
     clearTimeout(draftTimer);
     draftTimer = setTimeout(() => {
       try {
-        const draft: MailDraft = { version: 1, ...JSON.parse(content), savedAt: new Date().toISOString() };
+        const draft: MailDraft = {
+          version: 1, ...JSON.parse(content), savedAt: new Date().toISOString(),
+          ...(savedRef ? { saved: { ...$state.snapshot(savedRef), clean: content === savedContent } } : {})
+        };
         localStorage.setItem(draftKey(userId), JSON.stringify(draft));
-        lastSavedContent = content;
+        lastSavedContent = content + JSON.stringify(savedRef) + (content === savedContent);
         draftError = "";
         draftNotice = `Brouillon enregistré automatiquement à ${new Date().toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" })}.`;
       } catch (cause) {
@@ -236,7 +267,13 @@
         doc = draft.document;
         recipients = draft.recipients;
         replyTo = draft.replyTo;
-        lastSavedContent = JSON.stringify({ document: draft.document, recipients: draft.recipients, replyTo: draft.replyTo });
+        const content = JSON.stringify({ document: draft.document, recipients: draft.recipients, replyTo: draft.replyTo });
+        if (draft.saved) {
+          savedRef = { ...draft.saved, clean: false };
+          savedName = draft.saved.name;
+          savedContent = draft.saved.clean ? content : "";
+        }
+        lastSavedContent = content + JSON.stringify(savedRef) + (content === savedContent);
         draftNotice = "Brouillon précédent retrouvé dans ce navigateur.";
       }
     } catch (cause) {
@@ -247,7 +284,10 @@
   }
 
   function resetMail() {
-    if (!window.confirm("Effacer le mail en cours et repartir d'un mail vierge ?")) return;
+    if (!window.confirm(savedRef && !savedDirty
+      ? "Fermer ce mail sauvegardé et repartir d'un mail vierge ? Il reste disponible dans les mails sauvegardés."
+      : "Effacer le mail en cours et repartir d'un mail vierge ? Les modifications non enregistrées seront perdues.")) return;
+    detachSaved();
     assistantController?.abort();
     assistantController = undefined;
     assistantLoading = false;
@@ -263,6 +303,115 @@
     sendNotice = "";
     sendError = "";
     draftNotice = "Nouveau mail.";
+  }
+
+  // ---------- Mails sauvegardés ----------
+  function detachSaved() {
+    savedRef = null;
+    savedName = "";
+    savedContent = "";
+    savedError = "";
+    savedNotice = "";
+  }
+
+  async function loadSavedList() {
+    savedLoading = true;
+    savedError = "";
+    try {
+      savedList = await readSavedList(await apiFetch(`${base}${savedMailPath()}`, { signal: AbortSignal.timeout(30000) }));
+      savedListLoaded = true;
+    } catch (cause) {
+      savedError = errorMessage(cause);
+    } finally {
+      savedLoading = false;
+    }
+  }
+
+  async function saveMail(asNew: boolean) {
+    if (savedBusy) return;
+    savedError = "";
+    savedNotice = "";
+    const name = (savedName.trim() || defaultSavedName(doc)).slice(0, 120);
+    const content = currentContent;
+    const snapshot = JSON.parse(content);
+    const update = !asNew && savedRef ? savedRef : null;
+    savedBusy = true;
+    try {
+      const response = await apiFetch(`${base}${savedMailPath(update?.id)}`, {
+        method: update ? "PUT" : "POST",
+        body: JSON.stringify(savedMailPayload(name, snapshot, update?.version)),
+        signal: AbortSignal.timeout(30000)
+      });
+      const mail = await readSavedWrite(response, { name, version: update?.version });
+      savedRef = { id: mail.id, name: mail.name, version: mail.version, clean: true };
+      savedName = mail.name;
+      savedContent = content;
+      savedNotice = update ? `« ${mail.name} » mis à jour.` : `« ${mail.name} » enregistré. Vous pourrez le rouvrir depuis « Mails sauvegardés ».`;
+      if (savedListLoaded) void loadSavedList();
+    } catch (cause) {
+      savedError = errorMessage(cause);
+    } finally {
+      savedBusy = false;
+    }
+  }
+
+  async function openSaved(item: SavedMailSummary) {
+    if (savedBusy) return;
+    const unchanged = savedRef !== null && !savedDirty;
+    if (!unchanged && !window.confirm(`Ouvrir « ${item.name} » ? Le mail en cours sera remplacé ; ses modifications non enregistrées seront perdues.`)) return;
+    savedBusy = true;
+    savedError = "";
+    savedNotice = "";
+    try {
+      const { mail, draft } = await readSavedMail(await apiFetch(`${base}${savedMailPath(item.id)}`, { signal: AbortSignal.timeout(30000) }));
+      assistantController?.abort();
+      suggestion = null;
+      previousCopy = null;
+      doc = draft.document;
+      recipients = draft.recipients;
+      replyTo = draft.replyTo;
+      sendResults = [];
+      sendNotice = "";
+      sendError = "";
+      savedRef = { id: mail.id, name: mail.name, version: mail.version, clean: true };
+      savedName = mail.name;
+      savedContent = JSON.stringify({ document: $state.snapshot(doc), recipients, replyTo });
+      savedNotice = `« ${mail.name} » ouvert. Vos modifications seront enregistrées dans ce mail avec « Enregistrer ».`;
+      tab = "content";
+    } catch (cause) {
+      savedError = errorMessage(cause);
+    } finally {
+      savedBusy = false;
+    }
+  }
+
+  async function deleteSaved(item: SavedMailSummary) {
+    if (savedBusy || !window.confirm(`Supprimer définitivement « ${item.name} » pour tous les utilisateurs ?`)) return;
+    savedBusy = true;
+    savedError = "";
+    savedNotice = "";
+    try {
+      const result = await readSavedJSON(await apiFetch(`${base}${savedMailPath(item.id, item.version)}`, {
+        method: "DELETE", signal: AbortSignal.timeout(30000)
+      }));
+      if (typeof result !== "object" || result === null || !("deleted" in result) || result.deleted !== true) {
+        throw new Error("La suppression n'a pas été confirmée par Central-API.");
+      }
+      if (savedRef?.id === item.id) {
+        savedRef = null;
+        savedContent = "";
+      }
+      savedNotice = `« ${item.name} » supprimé.${savedRef === null ? " Le mail ouvert reste dans l'éditeur, non sauvegardé." : ""}`;
+      void loadSavedList();
+    } catch (cause) {
+      savedError = errorMessage(cause);
+    } finally {
+      savedBusy = false;
+    }
+  }
+
+  function setContentMode(mode: "objects" | "subscriptions") {
+    doc = switchContentMode(doc, mode);
   }
 
   // ---------- Inventaire ----------
@@ -315,7 +464,7 @@
   }
 
   $effect(() => {
-    if (tab === "objects" && !inventoryLoaded && !inventoryLoading && !inventoryError) void loadInventory(1);
+    if (tab === "objects" && doc.contentMode === "objects" && !inventoryLoaded && !inventoryLoading && !inventoryError) void loadInventory(1);
   });
 
   // ---------- Export ----------
@@ -376,8 +525,8 @@
     sendError = "";
     sendNotice = "";
     sendResults = [];
-    if (appointmentError) {
-      sendError = appointmentError;
+    if (appointmentError || contentError) {
+      sendError = appointmentError || contentError;
       return;
     }
     if (!doc.subject.trim()) {
@@ -453,6 +602,70 @@
     <div role="alert" class="border-2 border-black bg-[#FFE2E2] p-3 text-xs">{draftError}</div>
   {/if}
 
+  <section aria-labelledby="saved-mails-title" class="space-y-3 border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_#000]" aria-busy={savedBusy || savedLoading}>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="saved-mails-title" class="text-sm font-black uppercase">
+        {savedRef ? `Mail sauvegardé : ${savedRef.name}` : "Mail non sauvegardé"}
+      </h2>
+      {#if savedRef}
+        <span class="border-2 border-black px-2 py-0.5 text-[11px] font-bold {savedDirty ? 'bg-[#FFF394]' : 'bg-[#86E2D5]'}">
+          {savedDirty ? "Modifications non enregistrées" : "À jour"}
+        </span>
+      {/if}
+    </div>
+    <div class="flex flex-wrap items-end gap-2">
+      <div class="min-w-[220px] flex-1">
+        <label for="saved-mail-name" class={labelClass}>Nom du mail sauvegardé</label>
+        <input id="saved-mail-name" class={inputClass} maxlength="120" bind:value={savedName} placeholder={defaultSavedName(doc)} disabled={savedBusy} />
+      </div>
+      <button type="button" class="retro-btn bg-[#86E2D5] text-xs" disabled={savedBusy || !status?.authorized} onclick={() => saveMail(false)}>
+        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">save</span>
+        {savedBusy ? "Enregistrement…" : savedRef ? "Enregistrer" : "Sauvegarder le mail"}
+      </button>
+      {#if savedRef}
+        <button type="button" class="retro-btn bg-white text-xs" disabled={savedBusy || !status?.authorized} onclick={() => saveMail(true)}>Enregistrer comme nouveau</button>
+      {/if}
+      <button type="button" class="retro-btn bg-white text-xs" aria-expanded={savedListOpen} aria-controls="saved-mails-list" disabled={!status?.authorized}
+        onclick={() => { savedListOpen = !savedListOpen; if (savedListOpen) void loadSavedList(); }}>
+        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">folder_open</span> Mails sauvegardés
+      </button>
+    </div>
+    <p class="text-[11px] text-black/60">Les mails sauvegardés (texte, objets ou formules, mise en page, destinataires) sont partagés avec les utilisateurs autorisés. Le brouillon de ce navigateur reste enregistré automatiquement.</p>
+    {#if status && !status.authorized}<p class="text-xs">Votre compte doit être autorisé dans MAIL_ALLOWED_SENDERS pour sauvegarder des mails.</p>{/if}
+    {#if savedError}<p role="alert" class="border-2 border-black bg-[#FFE2E2] p-2 text-xs">{savedError}</p>{/if}
+    {#if savedNotice}<p role="status" class="text-xs">{savedNotice}</p>{/if}
+    {#if savedListOpen}
+      <div id="saved-mails-list" class="space-y-2 border-t-2 border-black pt-3">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="text-xs font-black uppercase">Mails sauvegardés</h3>
+          <button type="button" class="retro-btn bg-white px-2 py-1 text-xs" disabled={savedLoading} onclick={loadSavedList}>Actualiser</button>
+        </div>
+        {#if savedLoading}
+          <p role="status" class="text-xs">Chargement des mails sauvegardés…</p>
+        {:else if savedListLoaded && savedList.length === 0}
+          <p class="text-xs text-black/60">Aucun mail sauvegardé pour le moment.</p>
+        {:else}
+          <ul class="divide-y divide-black/20 border-2 border-black">
+            {#each savedList as item (item.id)}
+              <li class="flex flex-wrap items-center justify-between gap-2 p-2 {savedRef?.id === item.id ? 'bg-[#F4F1EA]' : ''}">
+                <div class="min-w-0">
+                  <p class="break-words text-xs font-black">{item.name}{savedRef?.id === item.id ? " (ouvert)" : ""}</p>
+                  <p class="break-words text-[11px] text-black/60">
+                    {item.subject || "Sans objet"} · modifié le {new Date(item.updated_at).toLocaleString("fr-BE", { dateStyle: "short", timeStyle: "short" })}
+                  </p>
+                </div>
+                <div class="flex shrink-0 gap-1">
+                  <button type="button" class="retro-btn bg-[#BFD7FE] px-2 py-1 text-xs" disabled={savedBusy} aria-label={`Ouvrir ${item.name}`} onclick={() => openSaved(item)}>Ouvrir</button>
+                  <button type="button" class="retro-btn bg-[#FFE2E2] px-2 py-1 text-xs" disabled={savedBusy} aria-label={`Supprimer ${item.name}`} onclick={() => deleteSaved(item)}>Supprimer</button>
+                </div>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+    {/if}
+  </section>
+
   <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
     <!-- Éditeur -->
     <div class="min-w-0 space-y-4">
@@ -469,8 +682,9 @@
           >
             <span class="material-symbols-outlined text-[16px]" aria-hidden="true">{item.icon}</span>
             {item.label}
-            {#if item.id === "objects" && doc.items.length}
-              <span class="border border-black bg-white px-1 text-[10px]">{doc.items.length}</span>
+            {#if item.id === "objects"}
+              {@const count = doc.contentMode === "subscriptions" ? doc.plans.length : doc.items.length}
+              {#if count}<span class="border border-black bg-white px-1 text-[10px]">{count}</span>{/if}
             {/if}
           </button>
         {/each}
@@ -512,7 +726,7 @@
                 <textarea id="mail-ai-instructions" class={inputClass} rows="4" maxlength="4000" bind:value={assistant.instructions}
                   placeholder="Ex. : Présenter notre sélection de pièces anciennes à des décorateurs et proposer un échange sur leurs projets. Ne pas proposer de remise."></textarea>
               </div>
-              <p class="text-[11px]">En cliquant, vous transmettez à Gemini vos consignes, les six champs de rédaction ci-dessous et les noms des objets sélectionnés. Ni destinataires, ni historique, ni photos, ni signature ne sont transmis. N'incluez pas d'informations confidentielles. Relisez les engagements proposés ; l'IA ne doit inventer aucun avantage commercial.</p>
+              <p class="text-[11px]">En cliquant, vous transmettez à Gemini vos consignes, les six champs de rédaction ci-dessous et, selon le contenu choisi, les noms des objets sélectionnés ou le détail public des formules choisies. Ni destinataires, ni historique, ni photos, ni signature ne sont transmis. N'incluez pas d'informations confidentielles. Relisez les engagements proposés ; l'IA ne doit inventer aucun avantage commercial.</p>
               <div class="flex flex-wrap gap-2">
                 <button type="button" class="retro-btn bg-[#86E2D5] text-xs" disabled={assistantLoading || !status?.authorized} onclick={() => generateCopy("draft")}>
                   {assistantLoading ? "Rédaction en cours…" : "Rédiger une proposition"}
@@ -606,6 +820,48 @@
           </div>
         {:else if tab === "objects"}
           <div id="mail-panel-objects" role="tabpanel" aria-labelledby="mail-tab-objects" class="space-y-6">
+            <fieldset>
+              <legend class={labelClass}>Contenu mis en avant dans le mail</legend>
+              <div class="grid gap-2 sm:grid-cols-2">
+                {#each contentModes as option (option.id)}
+                  <label class={optionClass(doc.contentMode === option.id)}>
+                    <span class="flex items-center gap-2 font-black uppercase">
+                      <input type="radio" name="content-mode" value={option.id} checked={doc.contentMode === option.id} onchange={() => setContentMode(option.id)} /> {option.label}
+                    </span>
+                    <span class="text-black/65">{option.hint}</span>
+                  </label>
+                {/each}
+              </div>
+            </fieldset>
+            {#if doc.contentMode === "subscriptions"}
+            <section aria-labelledby="mail-plans-title" class="space-y-3">
+              <h2 id="mail-plans-title" class="text-sm font-black uppercase">Formules présentées ({doc.plans.length}/{subscriptionPlans.length})</h2>
+              <div class="grid gap-3 sm:grid-cols-2">
+                {#each subscriptionPlans as plan (plan.id)}
+                  <label class="flex cursor-pointer gap-2 border-2 border-black p-3 text-xs {doc.plans.includes(plan.id) ? 'bg-[#86E2D5]' : 'bg-white'}">
+                    <input type="checkbox" value={plan.id} checked={doc.plans.includes(plan.id)}
+                      onchange={(event) => {
+                        const chosen = new Set(event.currentTarget.checked ? [...doc.plans, plan.id] : doc.plans.filter((id) => id !== plan.id));
+                        doc.plans = subscriptionPlans.map((item) => item.id).filter((id) => chosen.has(id));
+                      }} />
+                    <span>
+                      <span class="block font-black uppercase">{plan.name} — {plan.price}</span>
+                      <span class="block font-bold">Commission {plan.commission}</span>
+                      <span class="block text-black/65">{plan.features}</span>
+                    </span>
+                  </label>
+                {/each}
+              </div>
+              {#if contentError}<p role="alert" class="text-xs text-red-800">{contentError}</p>{/if}
+              <p class="text-[11px] text-black/60">
+                Chaque formule a un bouton « Choisir cette formule » vers <a class="underline" href={SELLER_URL} target="_blank" rel="noopener">l'espace vendeur</a>, et le mail renvoie au <a class="underline" href={SELLER_PRICING_URL} target="_blank" rel="noopener">détail des commissions</a>.
+                Tarifs repris de cette page publique : si elle change, mettez à jour le portail avant d'envoyer.
+              </p>
+              {#if doc.items.length}
+                <p class="text-[11px] text-black/60">Les {doc.items.length} objet(s) choisis sont conservés pour plus tard mais n'apparaissent pas dans ce mail.</p>
+              {/if}
+            </section>
+            {:else}
             <section aria-labelledby="mail-selected-title" class="space-y-3">
               <h2 id="mail-selected-title" class="text-sm font-black uppercase">Objets du mail ({doc.items.length}/{MAX_MAIL_ITEMS})</h2>
               <label class="flex items-center gap-2 text-xs font-bold">
@@ -704,9 +960,13 @@
                 {/if}
               {/if}
             </section>
+            {/if}
           </div>
         {:else if tab === "layout"}
           <div id="mail-panel-layout" role="tabpanel" aria-labelledby="mail-tab-layout" class="space-y-6">
+            {#if doc.contentMode === "subscriptions"}
+              <p class="border-2 border-black bg-[#F4F1EA] p-3 text-xs">Les formules d'abonnement s'affichent en cartes, deux par ligne (une par ligne sur mobile). Les options de photos et de disposition des objets s'appliquent au mode « Objets ».</p>
+            {:else}
             <fieldset>
               <legend class={labelClass}>Affichage des photos de chaque objet</legend>
               <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -740,6 +1000,7 @@
                 {/each}
               </div>
             </fieldset>
+            {/if}
 
             <fieldset>
               <legend class={labelClass}>Disposition du texte</legend>

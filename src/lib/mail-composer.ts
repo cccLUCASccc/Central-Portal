@@ -14,6 +14,24 @@ export type ObjectLayout = "stacked" | "list" | "zigzag" | "cards" | "carousel";
 export type TextLayout = "classic" | "centered" | "two-columns" | "boxed" | "letter";
 export type TextAlign = "left" | "center" | "justify";
 export type FontStyle = "sans" | "serif";
+export type ContentMode = "objects" | "subscriptions";
+export type PlanId = "essential" | "amateur" | "professional" | "premium";
+
+export const SELLER_URL = `${SITE_URL}/espace-vendeur`;
+export const SELLER_PRICING_URL = `${SITE_URL}/espace-vendeur/fonctionnement-paiements`;
+
+// Reprend les formules publiées sur la page « Fonctionnement des paiements » du site.
+export const subscriptionPlans: { id: PlanId; name: string; badge: string; price: string; commission: string; features: string }[] = [
+  { id: "essential", name: "Essentiel", badge: "Essentiel", price: "12 € / mois", commission: "18 %", features: "Jusqu'à 50 objets en ligne, 5 photos par annonce, avatar simple, versements automatiques à J+30." },
+  { id: "amateur", name: "Amateur", badge: "Populaire", price: "29 € / mois", commission: "15 %", features: "Jusqu'à 250 objets en ligne, 7 photos par annonce, avatar et bannière personnalisés, versements à J+30." },
+  { id: "professional", name: "Professionnel", badge: "Pro", price: "59 € / mois", commission: "12 %", features: "Jusqu'à 1000 objets, 10 photos par annonce, vidéo de vitrine exclusive, mise en avant sur l'accueil, versements à J+30." },
+  { id: "premium", name: "Premium", badge: "Premium", price: "99 € / mois", commission: "10 %", features: "Objets illimités, personnalisation complète des couleurs, badge Maison d'Art, commission minimale de 10 %." }
+];
+
+export const contentModes: { id: ContentMode; label: string; hint: string }[] = [
+  { id: "objects", label: "Objets de l'inventaire", hint: "Présenter une sélection de pièces à vendre." },
+  { id: "subscriptions", label: "Abonnements vendeurs", hint: "Promouvoir les formules pour ouvrir une boutique sur la plateforme." }
+];
 
 export const imageLayouts: { id: ImageLayout; label: string; hint: string }[] = [
   { id: "single", label: "Grande image", hint: "La première photo sélectionnée, en grand." },
@@ -70,7 +88,17 @@ export interface MailDocument {
   objectLayout: ObjectLayout;
   imageLayout: ImageLayout;
   galleryColumns: 2 | 3;
+  contentMode: ContentMode;
+  plans: PlanId[];
   items: MailItem[];
+}
+
+export interface SavedMailRef {
+  id: number;
+  name: string;
+  version: number;
+  // Le brouillon local correspondait exactement à la version enregistrée.
+  clean: boolean;
 }
 
 export interface MailDraft {
@@ -79,19 +107,46 @@ export interface MailDraft {
   recipients: string;
   replyTo: string;
   savedAt: string;
+  saved?: SavedMailRef;
+}
+
+type ModeCopy = Pick<MailDocument, "title" | "intro" | "outro" | "ctaLabel" | "ctaUrl">;
+const modeCopy: Record<ContentMode, ModeCopy> = {
+  objects: {
+    title: "Notre sélection pour vous",
+    intro: "Bonjour,\n\nNous avons sélectionné quelques pièces qui pourraient vous plaire.",
+    outro: "N'hésitez pas à répondre à ce mail pour toute question ou pour réserver un objet.",
+    ctaLabel: "Voir la boutique",
+    ctaUrl: `${SITE_URL}/boutique`
+  },
+  subscriptions: {
+    title: "Vendez vos pièces sur Daisy Brocante",
+    intro: "Bonjour,\n\nDaisy Brocante accueille les marchands, décorateurs et professionnels qui souhaitent présenter leurs pièces à une clientèle passionnée. Voici les formules disponibles pour ouvrir votre boutique.",
+    outro: "N'hésitez pas à répondre à ce mail pour toute question sur les formules ou l'ouverture de votre boutique.",
+    ctaLabel: "Ouvrir ma boutique",
+    ctaUrl: SELLER_URL
+  }
+};
+
+/** Remplace uniquement les textes encore identiques aux valeurs par défaut de l'autre mode. */
+export function switchContentMode(doc: MailDocument, mode: ContentMode): MailDocument {
+  if (doc.contentMode === mode) return doc;
+  const from = modeCopy[doc.contentMode];
+  const to = modeCopy[mode];
+  const next = { ...doc, contentMode: mode };
+  for (const key of Object.keys(to) as (keyof ModeCopy)[]) {
+    if (doc[key] === from[key]) next[key] = to[key];
+  }
+  return next;
 }
 
 export function defaultDocument(): MailDocument {
   return {
     subject: "",
     preheader: "",
-    title: "Notre sélection pour vous",
-    intro: "Bonjour,\n\nNous avons sélectionné quelques pièces qui pourraient vous plaire.",
-    outro: "N'hésitez pas à répondre à ce mail pour toute question ou pour réserver un objet.",
+    ...modeCopy.objects,
     signature: "Daisy Brocante",
     footer: "Vous recevez ce message car nous pensons que notre sélection peut vous intéresser. Si vous ne souhaitez plus être contacté, répondez simplement « STOP » à ce mail.",
-    ctaLabel: "Voir la boutique",
-    ctaUrl: `${SITE_URL}/boutique`,
     showLogo: true,
     showPrices: true,
     showProfessionalTerms: false,
@@ -105,6 +160,8 @@ export function defaultDocument(): MailDocument {
     objectLayout: "stacked",
     imageLayout: "single",
     galleryColumns: 2,
+    contentMode: "objects",
+    plans: subscriptionPlans.map((plan) => plan.id),
     items: []
   };
 }
@@ -223,6 +280,10 @@ export function readDraft(raw: string): MailDraft {
     objectLayout: oneOf(source.objectLayout, objectLayouts.map((item) => item.id), defaults.objectLayout),
     imageLayout: oneOf(source.imageLayout, imageLayouts.map((item) => item.id), defaults.imageLayout),
     galleryColumns: source.galleryColumns === 3 ? 3 : 2,
+    contentMode: oneOf(source.contentMode, contentModes.map((mode) => mode.id), defaults.contentMode),
+    plans: Array.isArray(source.plans)
+      ? subscriptionPlans.map((plan) => plan.id).filter((id) => (source.plans as unknown[]).includes(id))
+      : defaults.plans,
     items: Array.isArray(source.items)
       ? source.items.map(readItem).filter((item): item is MailItem => item !== null).slice(0, MAX_MAIL_ITEMS)
       : []
@@ -232,8 +293,20 @@ export function readDraft(raw: string): MailDraft {
     document,
     recipients: text(value.recipients, ""),
     replyTo: text(value.replyTo, ""),
-    savedAt: text(value.savedAt, new Date().toISOString())
+    savedAt: text(value.savedAt, new Date().toISOString()),
+    ...(readSavedRef(value.saved) ? { saved: readSavedRef(value.saved)! } : {})
   };
+}
+
+function readSavedRef(value: unknown): SavedMailRef | null {
+  return isRecord(value) && typeof value.id === "number" && Number.isSafeInteger(value.id) && value.id > 0 &&
+    typeof value.name === "string" && typeof value.version === "number" && Number.isSafeInteger(value.version) && value.version > 0
+    ? { id: value.id, name: value.name, version: value.version, clean: value.clean === true }
+    : null;
+}
+
+export function selectedPlans(doc: Pick<MailDocument, "plans">) {
+  return subscriptionPlans.filter((plan) => doc.plans.includes(plan.id));
 }
 
 // ---------- Rendu HTML compatible clients mail ----------
@@ -436,6 +509,36 @@ function itemTextHtml(item: MailItem, theme: Theme, align: string): string {
   return name + price + body + link;
 }
 
+function planCardHtml(plan: (typeof subscriptionPlans)[number], theme: Theme, align: string): string {
+  const line = (content: string, style: string) =>
+    `<p style="margin:0 0 8px 0;font-family:${theme.fontFamily};text-align:${align};${style}">${content}</p>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background-color:#FFFFFF;border:1px solid #E5E5E5;border-top:4px solid ${theme.accent};border-radius:6px;"><tr><td style="padding:18px;">`
+    + line(escapeHtml(plan.badge.toUpperCase()), `font-size:11px;font-weight:bold;letter-spacing:1px;color:${theme.accent};`)
+    + `<h3 style="margin:0 0 8px 0;font-family:${theme.fontFamily};font-size:20px;line-height:1.3;color:#111111;text-align:${align};">${escapeHtml(plan.name)}</h3>`
+    + line(escapeHtml(plan.price), "font-size:22px;font-weight:bold;color:#111111;")
+    + line(`Commission : <strong>${escapeHtml(plan.commission)}</strong>`, "font-size:14px;color:#333333;")
+    + line(escapeHtml(plan.features), "font-size:14px;line-height:1.55;color:#555555;")
+    + button("Choisir cette formule", SELLER_URL, theme, align)
+    + `</td></tr></table>`;
+}
+
+function plansHtml(doc: MailDocument, theme: Theme): string {
+  const plans = selectedPlans(doc);
+  if (plans.length === 0) return "";
+  const align = theme.align === "justify" ? "left" : theme.align;
+  const cardWidth = Math.floor((CONTENT_WIDTH - 16) / 2);
+  let rows = "";
+  for (let start = 0; start < plans.length; start += 2) {
+    const pair = plans.slice(start, start + 2);
+    // Une formule seule sur sa ligne garde toute la largeur.
+    rows += pair.length === 1
+      ? `<tr><td valign="top" style="padding-bottom:16px;">${planCardHtml(pair[0], theme, align)}</td></tr>`
+      : `<tr>${pair.map((plan, offset) => `<td class="mc-col" width="${cardWidth}" valign="top" style="width:${cardWidth}px;${offset === 0 ? "padding-right:16px;" : ""}padding-bottom:16px;">${planCardHtml(plan, theme, align)}</td>`).join("")}</tr>`;
+  }
+  const details = `<p style="margin:4px 0 0 0;font-family:${theme.fontFamily};font-size:13px;line-height:1.5;color:#555555;text-align:${align};">Détail des commissions et des versements : <a href="${SELLER_PRICING_URL}" target="_blank" style="color:${theme.accent};text-decoration:underline;">fonctionnement des paiements</a>.</p>`;
+  return `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table>${details}</td></tr>${spacer(24)}`;
+}
+
 const spacer = (height: number) =>
   `<tr><td style="height:${height}px;line-height:${height}px;font-size:${height}px;">&nbsp;</td></tr>`;
 
@@ -588,8 +691,8 @@ export function renderMail(doc: MailDocument): RenderedMail {
     logo,
     title,
     textBlockHtml(doc.intro, doc, theme, false),
-    doc.items.length ? spacer(8) : "",
-    itemsHtml(doc, theme),
+    (doc.contentMode === "subscriptions" ? doc.plans.length : doc.items.length) ? spacer(8) : "",
+    doc.contentMode === "subscriptions" ? plansHtml(doc, theme) : itemsHtml(doc, theme),
     cta ? `<tr><td>${cta}</td></tr>${spacer(20)}` : "",
     textBlockHtml(doc.outro, doc, theme),
     contactBlockHtml(doc, theme),
@@ -630,7 +733,13 @@ export function renderPlainText(doc: MailDocument): string {
   const blocks: string[] = [];
   if (doc.title.trim()) blocks.push(doc.title.trim().toUpperCase());
   if (doc.intro.trim()) blocks.push(stripMarkup(doc.intro));
-  for (const item of doc.items) {
+  if (doc.contentMode === "subscriptions") {
+    for (const plan of selectedPlans(doc)) {
+      blocks.push([`— Formule ${plan.name} : ${plan.price}`, `Commission : ${plan.commission}`, plan.features].join("\n"));
+    }
+    if (doc.plans.length) blocks.push(`Choisir une formule : ${SELLER_URL}\nDétail des commissions et des versements : ${SELLER_PRICING_URL}`);
+  }
+  for (const item of doc.contentMode === "objects" ? doc.items : []) {
     const lines = [`— ${item.article.name}`];
     if (doc.showPrices && item.showPrice) lines.push(formatPrice(item.article.price));
     if (item.text.trim()) lines.push(stripMarkup(item.text));

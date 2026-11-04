@@ -151,7 +151,38 @@ et le bouton de réservation activés, puis signature séparée par un filet.
 Le bloc de contact reste en pleine largeur et disparaît si son contenu est vide.
 Le pied de page de désinscription reste à l'extérieur du corps du mail.
 
-Tests : `bun test src/lib/mail-composer.test.ts`.
+### Objets ou abonnements vendeurs
+
+L'onglet « Objets / offres » propose deux contenus exclusifs : des objets de
+l'inventaire, ou la promotion des abonnements vendeurs de la plateforme.
+En mode abonnements, choisir les formules à présenter (Essentiel, Amateur,
+Professionnel, Premium). Chacune s'affiche en carte (deux par ligne, une sur
+mobile) avec prix, commission, avantages et un bouton vers `/espace-vendeur`,
+puis un lien vers `/espace-vendeur/fonctionnement-paiements`. Les objets choisis
+sont conservés mais n'apparaissent pas. Le titre, l'introduction, la conclusion
+et le bouton principal s'adaptent au mode, sauf s'ils ont été personnalisés.
+L'envoi est bloqué sans formule sélectionnée.
+
+Les formules sont recopiées depuis `Daisy_Brocanye_V2/src/pages/espace-vendeur/fonctionnement-paiements.astro`
+dans `subscriptionPlans` (`src/lib/mail-composer.ts`) : mettre à jour les deux
+ensemble en cas de changement de tarif ou de commission.
+
+### Mails sauvegardés
+
+En plus du brouillon automatique du navigateur, « Sauvegarder le mail »
+enregistre le mail dans Central-API sous un nom : textes, objets ou formules,
+mise en page, destinataires et adresse de réponse. Ces mails sont partagés
+entre les comptes de `MAIL_ALLOWED_SENDERS`. « Mails sauvegardés » liste,
+ouvre et supprime ces mails. Une fois ouvert, « Enregistrer » met à jour le
+même mail et un badge indique les modifications non enregistrées ;
+« Enregistrer comme nouveau » crée une copie. Ouvrir un autre mail ou
+« Nouveau mail » demande confirmation si des modifications seraient perdues.
+Si quelqu'un d'autre a modifié ou supprimé le mail entre-temps, l'enregistrement
+est refusé (HTTP 409/404) sans rien écraser : utiliser « Enregistrer comme
+nouveau » ou rouvrir le mail. Le lien vers le mail ouvert est conservé dans le
+brouillon du navigateur.
+
+Tests : `bun test src/lib/mail-composer.test.ts src/lib/mail-saved.test.ts`.
 
 ### Assistant IA pour les propositions professionnelles
 
@@ -160,7 +191,7 @@ partenariat, sélection pour un projet ou relance), public professionnel,
 quatre tons, trois longueurs indicatives et consignes libres.
 « Rédiger une proposition » part des consignes ; « Améliorer mon texte »
 reformule les textes existants. Seuls les six champs de rédaction et les noms
-des objets sélectionnés sont transmis, sans destinataires, photos ni historique.
+des objets sélectionnés (ou le détail public des formules en mode abonnements) sont transmis, sans destinataires, photos ni historique.
 Ne pas inclure de données confidentielles dans les textes ou les consignes.
 
 La suggestion est affichée séparément avant application explicite au brouillon.

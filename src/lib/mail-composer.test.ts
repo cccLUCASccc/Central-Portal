@@ -13,8 +13,10 @@ import {
   parseRecipients,
   readDraft,
   renderMail,
+  renderPlainText,
   safeColor,
   safeUrl,
+  switchContentMode,
   textLayouts,
   type MailArticle,
   type MailDocument
@@ -286,4 +288,53 @@ test("restores drafts and repairs invalid values", () => {
   assert.deepEqual(draft.document.items[0].imageIds, [1]);
   assert.equal(draft.recipients, "a@example.com");
   assert.throws(() => readDraft(JSON.stringify({ version: 2 })), /invalide/);
+});
+
+test("subscription mails show the selected plans instead of objects in HTML and text", () => {
+  const doc = documentWith({ contentMode: "subscriptions", plans: ["essential", "premium"] });
+  const { html } = renderMail(doc);
+  const text = renderPlainText(doc);
+  for (const output of [html, text]) {
+    assert.match(output, /Essentiel/);
+    assert.match(output, /Premium/);
+    assert.match(output, /12 € \/ mois/);
+    assert.match(output, /https:\/\/daisybrocante\.com\/espace-vendeur/);
+    assert.doesNotMatch(output, /Amateur|Professionnel/);
+    assert.doesNotMatch(output, /Miroir|Vase/);
+  }
+  assert.match(html, /Choisir cette formule/);
+  const objects = renderMail(documentWith({ contentMode: "objects" })).html;
+  assert.match(objects, /Miroir/);
+  assert.doesNotMatch(objects, /Choisir cette formule/);
+});
+
+test("drafts migrate content mode and plans and keep a valid saved reference", () => {
+  const old = documentWith({});
+  Reflect.deleteProperty(old, "contentMode");
+  Reflect.deleteProperty(old, "plans");
+  const migrated = readDraft(JSON.stringify({ version: 1, document: old }));
+  assert.equal(migrated.document.contentMode, "objects");
+  assert.deepEqual(migrated.document.plans, ["essential", "amateur", "professional", "premium"]);
+  assert.equal(migrated.saved, undefined);
+  const restored = readDraft(JSON.stringify({
+    version: 1, document: { ...old, contentMode: "subscriptions", plans: ["premium", "bogus", "amateur"] },
+    saved: { id: 4, name: "Décorateurs", version: 3, clean: true }
+  }));
+  assert.equal(restored.document.contentMode, "subscriptions");
+  assert.deepEqual(restored.document.plans, ["amateur", "premium"]);
+  assert.deepEqual(restored.saved, { id: 4, name: "Décorateurs", version: 3, clean: true });
+  const invalid = readDraft(JSON.stringify({ version: 1, document: { ...old, contentMode: "x" }, saved: { id: 0, name: "x", version: 1 } }));
+  assert.equal(invalid.document.contentMode, "objects");
+  assert.equal(invalid.saved, undefined);
+});
+
+test("switching content mode only replaces copy that was not customised", () => {
+  const doc = { ...defaultDocument(), title: "Mon titre" };
+  const subscriptions = switchContentMode(doc, "subscriptions");
+  assert.equal(subscriptions.contentMode, "subscriptions");
+  assert.equal(subscriptions.title, "Mon titre");
+  assert.equal(subscriptions.ctaUrl, "https://daisybrocante.com/espace-vendeur");
+  assert.match(subscriptions.intro, /formules/);
+  const back = switchContentMode(subscriptions, "objects");
+  assert.deepEqual(back, doc);
 });
