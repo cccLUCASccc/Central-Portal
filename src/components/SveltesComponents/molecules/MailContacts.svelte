@@ -36,6 +36,20 @@
   const inputClass = "w-full border-2 border-black bg-white p-2 text-sm";
   const date = (value: string) => new Date(value).toLocaleString("fr-BE", { dateStyle: "short", timeStyle: "short" });
   const message = (cause: unknown) => cause instanceof Error ? cause.message : String(cause);
+  const normalize = (value: ContactEdit): ContactEdit => ({
+    ...value, name: value.name.trim(), company: value.company.trim(), profession: value.profession.trim()
+  });
+
+  async function persistContact(email: string, changes: ContactEdit): Promise<number> {
+    const result = await readContactsJSON(await apiFetch(`${base}${contactPath(email)}`, {
+      method: "PATCH", body: JSON.stringify(changes), signal: AbortSignal.timeout(30000)
+    }));
+    if (typeof result !== "object" || result === null || !("saved" in result) || result.saved !== true ||
+      !("version" in result) || typeof result.version !== "number" || result.version !== changes.version + 1) {
+      throw new Error("L'enregistrement n'a pas été confirmé par Central-API.");
+    }
+    return result.version;
+  }
 
   async function load(page = 1, filters = applied) {
     controller?.abort();
@@ -113,19 +127,35 @@
     saving = true;
     saveError = "";
     notice = "";
-    const changes = { ...contactEdit(edit), name: edit.name.trim(), company: edit.company.trim(), profession: edit.profession.trim() };
+    const changes = normalize(contactEdit(edit));
     const email = selected.email;
     try {
-      const result = await readContactsJSON(await apiFetch(`${base}${contactPath(email)}`, {
-        method: "PATCH", body: JSON.stringify(changes), signal: AbortSignal.timeout(30000)
-      }));
-      if (typeof result !== "object" || result === null || !("saved" in result) || result.saved !== true ||
-        !("version" in result) || result.version !== changes.version + 1) {
-        throw new Error("L'enregistrement n'a pas été confirmé par Central-API.");
-      }
-      selected = { ...selected, ...changes, version: changes.version + 1 };
+      const version = await persistContact(email, changes);
+      selected = { ...selected, ...changes, version };
       edit = contactEdit(selected);
       notice = `Fiche enregistrée : ${email}.`;
+      void load(pagination?.current_page ?? 1);
+    } catch (cause) {
+      saveError = message(cause);
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function unsubscribeFromStop() {
+    if (!selected || saving) return;
+    if (!window.confirm(`Désabonner immédiatement ${selected.email} ? Le contact passera en « Refus » et « Ne plus contacter ».`)) return;
+    saving = true;
+    saveError = "";
+    notice = "";
+    const email = selected.email;
+    const changes = normalize({ ...contactEdit(edit), status: "declined", do_not_contact: true });
+    try {
+      const version = await persistContact(email, changes);
+      selected = { ...selected, ...changes, version };
+      edit = contactEdit(selected);
+      notice = `Contact désabonné : ${email}.`;
+      window.alert(`Désabonnement confirmé : ${email} est désormais en refus et ne sera plus contacté.`);
       void load(pagination?.current_page ?? 1);
     } catch (cause) {
       saveError = message(cause);
@@ -253,7 +283,12 @@
           </div>
           <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" bind:checked={edit.do_not_contact} /> Ne plus contacter : bloquer les futurs envois</label>
         </fieldset>
-        <p class="text-xs">Le blocage est partagé, indépendant du statut de suivi et s'applique aussi aux tests. Enregistrez pour l'activer ; les mails déjà transmis ne peuvent pas être rappelés.</p>
+        <div class="space-y-2">
+          <p class="text-xs">Le blocage est partagé, indépendant du statut de suivi et s'applique aussi aux tests. Enregistrez pour l'activer ; les mails déjà transmis ne peuvent pas être rappelés.</p>
+          <button type="button" class="retro-btn bg-[#FFE2E2] text-xs" disabled={saving} onclick={() => void unsubscribeFromStop()}>
+            STOP : désabonner immédiatement ce contact
+          </button>
+        </div>
         {#if saveError}<p role="alert" class="text-sm text-red-800">{saveError}</p>{/if}
         <button type="submit" class="retro-btn bg-[#86E2D5] text-xs" disabled={saving || !dirty}>{saving ? "Enregistrement…" : "Enregistrer la fiche"}</button>
         {#if dirty}<span class="ml-2 text-xs">Modifications non enregistrées</span>{/if}
