@@ -72,6 +72,7 @@ export interface MailDocument {
   intro: string;
   outro: string;
   signature: string;
+  mailingAddress: string;
   footer: string;
   ctaLabel: string;
   ctaUrl: string;
@@ -146,6 +147,7 @@ export function defaultDocument(): MailDocument {
     preheader: "",
     ...modeCopy.objects,
     signature: "Daisy Brocante",
+    mailingAddress: "",
     footer: "Vous recevez ce message car nous pensons que notre sélection peut vous intéresser. Si vous ne souhaitez plus être contacté, répondez simplement « STOP » à ce mail.",
     showLogo: true,
     showPrices: true,
@@ -264,6 +266,7 @@ export function readDraft(raw: string): MailDraft {
     intro: text(source.intro, defaults.intro),
     outro: text(source.outro, defaults.outro),
     signature: text(source.signature, defaults.signature),
+    mailingAddress: text(source.mailingAddress, defaults.mailingAddress),
     footer: text(source.footer, defaults.footer),
     ctaLabel: text(source.ctaLabel, defaults.ctaLabel),
     ctaUrl: text(source.ctaUrl, defaults.ctaUrl),
@@ -677,6 +680,9 @@ export function renderMail(doc: MailDocument): RenderedMail {
   const signature = doc.signature.trim()
     ? `<tr><td class="mc-signature" style="border-top:1px solid #E5E5E5;padding-top:20px;">${paragraphHtml(doc.signature, theme, signatureAlign, doc.textLayout === "letter" ? "font-style:italic;" : "font-weight:bold;")}</td></tr>`
     : "";
+  const mailingAddress = doc.mailingAddress.trim()
+    ? `<tr><td class="mc-mailing-address" style="padding:0 24px 12px;font-family:${theme.fontFamily};font-size:11px;line-height:1.5;color:#777777;text-align:${signatureAlign};">${escapeHtml(doc.mailingAddress.trim()).replace(/\r?\n/g, "<br>")}</td></tr>`
+    : "";
   const ctaAlign = theme.align === "center" ? "center" : "left";
   const cta = button(doc.ctaLabel, doc.ctaUrl, theme, ctaAlign);
   const footer = doc.footer.trim()
@@ -696,7 +702,8 @@ export function renderMail(doc: MailDocument): RenderedMail {
     cta ? `<tr><td>${cta}</td></tr>${spacer(20)}` : "",
     textBlockHtml(doc.outro, doc, theme),
     contactBlockHtml(doc, theme),
-    signature
+    signature,
+    mailingAddress
   ].join("");
 
   const html = `<!DOCTYPE html>
@@ -753,6 +760,7 @@ export function renderPlainText(doc: MailDocument): string {
   const appointmentUrl = safeUrl(doc.appointmentUrl);
   if (doc.showAppointment && appointmentUrl) blocks.push(`Planifier un appel : ${appointmentUrl}`);
   if (doc.signature.trim()) blocks.push(stripMarkup(doc.signature));
+  if (doc.mailingAddress.trim()) blocks.push(doc.mailingAddress.trim());
   if (doc.footer.trim()) blocks.push(`--\n${stripMarkup(doc.footer)}`);
   return blocks.join("\n\n");
 }

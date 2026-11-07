@@ -810,6 +810,10 @@
               <textarea id="mail-signature" class={inputClass} rows="2" bind:value={doc.signature}></textarea>
             </div>
             <div>
+              <label for="mail-address" class={labelClass}>Adresse affichée sous la signature</label>
+              <textarea id="mail-address" class={inputClass} rows="2" bind:value={doc.mailingAddress} placeholder={"Numéro et rue\nCode postal · Ville"}></textarea>
+            </div>
+            <div>
               <label for="mail-footer" class={labelClass}>Pied de page</label>
               <textarea id="mail-footer" class={inputClass} rows="3" bind:value={doc.footer}></textarea>
               <p class="mt-1 text-[11px] text-black/60">Gardez une mention permettant au prospect de ne plus être contacté.</p>

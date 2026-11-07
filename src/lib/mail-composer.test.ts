@@ -244,6 +244,28 @@ test("mail ending groups enabled contact options before a separated signature", 
   }
 });
 
+test("mailing address is saved and rendered in small type below the signature", () => {
+  const doc = documentWith({
+    signature: "Daisy Brocante",
+    mailingAddress: "12 rue des Brocanteurs\n75000 Paris"
+  });
+  const { html, text } = renderMail(doc);
+  const signature = html.indexOf('class="mc-signature"');
+  const address = html.indexOf('class="mc-mailing-address"');
+  assert.ok(address > signature);
+  assert.match(html.slice(address, address + 250), /font-size:11px/);
+  assert.match(html, /12 rue des Brocanteurs<br>75000 Paris/);
+  assert.ok(text.indexOf(doc.mailingAddress) > text.indexOf(doc.signature));
+  assert.equal(readDraft(JSON.stringify({ version: 1, document: doc })).document.mailingAddress, doc.mailingAddress);
+
+  const old = { ...doc };
+  Reflect.deleteProperty(old, "mailingAddress");
+  assert.equal(readDraft(JSON.stringify({ version: 1, document: old })).document.mailingAddress, "");
+  const escaped = renderMail(documentWith({ mailingAddress: "<script>" })).html;
+  assert.match(escaped, /&lt;script&gt;/);
+  assert.doesNotMatch(escaped, /<script>/);
+});
+
 test("drafts preserve professional terms and global prices and migrate older drafts", () => {
   const doc = documentWith({ showPrices: false, showProfessionalTerms: true, professionalTerms: "Conditions sur demande." });
   const restored = readDraft(JSON.stringify({ version: 1, document: doc })).document;
