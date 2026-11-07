@@ -544,6 +544,7 @@
           subject: isTest ? `[TEST] ${doc.subject.trim()}` : doc.subject.trim(),
           html: rendered.html,
           text: rendered.text,
+          unsubscribe_url: `${window.location.origin}/unsubscribe`,
           reply_to: replyTo.trim()
         })
       });
@@ -817,6 +818,7 @@
               <label for="mail-footer" class={labelClass}>Pied de page</label>
               <textarea id="mail-footer" class={inputClass} rows="3" bind:value={doc.footer}></textarea>
               <p class="mt-1 text-[11px] text-black/60">Gardez une mention permettant au prospect de ne plus être contacté.</p>
+              <p class="mt-1 text-[11px] text-black/60">Le bouton « Se désabonner » est ajouté automatiquement. À l'envoi, chaque destinataire reçoit son lien individuel ; le bouton de l'aperçu ne désabonne aucun contact.</p>
             </div>
             <label class="flex items-center gap-2 text-xs font-bold">
               <input type="checkbox" bind:checked={doc.showLogo} /> Afficher le logo Daisy Brocante en en-tête

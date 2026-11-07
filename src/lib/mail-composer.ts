@@ -685,9 +685,7 @@ export function renderMail(doc: MailDocument): RenderedMail {
     : "";
   const ctaAlign = theme.align === "center" ? "center" : "left";
   const cta = button(doc.ctaLabel, doc.ctaUrl, theme, ctaAlign);
-  const footer = doc.footer.trim()
-    ? `<tr><td class="mc-pad" style="padding:20px 24px;font-family:${theme.fontFamily};font-size:12px;line-height:1.5;color:#888888;text-align:center;">${paragraphs(doc.footer).map((part) => formatInline(part, "#888888")).join("<br><br>")}</td></tr>`
-    : "";
+  const footer = `<tr><td class="mc-pad" style="padding:20px 24px;font-family:${theme.fontFamily};font-size:12px;line-height:1.5;color:#888888;text-align:center;">${paragraphs(doc.footer).map((part) => formatInline(part, "#888888")).join("<br><br>")}<p style="margin:16px 0 0;"><a href="#daisy-unsubscribe" style="display:inline-block;padding:10px 18px;border:1px solid #888888;border-radius:4px;color:#555555;text-decoration:none;font-family:${theme.fontFamily};font-size:12px;">Se désabonner</a></p></td></tr>`;
   const preheader = doc.preheader.trim()
     ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#ffffff;opacity:0;">${escapeHtml(doc.preheader.trim())}${"&nbsp;&zwnj;".repeat(40)}</div>`
     : "";
@@ -762,6 +760,7 @@ export function renderPlainText(doc: MailDocument): string {
   if (doc.signature.trim()) blocks.push(stripMarkup(doc.signature));
   if (doc.mailingAddress.trim()) blocks.push(doc.mailingAddress.trim());
   if (doc.footer.trim()) blocks.push(`--\n${stripMarkup(doc.footer)}`);
+  blocks.push("Se désabonner : #daisy-unsubscribe");
   return blocks.join("\n\n");
 }
 

@@ -266,6 +266,16 @@ test("mailing address is saved and rendered in small type below the signature", 
   assert.doesNotMatch(escaped, /<script>/);
 });
 
+test("unsubscribe button is visible in the footer even if its text is empty", () => {
+  for (const footer of ["Mention STOP.", ""]) {
+    const { html, text } = renderMail(documentWith({ footer }));
+    assert.match(html, /href="#daisy-unsubscribe"[^>]*>Se désabonner<\/a>/);
+    assert.equal((html.match(/>Se désabonner<\/a>/g) ?? []).length, 1);
+    assert.ok(html.indexOf(">Se désabonner</a>") > html.indexOf('class="mc-signature"'));
+    assert.match(text, /Se désabonner : #daisy-unsubscribe/);
+  }
+});
+
 test("drafts preserve professional terms and global prices and migrate older drafts", () => {
   const doc = documentWith({ showPrices: false, showProfessionalTerms: true, professionalTerms: "Conditions sur demande." });
   const restored = readDraft(JSON.stringify({ version: 1, document: doc })).document;

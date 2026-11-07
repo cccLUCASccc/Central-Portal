@@ -101,7 +101,7 @@ La carte « Rédaction de mail » et le menu ouvrent `/mails`, pour écrire un
 mail aux prospects avec un aperçu en temps réel (bureau ou mobile) :
 
 - **Texte** : objet, pré-en-tête, titre, introduction, conclusion, bouton,
-  signature et pied de page. `**gras**` et les liens sont reconnus.
+  signature, adresse postale et pied de page. `**gras**` et les liens sont reconnus.
 - **Objets** : recherche dans l'inventaire en vente, 12 objets maximum,
   ordre modifiable, choix des photos, du prix et du lien par objet.
 - **Mise en page** : images (une seule, galerie, slider, grande image et
@@ -114,6 +114,17 @@ mail aux prospects avec un aperçu en temps réel (bureau ou mobile) :
 Le slider fonctionne sans JavaScript (Apple Mail, iOS, Thunderbird…). Les
 clients qui ne le gèrent pas (Gmail, Outlook) affichent automatiquement une
 grande image avec des vignettes ; l'aperçu permet de basculer sur ce rendu.
+
+Le bouton **Se désabonner** est toujours affiché dans le pied de page, y compris
+dans l'aperçu. L'aperçu ne désabonne aucun contact : à l'envoi, Central-API
+remplace le lien de démonstration par un lien individuel opaque. Le destinataire
+ouvre `/unsubscribe` sans connexion ; la page enregistre sa demande puis affiche
+une popup de confirmation. Le contact passe en **Refus** et **Ne plus contacter**,
+ce qui bloque les futurs envois, tests compris. Sans JavaScript, la page propose
+un bouton de confirmation. Une simple requête GET n'effectue aucune modification.
+Les anciens mails reçus ne sont pas modifiés. Déployer Central-API avec la
+migration `unsubscribe_tokens` avant le portail ; `API_URL` (ou `PUBLIC_API_URL`)
+doit aussi être accessible depuis le serveur du portail.
 Le brouillon est enregistré dans le navigateur. L'envoi exige la configuration
 SMTP et `MAIL_ALLOWED_SENDERS` de [Central-API](../Central-API/README.md).
 

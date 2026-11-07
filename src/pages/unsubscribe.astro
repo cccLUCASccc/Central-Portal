@@ -1,0 +1,94 @@
+---
+export const prerender = false;
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('Referrer-Policy', 'no-referrer');
+const token = Astro.url.searchParams.get('token') || '';
+let error = '';
+let done = false;
+if (!/^[a-f0-9]{64}$/.test(token)) {
+  Astro.response.status = 400;
+  error = 'Ce lien de désabonnement est invalide.';
+}
+if (Astro.request.method === 'POST') {
+  const apiUrl = (process.env.API_URL || import.meta.env.API_URL || import.meta.env.PUBLIC_API_URL || '').replace(/\/+$/, '');
+  if (!/^[a-f0-9]{64}$/.test(token)) {
+    Astro.response.status = 400;
+    error = 'Ce lien de désabonnement est invalide.';
+  } else if (!apiUrl) {
+    Astro.response.status = 503;
+    error = 'Le désabonnement est temporairement indisponible. Réessayez plus tard.';
+    console.error('[Unsubscribe] API_URL manquante');
+  } else {
+    try {
+      const response = await fetch(`${apiUrl}/front/mails/unsubscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+        signal: AbortSignal.timeout(15000)
+      });
+      const result: unknown = await response.json();
+      if (response.ok && typeof result === 'object' && result !== null && 'unsubscribed' in result && result.unsubscribed === true) {
+        done = true;
+      } else {
+        Astro.response.status = response.ok ? 502 : response.status;
+        error = response.status === 400 ? 'Ce lien de désabonnement est invalide.' : 'Le désabonnement n’a pas été confirmé. Réessayez.';
+        console.error('[Unsubscribe] Échec de confirmation API', response.status);
+      }
+    } catch (cause) {
+      Astro.response.status = 503;
+      error = 'Le désabonnement est temporairement indisponible. Réessayez.';
+      console.error('[Unsubscribe] API indisponible', cause);
+    }
+  }
+}
+const autoSubmit = !error && /^[a-f0-9]{64}$/.test(token);
+---
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Désabonnement — Daisy Brocante</title>
+  </head>
+  <body>
+    <main>
+      <h1>Daisy Brocante</h1>
+      {done ? (
+        <div>
+          <h2>Désabonnement confirmé</h2>
+          <p>Vous ne recevrez plus de mails de prospection de notre part.</p>
+          <dialog id="unsubscribe-confirmation" open aria-labelledby="confirmation-title">
+            <h2 id="confirmation-title">Vous êtes désabonné</h2>
+            <p>Votre demande a été enregistrée. Vous ne serez plus contacté.</p>
+            <form method="dialog"><button>Fermer</button></form>
+          </dialog>
+        </div>
+      ) : (
+        <div>
+          {error ? <p role="alert">{error}</p> : <p role="status">Enregistrement de votre désabonnement…</p>}
+          <form id="unsubscribe-form" method="post" data-auto-submit={autoSubmit ? 'true' : 'false'}>
+            <p>Si le désabonnement ne démarre pas automatiquement, cliquez sur le bouton ci-dessous.</p>
+            <button type="submit">Se désabonner</button>
+          </form>
+        </div>
+      )}
+    </main>
+    <script>
+      const form = document.querySelector<HTMLFormElement>('#unsubscribe-form');
+      if (form?.dataset.autoSubmit === 'true') form.requestSubmit();
+      const confirmation = document.querySelector<HTMLDialogElement>('#unsubscribe-confirmation');
+      if (confirmation) {
+        confirmation.close();
+        confirmation.showModal();
+      }
+    </script>
+  </body>
+</html>
+<style>
+  body { margin: 0; background: #f4f1ea; color: #222; font-family: Arial, sans-serif; }
+  main { max-width: 520px; margin: 80px auto; padding: 24px; background: white; border-radius: 8px; }
+  button { padding: 12px 20px; border: 1px solid #555; border-radius: 4px; cursor: pointer; }
+  dialog { max-width: 420px; padding: 24px; border: 1px solid #555; border-radius: 8px; }
+  dialog::backdrop { background: #0008; }
+</style>
