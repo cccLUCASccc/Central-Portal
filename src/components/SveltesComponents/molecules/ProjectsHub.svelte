@@ -17,6 +17,14 @@ const services = [
     group: "Catalogue"
   },
   {
+    name: "Registre d'inventaire",
+    description: "Importer un inventaire manuscrit avec Gemini, suivre les achats et exporter en Excel.",
+    href: "/registre-inventaire",
+    icon: "document_scanner",
+    tint: "bg-[#FFF394]",
+    group: "Catalogue"
+  },
+  {
     name: "Sous-catégories",
     description: "Organiser les catégories et sous-catégories du catalogue.",
     href: "/subcategories",
