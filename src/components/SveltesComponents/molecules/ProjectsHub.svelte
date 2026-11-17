@@ -9,14 +9,6 @@ const services = [
     group: "Catalogue"
   },
   {
-    name: "Inventaire Magasin",
-    description: "Suivre rapidement le stock du magasin et le lier aux objets du site.",
-    href: "/inventaire-magasin",
-    icon: "store",
-    tint: "bg-[#D4E2FD]",
-    group: "Catalogue"
-  },
-  {
     name: "Registre d'inventaire",
     description: "Importer un inventaire manuscrit avec Gemini, suivre les achats et exporter en Excel.",
     href: "/registre-inventaire",
