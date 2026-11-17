@@ -28,9 +28,19 @@
         code: string;
         antiquite_id: number | null;
         antiquite?: LinkedAntiquite | null;
+        document_id: number | null;
+        document?: PurchaseDoc | null;
+        doc_fields: string[] | null;
     }
     type BoolField = "vendu" | "photo" | "publie";
-    type ColumnKey = keyof Entry | "code" | "lien_site";
+    interface PurchaseDoc {
+        id: number;
+        title: string;
+        file_name: string;
+        content_type: string;
+        created_at: string;
+    }
+    type ColumnKey = keyof Entry | "code" | "lien_site" | "document";
 
     const COLUMNS: { key: ColumnKey; label: string; width: number }[] = [
         { key: "code", label: "Code", width: 10 },
@@ -44,6 +54,7 @@
         { key: "publie", label: "Publié", width: 8 },
         { key: "provenance", label: "Provenance", width: 22 },
         { key: "lien_site", label: "Lien site", width: 50 },
+        { key: "document", label: "Document d'achat", width: 30 },
     ];
     const BOOL_FIELDS: { key: BoolField; label: string }[] = [
         { key: "vendu", label: "Vendu" },
@@ -65,6 +76,7 @@
         { key: "photo", label: "Photo", width: 72 },
         { key: "publie", label: "Publié", width: 72 },
         { key: "provenance", label: "Provenance", width: 140 },
+        { key: "document", label: "Document", width: 200 },
         { key: "site", label: "Site", width: 240 },
         { key: "actions", label: "", width: 48 },
     ];
@@ -225,6 +237,7 @@
         loadColWidths();
         load();
         loadSiteObjects();
+        loadPurchaseDocs();
     });
 
     // ---------- Import via Gemini ----------
@@ -355,6 +368,7 @@
         options: PickerOption[];
         current: string;
         searchable: boolean;
+        empty?: string;
         onPick: (value: string) => void;
     }
     let picker = $state<Picker | null>(null);
@@ -423,6 +437,96 @@
     const linkedCodeBySite = $derived(
         new Map(items.filter((i) => i.antiquite_id != null).map((i) => [i.antiquite_id as number, i.code]))
     );
+
+    // ---------- Liaison à un document d'achat ----------
+    const DOC_FIELD_LABELS: Record<string, string> = {
+        nom: "nom",
+        categorie: "catégorie",
+        date_acquisition: "date",
+        prix_achat: "prix d'achat",
+        provenance: "provenance",
+    };
+    let purchaseDocs = $state<PurchaseDoc[]>([]);
+    let readingIds = $state<Set<number>>(new Set());
+
+    const fromDoc = (item: Item, field: string) => item.document_id != null && (item.doc_fields ?? []).includes(field);
+    const docClass = (item: Item, field: string) => (fromDoc(item, field) ? "!bg-[#C9F2C7] !border-[#1F7A3A]" : "");
+    const docTitle = (item: Item, field: string) =>
+        fromDoc(item, field) ? `Valeur issue du document « ${item.document?.title ?? ""} »` : undefined;
+
+    async function loadPurchaseDocs() {
+        try {
+            const res = await apiFetch("/api/documents?folder=achats");
+            if (res.ok) purchaseDocs = await res.json();
+        } catch {
+            // La colonne Document affichera une liste vide.
+        }
+    }
+
+    function setReading(id: number, on: boolean) {
+        const next = new Set(readingIds);
+        on ? next.add(id) : next.delete(id);
+        readingIds = next;
+    }
+
+    function pickDocument(item: Item) {
+        openPicker({
+            title: `Lier ${item.code} « ${item.nom} » à un document d'achat`,
+            options: purchaseDocs.map((d) => {
+                const codes = items.filter((i) => i.document_id === d.id && i.id !== item.id).map((i) => i.code);
+                return {
+                    value: String(d.id),
+                    label: d.title,
+                    hint: `${d.file_name}${codes.length ? ` · déjà lié à ${codes.join(", ")}` : ""}`,
+                    badge: { text: (d.file_name.split(".").pop() || "").toUpperCase().slice(0, 5), cls: "bg-[#FFD2A6]" },
+                };
+            }),
+            current: item.document_id != null ? String(item.document_id) : "",
+            searchable: true,
+            empty: "Aucun document dans le dossier Achats. Ajoutez-en depuis le service Documents.",
+            onPick: (v) => linkDocument(item, Number(v)),
+        });
+    }
+
+    async function linkDocument(item: Item, documentId: number) {
+        setReading(item.id, true);
+        error = "";
+        try {
+            const res = await apiFetch(`/api/inventaire/${item.id}/document`, {
+                method: "PUT",
+                body: JSON.stringify({ document_id: documentId }),
+            });
+            if (!res.ok) {
+                error = await readError(res, "Lecture du document impossible.");
+                return;
+            }
+            const body: { item: Item; found: boolean; changes: { field: string }[] } = await res.json();
+            items = items.map((i) => (i.id === item.id ? body.item : i));
+            const title = body.item.document?.title ?? "le document";
+            if (!body.found) {
+                notice = `${item.code} lié à « ${title} », mais Gemini n'y a pas trouvé cet objet : aucun champ modifié.`;
+            } else if (body.changes.length === 0) {
+                notice = `${item.code} lié à « ${title} » : les informations du document confirment la fiche.`;
+            } else {
+                const labels = body.changes.map((c) => DOC_FIELD_LABELS[c.field] ?? c.field).join(", ");
+                notice = `${item.code} lié à « ${title} » : ${body.changes.length} champ(s) rempli(s) ou corrigé(s) (${labels}).`;
+            }
+        } catch {
+            error = "Erreur réseau pendant la lecture du document.";
+        } finally {
+            setReading(item.id, false);
+        }
+    }
+
+    async function unlinkDocument(item: Item) {
+        const res = await apiFetch(`/api/inventaire/${item.id}/document`, { method: "DELETE" });
+        if (res.ok) {
+            const updated: Item = await res.json();
+            items = items.map((i) => (i.id === item.id ? updated : i));
+        } else {
+            error = await readError(res, "Impossible de délier le document.");
+        }
+    }
 
     async function loadSiteObjects() {
         siteObjectsLoading = true;
@@ -505,6 +609,8 @@
             case "photo":
             case "publie":
                 return item[key] === null ? null : item[key] ? "Oui" : "Non";
+            case "document":
+                return item.document?.title ?? null;
             case "lien_site":
                 return item.antiquite ? siteItemUrl(item.antiquite) : null;
             case "provenance":
@@ -737,10 +843,10 @@
                             <tr class="border-t border-black/10 {selected.has(item.id) ? 'bg-[#FFF394]/40' : ''} {item.vendu ? 'text-black/60' : ''}">
                                 <td class="p-0.5 text-center"><input type="checkbox" class="checkbox checkbox-xs" checked={selected.has(item.id)} onchange={() => toggle(item.id)} /></td>
                                 <td class="p-0.5 font-black truncate" title={item.code}>{item.code}</td>
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.nom} title={item.nom} onchange={(e) => editText(item, "nom", e)} /></td>
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.categorie} onchange={(e) => editText(item, "categorie", e)} /></td>
-                                <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0" value={item.date_acquisition ?? ""} onchange={(e) => editDate(item, e)} /></td>
-                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.prix_achat ?? ""} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'nom')}" value={item.nom} title={docTitle(item, "nom") ?? item.nom} onchange={(e) => editText(item, "nom", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
+                                <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
+                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.prix_vente ?? ""} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
@@ -748,7 +854,25 @@
                                             pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })))}
                                     </td>
                                 {/each}
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.provenance ?? ""} onchange={(e) => editText(item, "provenance", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
+                                <td class="p-0.5 overflow-hidden">
+                                    {#if readingIds.has(item.id)}
+                                        <span class="retro-input text-[11px] w-full flex items-center gap-1 !bg-[#FFF394] animate-pulse">
+                                            <span class="material-symbols-outlined text-[14px]">auto_awesome</span> Lecture Gemini…
+                                        </span>
+                                    {:else if item.document}
+                                        <div class="flex items-center gap-1 min-w-0">
+                                            <span class="retro-badge bg-[#C9F2C7] text-[10px] min-w-0 flex-1 truncate" title={`${item.document.title} (${item.document.file_name})`}>
+                                                {item.document.title}
+                                            </span>
+                                            <button class="material-symbols-outlined text-[16px]" title="Relire le document avec Gemini" onclick={() => item.document_id && linkDocument(item, item.document_id)}>refresh</button>
+                                            <button class="material-symbols-outlined text-[16px]" title="Changer de document" onclick={() => pickDocument(item)}>swap_horiz</button>
+                                            <button class="material-symbols-outlined text-[16px]" title="Délier le document" onclick={() => unlinkDocument(item)}>link_off</button>
+                                        </div>
+                                    {:else}
+                                        {@render pickerButton("Lier un document…", false, () => pickDocument(item), "Lier à un document du dossier Achats")}
+                                    {/if}
+                                </td>
                                 <td class="p-0.5 overflow-hidden">
                                     {#if item.antiquite}
                                         <div class="flex items-center gap-1 min-w-0">
@@ -813,7 +937,7 @@
                                 {#if o.badge}<span class="retro-badge {o.badge.cls} text-[9px] shrink-0">{o.badge.text}</span>{/if}
                             </button>
                         {:else}
-                            <p class="text-xs text-black/60 py-2">{siteObjectsLoading ? "Chargement..." : "Aucun résultat."}</p>
+                            <p class="text-xs text-black/60 py-2">{pickerSearch.trim() ? "Aucun résultat." : (picker.empty ?? (siteObjectsLoading ? "Chargement..." : "Aucun résultat."))}</p>
                         {/each}
                     </div>
                 </div>
