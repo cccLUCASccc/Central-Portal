@@ -113,6 +113,14 @@ const services = [
     group: "Outils"
   },
   {
+    name: "Documents",
+    description: "Téléverser, consulter et agrandir les documents internes de la boutique.",
+    href: "/documents",
+    icon: "folder_open",
+    tint: "bg-[#D4E2FD]",
+    group: "Outils"
+  },
+  {
     name: "Médias S3",
     description: "Parcourir et gérer les images et fichiers du stockage cloud.",
     href: "/storage",

@@ -192,6 +192,9 @@ const { fullWidth = false } = Astro.props;
                     <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR Code Imprimable
                   </a>
 
+              <a href="/documents" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname.startsWith('/documents') ? '!bg-[#BFD7FE]' : ''}">
+                <span class="material-symbols-outlined text-[16px]">folder_open</span> Documents
+              </a>
               <a href="/storage" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/storage') ? '!bg-[#86E2D5]' : ''}">
                 <span class="material-symbols-outlined text-[16px]">cloud</span> Fichiers S3
               </a>
