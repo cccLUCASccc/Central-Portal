@@ -710,7 +710,11 @@
                 disabled={files.length === 0 || isExtracting}
                 onclick={extract}
             >
-                <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                {#if isExtracting}
+                    <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
+                {:else}
+                    <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                {/if}
                 {isExtracting ? "Analyse en cours..." : `Analyser avec Gemini${files.length ? ` (${files.length})` : ""}`}
             </button>
         </div>
@@ -769,18 +773,18 @@
                         <tbody>
                             {#each drafts as d, i (i)}
                                 <tr class="border-t border-black/10">
-                                    <td class="p-1"><input class="retro-input text-[11px] w-48 {d.nom.trim() ? '' : '!bg-[#FFC2D1]'}" bind:value={d.nom} /></td>
-                                    <td class="p-1"><input class="retro-input text-[11px] w-28" bind:value={d.categorie} /></td>
-                                    <td class="p-1"><input type="date" class="retro-input text-[11px] w-32" bind:value={d.date_acquisition} /></td>
-                                    <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] w-20" bind:value={d.prix_achat} /></td>
-                                    <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] w-20" bind:value={d.prix_vente} /></td>
+                                    <td class="p-1"><input class="retro-input text-[11px] !w-48 {d.nom.trim() ? '' : '!bg-[#FFC2D1]'}" bind:value={d.nom} /></td>
+                                    <td class="p-1"><input class="retro-input text-[11px] !w-28" bind:value={d.categorie} /></td>
+                                    <td class="p-1"><input type="date" class="retro-input text-[11px] !w-32" bind:value={d.date_acquisition} /></td>
+                                    <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
+                                    <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
                                     {#each BOOL_FIELDS as f (f.key)}
-                                        <td class="p-1 w-20">
+                                        <td class="p-1 min-w-20">
                                             {@render pickerButton(boolLabel(d[f.key]), d[f.key] === true, () =>
                                                 pickBool(`${f.label} — ${d.nom || "objet détecté"}`, d[f.key], (v) => (d[f.key] = v)))}
                                         </td>
                                     {/each}
-                                    <td class="p-1"><input class="retro-input text-[11px] w-28" bind:value={d.provenance} /></td>
+                                    <td class="p-1"><input class="retro-input text-[11px] !w-28" bind:value={d.provenance} /></td>
                                     <td class="p-1">
                                         <button class="retro-btn-error text-xs px-2 py-1" title="Retirer" onclick={() => (drafts = drafts.filter((_, j) => j !== i))}>
                                             <span class="material-symbols-outlined text-[14px]">close</span>
@@ -815,7 +819,7 @@
         </div>
 
         {#if isLoading}
-            <p class="text-xs font-bold uppercase">Chargement...</p>
+            <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader" aria-hidden="true"></span><p class="text-xs font-bold uppercase">Chargement de l'inventaire...</p></div>
         {:else if filtered.length === 0}
             <p class="text-xs font-bold uppercase text-black/60">{items.length === 0 ? "L'inventaire est vide." : "Aucun objet ne correspond à ce code."}</p>
         {:else}
@@ -863,8 +867,8 @@
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
                                 <td class="p-0.5 overflow-hidden">
                                     {#if readingIds.has(item.id)}
-                                        <span class="retro-input text-[11px] w-full flex items-center gap-1 !bg-[#FFF394] animate-pulse">
-                                            <span class="material-symbols-outlined text-[14px]">auto_awesome</span> Lecture Gemini…
+                                        <span role="status" class="retro-input text-[11px] w-full flex items-center gap-1 !bg-[#FFF394]">
+                                            <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span> Lecture Gemini…
                                         </span>
                                     {:else if item.document}
                                         <div class="flex items-center gap-1 min-w-0">

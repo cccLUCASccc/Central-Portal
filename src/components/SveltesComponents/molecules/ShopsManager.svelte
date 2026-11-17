@@ -379,8 +379,8 @@
 
     <!-- Liste des Boutiques -->
     {#if isLoading}
-        <div class="bg-white border-3 border-black p-12 text-center shadow-[4px_4px_0px_0px_#000] space-y-3">
-            <div class="w-8 h-8 border-3 border-black border-t-[#FFD166] rounded-full animate-spin mx-auto"></div>
+        <div role="status" class="daisy-loading-state bg-white border-3 border-black p-12 shadow-[4px_4px_0px_0px_#000] space-y-3">
+            <span class="daisy-loader" aria-hidden="true"></span>
             <p class="text-xs font-bold uppercase text-black/70">Chargement des boutiques...</p>
         </div>
     {:else if filteredShops.length === 0}
@@ -921,8 +921,8 @@
                 <!-- Liste des Pièces de l'inventaire -->
                 <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-[#F6F4EE]">
                     {#if isLoadingItems}
-                        <div class="p-12 text-center bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] space-y-2 font-mono">
-                            <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+                        <div role="status" class="daisy-loading-state p-12 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] space-y-2 font-mono">
+                            <span class="daisy-loader" aria-hidden="true"></span>
                             <p class="text-xs font-black uppercase">Chargement de l'inventaire de la boutique...</p>
                         </div>
                     {:else if filteredShopItems.length === 0}

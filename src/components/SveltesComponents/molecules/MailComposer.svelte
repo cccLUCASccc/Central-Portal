@@ -642,7 +642,7 @@
           <button type="button" class="retro-btn bg-white px-2 py-1 text-xs" disabled={savedLoading} onclick={loadSavedList}>Actualiser</button>
         </div>
         {#if savedLoading}
-          <p role="status" class="text-xs">Chargement des mails sauvegardés…</p>
+          <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader daisy-loader-md" aria-hidden="true"></span><p class="text-xs">Chargement des mails sauvegardés…</p></div>
         {:else if savedListLoaded && savedList.length === 0}
           <p class="text-xs text-black/60">Aucun mail sauvegardé pour le moment.</p>
         {:else}
@@ -931,7 +931,7 @@
                 </div>
               {/if}
               {#if inventoryLoading}
-                <p role="status" class="text-xs">Chargement des objets…</p>
+                <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader daisy-loader-md" aria-hidden="true"></span><p class="text-xs">Chargement des objets…</p></div>
               {:else if inventoryLoaded && articles.length === 0}
                 <p class="text-xs text-black/60">Aucun objet actif ne correspond.</p>
               {:else}
@@ -1132,7 +1132,7 @@
                 {#if historyError}
                   <p role="alert" class="text-xs text-[#B00020]">{historyError}</p>
                 {:else if history.length === 0}
-                  <p class="text-xs text-black/60">{historyLoading ? "Chargement…" : "Aucun envoi pour le moment."}</p>
+                  {#if historyLoading}<div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader daisy-loader-md" aria-hidden="true"></span><p class="text-xs">Chargement…</p></div>{:else}<p class="text-xs text-black/60">Aucun envoi pour le moment.</p>{/if}
                 {:else}
                   <div class="max-h-64 overflow-auto border-2 border-black">
                     <table class="w-full text-left text-[11px]">

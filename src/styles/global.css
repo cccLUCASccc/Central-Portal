@@ -679,3 +679,68 @@
     size: auto;
   }
 }
+
+/* Loader « boîte » de Daisy Brocante (identique au site : planche 4×4 animée par étapes). */
+.daisy-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.daisy-loader {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  background-image: url("/boite-removebg-preview.png");
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  background-position: 0 0;
+}
+
+.daisy-loader.daisy-loader-md {
+  width: 48px;
+  height: 48px;
+}
+
+.daisy-loader.daisy-loader-sm {
+  width: 28px;
+  height: 28px;
+}
+
+.daisy-loader.daisy-loader-xs {
+  width: 20px;
+  height: 20px;
+}
+
+.daisy-loader.hidden {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .daisy-loader {
+    animation: daisy-box-loader 1.6s steps(1, end) infinite;
+  }
+}
+
+@keyframes daisy-box-loader {
+  0%, 100% { background-position: 0% 0%; }
+  6.25% { background-position: 33.333333% 0%; }
+  12.5% { background-position: 66.666667% 0%; }
+  18.75% { background-position: 100% 0%; }
+  25% { background-position: 0% 33.333333%; }
+  31.25% { background-position: 33.333333% 33.333333%; }
+  37.5% { background-position: 66.666667% 33.333333%; }
+  43.75% { background-position: 100% 33.333333%; }
+  50% { background-position: 0% 66.666667%; }
+  56.25% { background-position: 33.333333% 66.666667%; }
+  62.5% { background-position: 66.666667% 66.666667%; }
+  68.75% { background-position: 100% 66.666667%; }
+  75% { background-position: 0% 100%; }
+  81.25% { background-position: 33.333333% 100%; }
+  87.5% { background-position: 66.666667% 100%; }
+  93.75% { background-position: 100% 100%; }
+}

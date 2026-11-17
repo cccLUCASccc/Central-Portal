@@ -112,7 +112,7 @@
     class="retro-btn bg-white px-4 py-2 text-xs font-black hover:bg-[#86E2D5] disabled:opacity-60"
   >
     {#if isLoading}
-      <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+      <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
       Connexion en cours…
     {:else}
       <span class="material-symbols-outlined text-[16px]" aria-hidden="true">link</span>

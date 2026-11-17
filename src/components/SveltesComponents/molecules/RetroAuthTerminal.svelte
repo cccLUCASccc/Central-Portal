@@ -605,7 +605,7 @@
                                 class="w-full retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
                             >
                                 {#if isLoading}
-                                    <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                    <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
                                     <span>VÉRIFICATION DES DROITS...</span>
                                 {:else}
                                     <span class="material-symbols-outlined text-[16px]">bolt</span>
@@ -691,7 +691,7 @@
                                 class="flex-1 retro-btn retro-btn-primary py-3.5 text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000] hover:shadow-[5px_5px_0px_0px_#000] {isLoading ? 'opacity-70 cursor-wait' : ''}"
                             >
                                 {#if isLoading}
-                                    <span class="inline-block w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                    <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
                                     <span>VALIDATION...</span>
                                 {:else}
                                     <span class="material-symbols-outlined text-[16px]">check</span>

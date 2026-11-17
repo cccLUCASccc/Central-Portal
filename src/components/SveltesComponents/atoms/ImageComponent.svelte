@@ -35,7 +35,7 @@
 
     {#if isRotating}
         <div class="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-1 z-20">
-            <span class="loading loading-spinner loading-sm text-black"></span>
+            <span class="daisy-loader daisy-loader-sm" aria-hidden="true"></span>
             <span class="text-[9px] font-mono font-bold uppercase text-black">Rotation...</span>
         </div>
     {/if}

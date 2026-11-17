@@ -134,7 +134,7 @@
         {#if isLoading}
             <div class="absolute inset-0 bg-[#F6F4EE]/60 backdrop-blur-xs z-10 flex items-center justify-center border-2 border-black">
                 <div class="border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_#000] flex items-center gap-3 font-bold text-xs uppercase">
-                    <span class="loading loading-spinner loading-md text-black"></span>
+                    <span class="daisy-loader daisy-loader-md" aria-hidden="true"></span>
                     <span>Actualisation du catalogue eBay...</span>
                 </div>
             </div>

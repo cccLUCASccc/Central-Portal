@@ -189,7 +189,7 @@
         
         <div class="flex flex-col items-center gap-2">
             {#if isCompressing}
-                <span class="loading loading-spinner loading-md text-black"></span>
+                <span class="daisy-loader daisy-loader-md" aria-hidden="true"></span>
                 <p class="text-xs font-mono font-bold uppercase text-black">Compression...</p>
             {:else}
                 <div class="w-8 h-8 border-2 border-black bg-[#FFE600] flex items-center justify-center text-sm shadow-[2px_2px_0px_0px_#000]">

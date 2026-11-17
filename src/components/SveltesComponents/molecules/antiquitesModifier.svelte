@@ -354,7 +354,7 @@
                     title="Publier sur Facebook"
                 >
                     {#if isPublishingFB}
-                        <span class="loading loading-spinner loading-xs"></span>
+                        <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
                     {:else}
                         <span class="material-symbols-outlined text-[16px]">share</span>
                         <span>Facebook</span>
@@ -383,7 +383,7 @@
                             class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066] flex items-center gap-1"
                         >
                             {#if isEnhancing}
-                                <span class="loading loading-spinner loading-xs"></span>
+                                <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
                             {:else}
                                 <span class="material-symbols-outlined text-[14px]">auto_fix_high</span>
                                 <span>Améliorer IA</span>
@@ -524,7 +524,7 @@
                 </button>
                 <button onclick={() => modifyAntiquity(antiquite.id)} disabled={isSaving} class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[4px_4px_0px_0px_#000] flex items-center gap-1.5">
                     {#if isSaving}
-                        <span class="loading loading-spinner loading-xs mr-1"></span>
+                        <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
                         Enregistrement...
                     {:else}
                         <span class="material-symbols-outlined text-[16px]">save</span>

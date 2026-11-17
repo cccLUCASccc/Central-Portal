@@ -329,7 +329,7 @@
             <div class="flex justify-end mt-4">
                 <button onclick={syncWithGo} disabled={isUploading} class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[3px_3px_0px_0px_#000]">
                     {#if isUploading}
-                        <span class="loading loading-spinner loading-xs mr-1"></span>
+                        <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
                         Synchronisation...
                     {:else}
                         <span class="flex items-center gap-1.5">

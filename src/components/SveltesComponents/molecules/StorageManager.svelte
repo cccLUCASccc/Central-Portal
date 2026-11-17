@@ -311,7 +311,7 @@
                 class="retro-btn bg-white hover:bg-[#FFE600] text-xs py-2 px-3 flex items-center gap-1.5"
                 disabled={isLoading}
             >
-                <span class="material-symbols-outlined text-[16px] {isLoading ? 'animate-spin' : ''}">refresh</span>
+                {#if isLoading}<span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>{:else}<span class="material-symbols-outlined text-[16px]">refresh</span>{/if}
                 <span>Actualiser</span>
             </button>
         </div>
@@ -422,7 +422,7 @@
         <div class="flex flex-col items-center justify-center gap-3">
             <div class="w-12 h-12 border-2 border-black bg-[#FFE600] flex items-center justify-center text-xl shadow-[2px_2px_0px_0px_#000]">
                 {#if isUploading}
-                    <span class="loading loading-spinner loading-md text-black"></span>
+                    <span class="daisy-loader daisy-loader-md" aria-hidden="true"></span>
                 {:else}
                     <span class="material-symbols-outlined text-2xl text-black">upload_file</span>
                 {/if}
@@ -561,7 +561,7 @@
     <!-- Zone de Contenu (Grille / Tableau) -->
     {#if isLoading}
         <div class="flex flex-col items-center justify-center py-20 gap-3 border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000]">
-            <span class="loading loading-spinner loading-lg text-black"></span>
+            <span class="daisy-loader" aria-hidden="true"></span>
             <p class="text-xs font-bold uppercase text-black">Lecture des objets S3...</p>
         </div>
     {:else if files.length === 0}

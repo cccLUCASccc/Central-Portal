@@ -339,7 +339,7 @@
             </button>
             <button onclick={bulkUpdateSubcategory} disabled={isUpdating} class="retro-btn-primary text-xs font-black">
               {#if isUpdating}
-                <span class="loading loading-spinner loading-xs mr-1"></span>
+                <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
               {/if}
               Appliquer
             </button>
@@ -452,7 +452,7 @@
                   </button>
                 </div>
                 {#if updatingQuantityId === antiquite.id}
-                  <div class="text-[9px] text-black/60 font-bold animate-pulse mt-0.5">MAJ...</div>
+                  <div role="status" class="text-[9px] text-black/60 font-bold mt-0.5 flex items-center gap-1"><span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>MAJ...</div>
                 {/if}
               </td>
               

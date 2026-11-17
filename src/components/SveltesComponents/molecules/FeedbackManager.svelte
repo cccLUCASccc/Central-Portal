@@ -209,7 +209,7 @@
                     disabled={isLoading}
                     class="retro-btn bg-white hover:bg-[#86E2D5] text-xs font-black py-2.5 px-4 shadow-[3px_3px_0px_0px_#000] flex items-center gap-2"
                 >
-                    <span class="material-symbols-outlined text-[16px] {isLoading ? 'animate-spin' : ''}">refresh</span>
+                    {#if isLoading}<span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>{:else}<span class="material-symbols-outlined text-[16px]">refresh</span>{/if}
                     <span>Actualiser</span>
                 </button>
             </div>
@@ -313,10 +313,8 @@
 
     <!-- Feedback Content List -->
     {#if isLoading}
-        <div class="p-12 text-center bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-            <div class="inline-block animate-spin text-3xl mb-2">
-                <span class="material-symbols-outlined text-4xl">progress_activity</span>
-            </div>
+        <div role="status" class="daisy-loading-state p-12 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] space-y-2">
+            <span class="daisy-loader" aria-hidden="true"></span>
             <p class="font-bold text-sm uppercase">Chargement des retours...</p>
         </div>
     {:else if filteredItems.length === 0}

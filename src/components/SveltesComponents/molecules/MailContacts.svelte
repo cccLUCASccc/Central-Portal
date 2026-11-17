@@ -224,7 +224,7 @@
         <p>{error}</p><button type="button" class="retro-btn mt-2 bg-white text-xs" onclick={() => load(requestedPage)}>Réessayer</button>
       </div>
     {:else if loading}
-      <p role="status">Chargement des contacts…</p>
+      <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader" aria-hidden="true"></span><p class="text-sm">Chargement des contacts…</p></div>
     {:else if contacts.length === 0}
       <p class="border-2 border-black bg-white p-4 text-sm">Aucun contact pour ces filtres. Les adresses apparaissent dès qu'une tentative d'envoi est enregistrée.</p>
     {:else}
@@ -297,7 +297,7 @@
       <h3 class="border-t-2 border-black pt-4 text-sm font-bold">Historique de ce contact</h3>
       {#if historyError}
         <div role="alert" class="text-xs"><p>{historyError}</p><button type="button" class="retro-btn mt-2 bg-white text-xs" onclick={() => loadHistory(requestedHistoryPage)}>Recharger l'historique</button></div>
-      {:else if historyLoading}<p role="status" class="text-xs">Chargement de l'historique…</p>
+      {:else if historyLoading}<div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader daisy-loader-md" aria-hidden="true"></span><p class="text-xs">Chargement de l'historique…</p></div>
       {:else}
         <div class="overflow-x-auto">
           <table class="w-full bg-white text-left text-xs">

@@ -201,7 +201,7 @@
                 Transporteurs et barèmes configurés
             </span>
             <button onclick={fetchLivraisons} class="retro-btn py-1 px-2.5 text-xs bg-white hover:bg-[#FFE600] flex items-center justify-center" title="Rafraîchir">
-                <span class="material-symbols-outlined text-[16px] {isLoading ? 'animate-spin' : ''}">refresh</span>
+                {#if isLoading}<span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>{:else}<span class="material-symbols-outlined text-[16px]">refresh</span>{/if}
             </button>
         </div>
 

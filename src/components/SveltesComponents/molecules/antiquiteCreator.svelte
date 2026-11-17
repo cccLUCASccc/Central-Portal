@@ -205,7 +205,7 @@
                             class="retro-btn text-[11px] py-1 px-2.5 bg-[#FFE600] hover:bg-[#fff066] flex items-center gap-1"
                         >
                             {#if isEnhancing}
-                                <span class="loading loading-spinner loading-xs"></span>
+                                <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
                             {:else}
                                 <span class="material-symbols-outlined text-[14px]">auto_fix_high</span>
                                 <span>Améliorer IA</span>
@@ -326,7 +326,7 @@
             </button>
             <button onclick={createAntiquity} disabled={isCreating} class="retro-btn-primary py-2 px-8 text-xs font-black shadow-[4px_4px_0px_0px_#000] flex items-center gap-1.5">
                 {#if isCreating}
-                    <span class="loading loading-spinner loading-xs mr-2"></span>
+                    <span class="daisy-loader daisy-loader-xs mr-2" aria-hidden="true"></span>
                     Création en cours...
                 {:else}
                     <span class="material-symbols-outlined text-[16px]">check</span>

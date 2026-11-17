@@ -197,7 +197,7 @@
             onclick={fetchOrders}
             class="retro-btn bg-[#FFD166] hover:bg-[#f3be4b] py-2 px-4 text-xs font-black flex items-center gap-2 shadow-[2px_2px_0px_0px_#000] cursor-pointer self-start sm:self-auto"
         >
-            <span class="material-symbols-outlined text-sm {isLoading ? 'animate-spin' : ''}">refresh</span>
+            {#if isLoading}<span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>{:else}<span class="material-symbols-outlined text-sm">refresh</span>{/if}
             <span>Actualiser</span>
         </button>
     </div>
@@ -318,8 +318,8 @@
 
     <!-- TABLEAU DES COMMANDES -->
     {#if isLoading}
-        <div class="p-12 text-center bg-white border-2 border-black shadow-[3px_3px_0px_0px_#000] space-y-2 font-mono">
-            <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+        <div role="status" class="daisy-loading-state p-12 bg-white border-2 border-black shadow-[3px_3px_0px_0px_#000] space-y-2 font-mono">
+            <span class="daisy-loader" aria-hidden="true"></span>
             <p class="text-xs font-black uppercase">Chargement des commandes en cours...</p>
         </div>
     {:else if filteredOrders.length === 0}

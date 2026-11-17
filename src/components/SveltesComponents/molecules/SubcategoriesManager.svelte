@@ -113,7 +113,7 @@
 
             <button type="submit" disabled={isCreating} class="retro-btn-primary w-full py-2.5 mt-2 font-black shadow-[3px_3px_0px_0px_#000] flex items-center justify-center gap-1.5">
                 {#if isCreating}
-                    <span class="loading loading-spinner loading-xs mr-2"></span>
+                    <span class="daisy-loader daisy-loader-xs mr-2" aria-hidden="true"></span>
                     Création...
                 {:else}
                     <span class="material-symbols-outlined text-[16px]">add</span>
@@ -142,7 +142,7 @@
         
         {#if isLoading}
             <div class="flex flex-col items-center justify-center py-16 gap-3">
-                <span class="loading loading-spinner loading-lg text-black"></span>
+                <span class="daisy-loader" aria-hidden="true"></span>
                 <p class="text-xs font-bold uppercase text-black">Chargement des sous-catégories...</p>
             </div>
         {:else if subcategories.length === 0}

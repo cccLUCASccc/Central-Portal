@@ -160,7 +160,7 @@
             <span class="text-xs font-black uppercase text-black">Statut de l'annonce :</span>
             {#if dynamicStatus === "LOADING"}
                 <span class="retro-badge bg-white text-[10px]">
-                    <span class="loading loading-spinner loading-xs mr-1"></span>
+                    <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
                     Vérification...
                 </span>
             {:else if dynamicStatus === "PUBLISHED" || dynamicStatus === "ACTIVE"}
@@ -212,7 +212,7 @@
                 class="retro-btn text-xs py-1.5 px-3 bg-white flex items-center gap-1"
             >
                 {#if isCheckingStatus}
-                    <span class="loading loading-spinner loading-xs mr-1"></span>
+                    <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
                 {:else}
                     <span class="material-symbols-outlined text-[14px]">refresh</span>
                 {/if}
@@ -344,7 +344,7 @@
                 class="retro-btn text-xs py-2 px-4 bg-white hover:bg-[#FFE600] flex items-center gap-1.5"
             >
                 {#if isSaving}
-                    <span class="loading loading-spinner loading-xs mr-1"></span>
+                    <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
                 {:else}
                     <span class="material-symbols-outlined text-[16px]">save</span>
                 {/if}
@@ -357,7 +357,7 @@
                 class="retro-btn-primary text-xs py-2 px-6 font-black shadow-[3px_3px_0px_0px_#000] flex items-center gap-1.5"
             >
                 {#if isPublishing}
-                    <span class="loading loading-spinner loading-xs mr-1"></span>
+                    <span class="daisy-loader daisy-loader-xs mr-1" aria-hidden="true"></span>
                 {:else}
                     <span class="material-symbols-outlined text-[16px]">sync</span>
                 {/if}

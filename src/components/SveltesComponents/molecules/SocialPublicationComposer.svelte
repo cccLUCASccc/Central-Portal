@@ -164,7 +164,7 @@
       </div>
     {/if}
     {#if loading}
-      <p role="status" class="text-sm">Chargement des articles actifs…</p>
+      <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader" aria-hidden="true"></span><p class="text-sm">Chargement des articles actifs…</p></div>
     {:else if !inventoryError}
       {#if articles.length === 0}
         <p class="border-2 border-black bg-white p-5 text-sm">Aucun article actif dans votre inventaire Daisy Brocante.</p>

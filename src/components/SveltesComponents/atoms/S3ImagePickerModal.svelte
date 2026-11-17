@@ -159,7 +159,7 @@
             <div class="flex-1 overflow-y-auto p-4 bg-[#F6F4EE] min-h-[300px]">
                 {#if isLoading}
                     <div class="flex flex-col items-center justify-center h-48 gap-3">
-                        <span class="loading loading-spinner loading-lg text-black"></span>
+                        <span class="daisy-loader" aria-hidden="true"></span>
                         <span class="text-xs font-bold uppercase text-black">Scan du bucket S3...</span>
                     </div>
                 {:else if images.length === 0}

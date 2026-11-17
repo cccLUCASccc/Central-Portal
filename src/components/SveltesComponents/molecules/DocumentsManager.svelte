@@ -373,7 +373,11 @@
                     </label>
                 {/if}
                 <button class="retro-btn-primary text-xs py-2 px-4 font-black flex items-center gap-1.5" disabled={isUploading} onclick={upload}>
-                    <span class="material-symbols-outlined text-[16px]">upload</span>
+                    {#if isUploading}
+                        <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
+                    {:else}
+                        <span class="material-symbols-outlined text-[16px]">upload</span>
+                    {/if}
                     {isUploading ? "Envoi en cours..." : `Téléverser (${files.length})`}
                 </button>
             </div>
@@ -419,7 +423,7 @@
         </div>
 
         {#if isLoading}
-            <p class="text-xs font-bold uppercase">Chargement...</p>
+            <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader" aria-hidden="true"></span><p class="text-xs font-bold uppercase">Chargement des documents...</p></div>
         {:else if filtered.length === 0}
             <p class="text-xs font-bold uppercase text-black/60">{search.trim() ? "Aucun document ne correspond." : "Aucun document dans ce dossier."}</p>
         {:else}
@@ -441,10 +445,14 @@
                                 </div>
                             {:else}
                                 <span class="absolute inset-0 grid place-items-center">
-                                    <span class="text-center">
-                                        <span class="material-symbols-outlined text-[48px] block">{icon(d)}</span>
-                                        <span class="text-[10px] font-black">{hasPreview(d) ? "Chargement..." : ext(d)}</span>
-                                    </span>
+                                    {#if hasPreview(d)}
+                                        <span class="daisy-loader daisy-loader-md" role="status" aria-label="Chargement de l'aperçu"></span>
+                                    {:else}
+                                        <span class="text-center">
+                                            <span class="material-symbols-outlined text-[48px] block">{icon(d)}</span>
+                                            <span class="text-[10px] font-black">{ext(d)}</span>
+                                        </span>
+                                    {/if}
                                 </span>
                             {/if}
                             <span class="absolute top-2 right-2 retro-badge bg-white text-[9px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
@@ -545,7 +553,7 @@
                             <button class="retro-btn-primary text-xs py-2 px-4 font-black" onclick={() => openDoc && download(openDoc)}>Télécharger</button>
                         </div>
                     {:else if !blobUrls[openDoc.id]}
-                        <p class="text-xs font-bold uppercase">Chargement...</p>
+                        <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader" aria-hidden="true"></span><p class="text-xs font-bold uppercase">Chargement du document...</p></div>
                     {:else}
                         <!-- À 90°/270°, largeur et hauteur sont inversées pour remplir la zone une fois tourné. -->
                         <div
