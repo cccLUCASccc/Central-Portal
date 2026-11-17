@@ -20,7 +20,7 @@ const { fullWidth = false } = Astro.props;
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <title>{pathname.startsWith('/posthog') ? "PostHog // Daisy Brocante" : pathname.startsWith('/qrcode') ? "QR Code & Impression // Daisy Brocante" : pathname.startsWith('/canaux-vente') ? "Canaux de vente // Daisy Brocante" : pathname.startsWith('/contacts') ? "Suivi des contacts // Daisy Brocante" : pathname.startsWith('/mails') ? "Rédaction de mail // Daisy Brocante" : "Gestionnaire // Daisy Brocante"}</title>
+    <title>{pathname.startsWith('/posthog') ? "PostHog // Daisy Brocante" : pathname.startsWith('/canaux-vente') ? "Canaux de vente // Daisy Brocante" : pathname.startsWith('/contacts') ? "Suivi des contacts // Daisy Brocante" : pathname.startsWith('/mails') ? "Rédaction de mail // Daisy Brocante" : "Gestionnaire // Daisy Brocante"}</title>
     <!-- Google Fonts : Plus Jakarta Sans & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,8 +50,6 @@ const { fullWidth = false } = Astro.props;
               <span class="inline-block w-2 h-2 bg-black rounded-none animate-pulse"></span>
               {pathname === '/' ? (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">spa</span> DAISY BROCANTE // GESTIONNAIRE.SYS — TABLEAU DE BORD</span>
-              ) : pathname.startsWith('/qrcode') ? (
-                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">qr_code_2</span> DAISY BROCANTE // GESTIONNAIRE.SYS — QR CODE & GABARITS D'IMPRESSION</span>
               ) : isDaisyBrocante ? (
                 <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">bolt</span> DAISY BROCANTE // GESTIONNAIRE.SYS — STATION ACTIVE</span>
               ) : (
@@ -187,9 +185,6 @@ const { fullWidth = false } = Astro.props;
                   </a>
                   <a href="/feedback" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFAEC1] {pathname.startsWith('/feedback') ? '!bg-[#FFAEC1]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">rate_review</span> Boîte à idées & Bugs
-                  </a>
-                  <a href="/qrcode" class="retro-btn justify-start text-xs bg-white hover:bg-[#86E2D5] {pathname.startsWith('/qrcode') ? '!bg-[#86E2D5] font-black' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR Code Imprimable
                   </a>
 
               <a href="/documents" class="retro-btn justify-start text-xs bg-white hover:bg-[#BFD7FE] {pathname.startsWith('/documents') ? '!bg-[#BFD7FE]' : ''}">

@@ -97,14 +97,6 @@ const services = [
     group: "Relation client"
   },
   {
-    name: "QR Code & impression",
-    description: "Créer les QR codes et préparer les supports imprimables.",
-    href: "/qrcode",
-    icon: "qr_code_2",
-    tint: "bg-[#86E2D5]",
-    group: "Outils"
-  },
-  {
     name: "PostHog",
     description: "Accéder aux statistiques, sessions, erreurs et logs du site.",
     href: "/posthog",
