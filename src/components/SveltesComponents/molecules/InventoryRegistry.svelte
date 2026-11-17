@@ -138,11 +138,6 @@
     let showManual = $state(false);
     let manual = $state<Entry>(emptyEntry());
 
-    // Liaison au site
-    let linkingItem = $state<Item | null>(null);
-    let siteSearch = $state("");
-    let siteResults = $state<LinkedAntiquite[]>([]);
-    let siteTimer: ReturnType<typeof setTimeout>;
 
     // Export Excel
     let showExport = $state(false);
@@ -348,11 +343,50 @@
         if (value !== item.date_acquisition) patch(item, { date_acquisition: value });
     }
 
-    const boolToSelect = (v: boolean | null) => (v === null || v === undefined ? "" : String(v));
-    const selectToBool = (v: string) => (v === "" ? null : v === "true");
+    // ---------- Popup de choix (remplace les listes déroulantes) ----------
+    interface PickerOption {
+        value: string;
+        label: string;
+        hint?: string;
+        badge?: { text: string; cls: string };
+    }
+    interface Picker {
+        title: string;
+        options: PickerOption[];
+        current: string;
+        searchable: boolean;
+        onPick: (value: string) => void;
+    }
+    let picker = $state<Picker | null>(null);
+    let pickerSearch = $state("");
+    const pickerOptions = $derived.by(() => {
+        if (!picker) return [];
+        const q = pickerSearch.trim().toLowerCase();
+        return q ? picker.options.filter((o) => o.label.toLowerCase().includes(q)) : picker.options;
+    });
 
-    function editBool(item: Item, field: BoolField, e: Event) {
-        patch(item, { [field]: selectToBool((e.currentTarget as HTMLSelectElement).value) });
+    function openPicker(p: Picker) {
+        pickerSearch = "";
+        picker = p;
+    }
+
+    function choose(value: string) {
+        const p = picker;
+        picker = null;
+        p?.onPick(value);
+    }
+
+    const BOOL_OPTIONS: PickerOption[] = [
+        { value: "true", label: "Oui" },
+        { value: "false", label: "Non" },
+        { value: "", label: "Non renseigné" },
+    ];
+    const boolKey = (v: boolean | null | undefined) => (v === null || v === undefined ? "" : String(v));
+    const keyToBool = (v: string) => (v === "" ? null : v === "true");
+    const boolLabel = (v: boolean | null | undefined) => (v === true ? "Oui" : v === false ? "Non" : "—");
+
+    function pickBool(title: string, current: boolean | null, onPick: (v: boolean | null) => void) {
+        openPicker({ title, options: BOOL_OPTIONS, current: boolKey(current), searchable: false, onPick: (v) => onPick(keyToBool(v)) });
     }
 
     async function remove(item: Item) {
@@ -414,44 +448,27 @@
         }
     }
 
-    function siteOptionLabel(a: LinkedAntiquite) {
+    function siteOption(a: LinkedAntiquite): PickerOption {
         const code = linkedCodeBySite.get(a.id);
-        return `#${a.id} · ${a.name}${code ? ` (déjà lié à ${code})` : ""}`;
+        return {
+            value: String(a.id),
+            label: `#${a.id} · ${a.name}`,
+            hint: code ? `Déjà lié à ${code}` : undefined,
+            badge: isPublished(a) ? { text: "Publié", cls: "bg-[#99E7DC]" } : { text: "Non publié", cls: "bg-[#EDE9DF]" },
+        };
     }
 
-    async function linkFromSelect(item: Item, e: Event) {
-        const select = e.currentTarget as HTMLSelectElement;
-        const a = siteObjects.find((o) => o.id === Number(select.value));
-        select.value = "";
-        if (!a) return;
-        await patch(item, { antiquite_id: a.id, publie: isPublished(a) ? true : item.publie });
-    }
-
-    function openLink(item: Item) {
-        linkingItem = item;
-        siteSearch = item.nom;
-        searchSite();
-    }
-
-    function onSiteSearch() {
-        clearTimeout(siteTimer);
-        siteTimer = setTimeout(searchSite, 300);
-    }
-
-    async function searchSite() {
-        const params = new URLSearchParams({ limit: "15" });
-        if (siteSearch.trim()) params.set("q", siteSearch.trim());
-        const res = await apiFetch(`/api/antiquites?${params.toString()}`);
-        if (res.ok) {
-            const r = await res.json();
-            siteResults = Array.isArray(r) ? r : r.data || [];
-        }
-    }
-
-    async function linkTo(a: LinkedAntiquite) {
-        if (!linkingItem) return;
-        await patch(linkingItem, { antiquite_id: a.id, publie: isPublished(a) ? true : linkingItem.publie });
-        linkingItem = null;
+    function pickSite(item: Item) {
+        openPicker({
+            title: `Lier ${item.code} « ${item.nom} » à un objet du site`,
+            options: [...publishedSiteObjects, ...otherSiteObjects].map(siteOption),
+            current: item.antiquite_id != null ? String(item.antiquite_id) : "",
+            searchable: true,
+            onPick: (v) => {
+                const a = siteObjects.find((o) => o.id === Number(v));
+                if (a) patch(item, { antiquite_id: a.id, publie: isPublished(a) ? true : item.publie });
+            },
+        });
     }
 
     // ---------- Export Excel ----------
@@ -521,6 +538,17 @@
 </script>
 
 <div class="space-y-2 font-mono">
+    {#snippet pickerButton(text: string, active: boolean, onclick: () => void, title = "")}
+        <button
+            type="button"
+            class="retro-input text-[11px] w-full min-w-0 flex items-center justify-between gap-1 text-left cursor-pointer hover:bg-[#FFF394] {active ? '!bg-[#99E7DC]' : ''}"
+            {title}
+            {onclick}
+        >
+            <span class="truncate">{text}</span>
+            <span class="material-symbols-outlined text-[14px] shrink-0">unfold_more</span>
+        </button>
+    {/snippet}
     <div class="retro-card-yellow px-3 py-2">
         <span class="retro-badge bg-black text-white text-[10px] font-black uppercase">INVENTAIRE</span>
         <h1 class="text-xl sm:text-2xl font-black uppercase tracking-tight text-black mt-1">Inventaire</h1>
@@ -596,15 +624,10 @@
                     <input type="number" step="0.01" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_vente} />
                 </label>
                 {#each BOOL_FIELDS as f (f.key)}
-                    <label class="text-[10px] font-bold uppercase">{f.label}
-                        <select
-                            class="retro-select text-xs w-full"
-                            value={boolToSelect(manual[f.key])}
-                            onchange={(e) => (manual[f.key] = selectToBool(e.currentTarget.value))}
-                        >
-                            <option value="">—</option><option value="true">Oui</option><option value="false">Non</option>
-                        </select>
-                    </label>
+                    <div class="text-[10px] font-bold uppercase">{f.label}
+                        {@render pickerButton(boolLabel(manual[f.key]), manual[f.key] === true, () =>
+                            pickBool(`${f.label} — nouvel objet`, manual[f.key], (v) => (manual[f.key] = v)))}
+                    </div>
                 {/each}
                 <button type="submit" class="retro-btn-primary text-xs py-2 px-4 font-black col-span-2 md:col-span-5">Créer l'objet</button>
             </form>
@@ -640,10 +663,9 @@
                                     <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] w-20" bind:value={d.prix_achat} /></td>
                                     <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] w-20" bind:value={d.prix_vente} /></td>
                                     {#each BOOL_FIELDS as f (f.key)}
-                                        <td class="p-1">
-                                            <select class="retro-select text-[11px]" value={boolToSelect(d[f.key])} onchange={(e) => (d[f.key] = selectToBool(e.currentTarget.value))}>
-                                                <option value="">—</option><option value="true">Oui</option><option value="false">Non</option>
-                                            </select>
+                                        <td class="p-1 w-20">
+                                            {@render pickerButton(boolLabel(d[f.key]), d[f.key] === true, () =>
+                                                pickBool(`${f.label} — ${d.nom || "objet détecté"}`, d[f.key], (v) => (d[f.key] = v)))}
                                         </td>
                                     {/each}
                                     <td class="p-1"><input class="retro-input text-[11px] w-28" bind:value={d.provenance} /></td>
@@ -722,9 +744,8 @@
                                 <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.prix_vente ?? ""} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
-                                        <select class="retro-select text-[11px] w-full min-w-0 {item[f.key] ? '!bg-[#99E7DC]' : ''}" value={boolToSelect(item[f.key])} onchange={(e) => editBool(item, f.key, e)}>
-                                            <option value="">—</option><option value="true">Oui</option><option value="false">Non</option>
-                                        </select>
+                                        {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
+                                            pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })))}
                                     </td>
                                 {/each}
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.provenance ?? ""} onchange={(e) => editText(item, "provenance", e)} /></td>
@@ -738,27 +759,7 @@
                                             <button class="material-symbols-outlined text-[16px]" title="Délier" onclick={() => patch(item, { antiquite_id: null })}>link_off</button>
                                         </div>
                                     {:else}
-                                        <div class="flex items-center gap-1 min-w-0">
-                                            <select
-                                                class="retro-select text-[11px] w-full min-w-0 flex-1"
-                                                disabled={siteObjectsLoading}
-                                                onchange={(e) => linkFromSelect(item, e)}
-                                                title="Lier à un objet du site"
-                                            >
-                                                <option value="">{siteObjectsLoading ? "Chargement..." : "Lier à un objet…"}</option>
-                                                {#if publishedSiteObjects.length}
-                                                    <optgroup label="Publiés sur le site">
-                                                        {#each publishedSiteObjects as a (a.id)}<option value={a.id}>{siteOptionLabel(a)}</option>{/each}
-                                                    </optgroup>
-                                                {/if}
-                                                {#if otherSiteObjects.length}
-                                                    <optgroup label="Non publiés">
-                                                        {#each otherSiteObjects as a (a.id)}<option value={a.id}>{siteOptionLabel(a)}</option>{/each}
-                                                    </optgroup>
-                                                {/if}
-                                            </select>
-                                            <button class="material-symbols-outlined text-[16px] shrink-0" title="Rechercher un objet du site" onclick={() => openLink(item)}>search</button>
-                                        </div>
+                                        {@render pickerButton(siteObjectsLoading ? "Chargement..." : "Lier à un objet…", false, () => pickSite(item), "Lier à un objet du site")}
                                     {/if}
                                 </td>
                                 <td class="p-0.5">
@@ -780,27 +781,39 @@
         {/if}
     </div>
 
-    {#if linkingItem}
-        <div class="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4" role="presentation" onclick={() => (linkingItem = null)}>
-            <div class="bg-white border-3 border-black shadow-[8px_8px_0px_0px_#000] max-w-md w-full" role="dialog" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={() => {}}>
+    {#if picker}
+        <div class="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4" role="presentation" onclick={() => (picker = null)}>
+            <div
+                class="bg-white border-3 border-black shadow-[8px_8px_0px_0px_#000] max-w-md w-full max-h-[80vh] flex flex-col"
+                role="dialog"
+                aria-modal="true"
+                tabindex="-1"
+                onclick={(e) => e.stopPropagation()}
+                onkeydown={(e) => e.key === "Escape" && (picker = null)}
+            >
                 <div class="bg-[#FFE600] border-b-2 border-black px-4 py-2 flex justify-between items-center gap-2">
-                    <span class="font-black text-xs uppercase truncate">Lier {linkingItem.code} « {linkingItem.nom} » au site</span>
-                    <button onclick={() => (linkingItem = null)} class="w-6 h-6 border border-black bg-white text-xs font-bold shrink-0">✕</button>
+                    <span class="font-black text-xs uppercase truncate" title={picker.title}>{picker.title}</span>
+                    <button onclick={() => (picker = null)} class="w-6 h-6 border border-black bg-white text-xs font-bold shrink-0">✕</button>
                 </div>
-                <div class="p-4 space-y-3">
-                    <input class="retro-input text-xs w-full" bind:value={siteSearch} oninput={onSiteSearch} placeholder="Rechercher un objet sur le site" />
-                    <div class="max-h-64 overflow-y-auto divide-y divide-black/10">
-                        {#each siteResults as a (a.id)}
-                            <button class="w-full text-left text-xs py-2 px-1 hover:bg-[#FFF394] flex justify-between gap-2" onclick={() => linkTo(a)}>
-                                <span class="truncate">#{a.id} · {a.name}</span>
-                                {#if isPublished(a)}
-                                    <span class="retro-badge bg-[#99E7DC] text-[9px] shrink-0">Publié</span>
-                                {:else}
-                                    <span class="retro-badge bg-[#EDE9DF] text-[9px] shrink-0">Non publié</span>
-                                {/if}
+                <div class="p-4 space-y-3 flex flex-col min-h-0">
+                    {#if picker.searchable}
+                        <!-- svelte-ignore a11y_autofocus -->
+                        <input class="retro-input text-xs w-full" bind:value={pickerSearch} placeholder="Rechercher..." autofocus />
+                    {/if}
+                    <div class="overflow-y-auto min-h-0 space-y-1.5">
+                        {#each pickerOptions as o (o.value)}
+                            <button
+                                class="retro-btn w-full justify-between text-left text-xs py-2 px-3 bg-white hover:bg-[#FFF394] flex items-center gap-2 {o.value === picker.current ? '!bg-[#99E7DC]' : ''}"
+                                onclick={() => choose(o.value)}
+                            >
+                                <span class="min-w-0">
+                                    <span class="block truncate font-bold">{o.label}</span>
+                                    {#if o.hint}<span class="block text-[10px] text-black/60">{o.hint}</span>{/if}
+                                </span>
+                                {#if o.badge}<span class="retro-badge {o.badge.cls} text-[9px] shrink-0">{o.badge.text}</span>{/if}
                             </button>
                         {:else}
-                            <p class="text-xs text-black/60 py-2">Aucun résultat.</p>
+                            <p class="text-xs text-black/60 py-2">{siteObjectsLoading ? "Chargement..." : "Aucun résultat."}</p>
                         {/each}
                     </div>
                 </div>
