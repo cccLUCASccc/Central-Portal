@@ -189,8 +189,10 @@
     let provenanceFilter = $state<string | null>(null);
     let publishedFilter = $state<"all" | "yes" | "no">("all");
     const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    // Clé de regroupement : majuscules et espaces réduits (« Brocante » = « BROCANTE »), comme l'API.
+    const provKey = (p: string | null | undefined) => (p ?? "").trim().replace(/\s+/g, " ").toUpperCase();
     const provenances = $derived(
-        [...new Set(items.map((i) => i.provenance?.trim()).filter((p): p is string => !!p))].sort((a, b) => a.localeCompare(b, "fr")),
+        [...new Set(items.map((i) => provKey(i.provenance)).filter((p) => !!p))].sort((a, b) => a.localeCompare(b, "fr")),
     );
     const hasFilters = $derived(!!search.trim() || !!nameSearch.trim() || provenanceFilter !== null || publishedFilter !== "all");
 
@@ -207,7 +209,7 @@
             (i) =>
                 (!name || normalize(i.nom).includes(name)) &&
                 (provenanceFilter === null ||
-                    (provenanceFilter === NO_PROVENANCE ? !i.provenance?.trim() : i.provenance?.trim() === provenanceFilter)) &&
+                    (provenanceFilter === NO_PROVENANCE ? !provKey(i.provenance) : provKey(i.provenance) === provenanceFilter)) &&
                 (publishedFilter === "all" || (publishedFilter === "yes") === (i.publie === true)),
         );
         const q = search.trim().toUpperCase().replace(/\s+/g, "");
@@ -217,6 +219,19 @@
         // Correspondance exacte (ex : "12" → D0012) en premier.
         return [...matches.filter((i) => i.code === exact), ...matches.filter((i) => i.code !== exact)];
     });
+    const purchaseTotal = $derived({
+        amount: filtered.reduce((s, i) => s + (i.prix_achat ?? 0), 0),
+        missing: filtered.filter((i) => i.prix_achat == null).length,
+    });
+    const totalLabel = $derived(
+        provenanceFilter === NO_PROVENANCE
+            ? "sans provenance"
+            : provenanceFilter !== null
+              ? provenanceFilter
+              : hasFilters
+                ? "objets filtrés"
+                : "tout l'inventaire",
+    );
     const totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
     const pageItems = $derived(filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
     const allFilteredSelected = $derived(filtered.length > 0 && filtered.every((i) => selected.has(i.id)));
@@ -371,7 +386,8 @@
             input.value = item.nom;
             return;
         }
-        if (value !== (item[field] ?? "")) patch(item, { [field]: field === "provenance" && !value ? null : value });
+        if (field === "provenance" ? provKey(value) !== provKey(item.provenance) : value !== (item[field] ?? ""))
+            patch(item, { [field]: field === "provenance" && !value ? null : value });
     }
 
     function editNumber(item: Item, field: "prix_achat" | "prix_vente", e: Event) {
@@ -604,11 +620,11 @@
             title: "Filtrer par provenance",
             options: [
                 { value: "__all__", label: "Toutes les provenances" },
-                { value: NO_PROVENANCE, label: "Sans provenance", hint: `${items.filter((i) => !i.provenance?.trim()).length} objet(s)` },
+                { value: NO_PROVENANCE, label: "Sans provenance", hint: `${items.filter((i) => !provKey(i.provenance)).length} objet(s)` },
                 ...provenances.map((p) => ({
                     value: p,
                     label: p,
-                    hint: `${items.filter((i) => i.provenance?.trim() === p).length} objet(s)`,
+                    hint: `${items.filter((i) => provKey(i.provenance) === p).length} objet(s)`,
                 })),
             ],
             current: provenanceFilter ?? "__all__",
@@ -781,7 +797,7 @@
                     <input type="date" class="retro-input text-xs w-full" bind:value={manual.date_acquisition} />
                 </label>
                 <label class="text-[10px] font-bold uppercase">Provenance
-                    <input class="retro-input text-xs w-full" bind:value={manual.provenance} />
+                    <input class="retro-input text-xs w-full uppercase" bind:value={manual.provenance} />
                 </label>
                 <label class="text-[10px] font-bold uppercase">Prix d'achat
                     <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_achat} />
@@ -834,7 +850,7 @@
                                                 pickBool(`${f.label} — ${d.nom || "objet détecté"}`, d[f.key], (v) => (d[f.key] = v)))}
                                         </td>
                                     {/each}
-                                    <td class="p-1"><input class="retro-input text-[11px] !w-28" bind:value={d.provenance} /></td>
+                                    <td class="p-1"><input class="retro-input text-[11px] !w-28 uppercase" bind:value={d.provenance} /></td>
                                     <td class="p-1">
                                         <button class="retro-btn-error text-xs px-2 py-1" title="Retirer" onclick={() => (drafts = drafts.filter((_, j) => j !== i))}>
                                             <span class="material-symbols-outlined text-[14px]">close</span>
@@ -939,7 +955,7 @@
                                             pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })))}
                                     </td>
                                 {/each}
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} readonly={fromDoc(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 uppercase {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} readonly={fromDoc(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
                                 <td class="p-0.5 overflow-hidden">
                                     {#if readingIds.has(item.id)}
                                         <span role="status" class="retro-input text-[11px] w-full flex items-center gap-1 !bg-[#FFF394]">
@@ -985,6 +1001,13 @@
                         {/each}
                     </tbody>
                 </table>
+            </div>
+            <div class="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-1 border-2 border-black bg-[#FFF394] px-3 py-2 text-xs" role="status">
+                <span class="font-black uppercase">Total d'achat — {totalLabel}</span>
+                <span class="text-base font-black">{euro(purchaseTotal.amount)}</span>
+                <span class="text-black/70">
+                    {filtered.length} objet(s){purchaseTotal.missing ? ` · ${purchaseTotal.missing} sans prix d'achat` : ""}
+                </span>
             </div>
             {#if totalPages > 1}
                 <PaginationBar
