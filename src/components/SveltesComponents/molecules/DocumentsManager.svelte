@@ -8,8 +8,18 @@
         file_name: string;
         content_type: string;
         size: number;
+        folder: Folder | "";
+        rotation: number;
         created_at: string;
     }
+    type Folder = "achats" | "ventes";
+    type Tab = Folder | "all" | "unsorted";
+
+    const FOLDERS: { key: Folder; label: string; icon: string; tint: string }[] = [
+        { key: "achats", label: "Achats", icon: "shopping_cart", tint: "bg-[#FFD2A6]" },
+        { key: "ventes", label: "Ventes", icon: "sell", tint: "bg-[#99E7DC]" },
+    ];
+    const folderInfo = (f: string) => FOLDERS.find((x) => x.key === f);
 
     const MAX_FILES = 10;
     const MAX_BYTES = 25 * 1024 * 1024;
@@ -19,6 +29,8 @@
     let error = $state("");
     let notice = $state("");
     let search = $state("");
+    let tab = $state<Tab>("achats");
+    let uploadFolder = $state<Folder>("achats");
 
     let files = $state<File[]>([]);
     let uploadTitle = $state("");
@@ -34,9 +46,26 @@
     let blobUrls = $state<Record<number, string>>({});
     const pending = new Set<number>();
 
+    const counts = $derived({
+        all: docs.length,
+        achats: docs.filter((d) => d.folder === "achats").length,
+        ventes: docs.filter((d) => d.folder === "ventes").length,
+        unsorted: docs.filter((d) => d.folder !== "achats" && d.folder !== "ventes").length,
+    });
     const filtered = $derived.by(() => {
         const q = search.trim().toLowerCase();
-        return q ? docs.filter((d) => `${d.title} ${d.file_name}`.toLowerCase().includes(q)) : docs;
+        return docs.filter(
+            (d) =>
+                (tab === "all" ||
+                    (tab === "unsorted" ? d.folder !== "achats" && d.folder !== "ventes" : d.folder === tab)) &&
+                (!q || `${d.title} ${d.file_name}`.toLowerCase().includes(q))
+        );
+    });
+    $effect(() => {
+        if (tab === "achats" || tab === "ventes") uploadFolder = tab;
+    });
+    $effect(() => {
+        if (tab === "unsorted" && counts.unsorted === 0) tab = "achats";
     });
     const openIndex = $derived(openId === null ? -1 : filtered.findIndex((d) => d.id === openId));
     const openDoc = $derived(openIndex >= 0 ? filtered[openIndex] : null);
@@ -125,6 +154,7 @@
         error = "";
         try {
             const form = new FormData();
+            form.append("folder", uploadFolder);
             files.forEach((f) => form.append("files", f));
             if (files.length === 1 && uploadTitle.trim()) form.append("title", uploadTitle.trim());
             const res = await apiFetch("/api/documents", { method: "POST", body: form });
@@ -132,7 +162,8 @@
             const created: Doc[] = Array.isArray(body) ? body : body.created || [];
             docs = [...created, ...docs];
             if (res.ok) {
-                notice = `${created.length} document(s) ajouté(s).`;
+                notice = `${created.length} document(s) ajouté(s) dans ${folderInfo(uploadFolder)?.label}.`;
+                tab = uploadFolder;
                 files = [];
                 uploadTitle = "";
             } else {
@@ -165,6 +196,20 @@
         else if (e.key === "ArrowLeft") step(-1);
     }
 
+    async function update(d: Doc, body: Partial<Pick<Doc, "title" | "folder" | "rotation">>, fallback: string) {
+        const previous = d;
+        docs = docs.map((x) => (x.id === d.id ? { ...x, ...body } : x));
+        const res = await apiFetch(`/api/documents/${d.id}`, { method: "PATCH", body: JSON.stringify(body) });
+        if (res.ok) {
+            const updated: Doc = await res.json();
+            docs = docs.map((x) => (x.id === d.id ? updated : x));
+            return true;
+        }
+        error = await readError(res, fallback);
+        docs = docs.map((x) => (x.id === d.id ? previous : x));
+        return false;
+    }
+
     async function rename() {
         const d = openDoc;
         const title = editingTitle.trim();
@@ -172,15 +217,22 @@
             if (d) editingTitle = d.title;
             return;
         }
-        const res = await apiFetch(`/api/documents/${d.id}`, { method: "PATCH", body: JSON.stringify({ title }) });
-        if (res.ok) {
-            const updated: Doc = await res.json();
-            docs = docs.map((x) => (x.id === d.id ? updated : x));
-        } else {
-            error = await readError(res, "Renommage impossible.");
-            editingTitle = d.title;
-        }
+        if (!(await update(d, { title }, "Renommage impossible."))) editingTitle = d.title;
     }
+
+    function rotate(d: Doc, delta: number) {
+        update(d, { rotation: (((d.rotation + delta) % 360) + 360) % 360 }, "Rotation impossible.");
+    }
+
+    async function moveTo(d: Doc, folder: Folder) {
+        if (d.folder === folder) return;
+        const keepOpen = openId === d.id;
+        if ((await update(d, { folder }, "Déplacement impossible.")) && keepOpen && tab !== "all") tab = folder;
+    }
+
+    const quarter = (d: Doc) => d.rotation === 90 || d.rotation === 270;
+    let stageW = $state(0);
+    let stageH = $state(0);
 
     async function download(d: Doc) {
         await ensureBlob(d);
@@ -273,6 +325,20 @@
                 {/each}
             </ul>
             <div class="flex flex-wrap items-end gap-3">
+                <div class="text-[10px] font-bold uppercase">Dossier
+                    <div class="flex gap-1 mt-0.5">
+                        {#each FOLDERS as f (f.key)}
+                            <button
+                                type="button"
+                                class="retro-btn text-xs py-1.5 px-3 flex items-center gap-1 {uploadFolder === f.key ? f.tint : 'bg-white'}"
+                                aria-pressed={uploadFolder === f.key}
+                                onclick={() => (uploadFolder = f.key)}
+                            >
+                                <span class="material-symbols-outlined text-[16px]">{f.icon}</span> {f.label}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
                 {#if files.length === 1}
                     <label class="flex-1 min-w-56 text-[10px] font-bold uppercase">Titre (facultatif)
                         <input class="retro-input text-xs w-full" bind:value={uploadTitle} placeholder={files[0].name.replace(/\.[^.]+$/, "")} />
@@ -288,6 +354,37 @@
 
     <!-- Cartes -->
     <div class="retro-card p-4 space-y-3">
+        <div class="flex flex-wrap gap-2 border-b-2 border-black pb-3" role="tablist">
+            {#each FOLDERS as f (f.key)}
+                <button
+                    role="tab"
+                    aria-selected={tab === f.key}
+                    class="retro-btn text-xs py-2 px-4 font-black flex items-center gap-1.5 {tab === f.key ? f.tint : 'bg-white'}"
+                    onclick={() => (tab = f.key)}
+                >
+                    <span class="material-symbols-outlined text-[18px]">{tab === f.key ? "folder_open" : "folder"}</span>
+                    {f.label} ({counts[f.key]})
+                </button>
+            {/each}
+            {#if counts.unsorted > 0}
+                <button
+                    role="tab"
+                    aria-selected={tab === "unsorted"}
+                    class="retro-btn text-xs py-2 px-4 font-black flex items-center gap-1.5 {tab === 'unsorted' ? 'bg-[#FFC2D1]' : 'bg-white'}"
+                    onclick={() => (tab = "unsorted")}
+                >
+                    <span class="material-symbols-outlined text-[18px]">folder_off</span> Non classés ({counts.unsorted})
+                </button>
+            {/if}
+            <button
+                role="tab"
+                aria-selected={tab === "all"}
+                class="retro-btn text-xs py-2 px-4 flex items-center gap-1.5 {tab === 'all' ? 'bg-[#FFF394]' : 'bg-white'}"
+                onclick={() => (tab = "all")}
+            >
+                <span class="material-symbols-outlined text-[18px]">folder_copy</span> Tous ({counts.all})
+            </button>
+        </div>
         <div class="relative">
             <span class="material-symbols-outlined text-[16px] absolute left-2 top-1/2 -translate-y-1/2 text-black/50">search</span>
             <input class="retro-input text-xs w-full !pl-8" bind:value={search} placeholder="Rechercher un document..." />
@@ -296,16 +393,24 @@
         {#if isLoading}
             <p class="text-xs font-bold uppercase">Chargement...</p>
         {:else if filtered.length === 0}
-            <p class="text-xs font-bold uppercase text-black/60">{docs.length ? "Aucun document ne correspond." : "Aucun document pour le moment."}</p>
+            <p class="text-xs font-bold uppercase text-black/60">{search.trim() ? "Aucun document ne correspond." : "Aucun document dans ce dossier."}</p>
         {:else}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {#each filtered as d (d.id)}
                     <div class="group flex flex-col border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000]">
                         <button class="relative aspect-[4/3] border-b-2 border-black bg-[#F6F4EE] overflow-hidden cursor-zoom-in" title="Agrandir" onclick={() => openDocument(d)}>
-                            {#if kind(d) === "image" && blobUrls[d.id]}
-                                <img src={blobUrls[d.id]} alt={d.title} class="h-full w-full object-cover" />
-                            {:else if (kind(d) === "pdf" || kind(d) === "text") && blobUrls[d.id]}
-                                <iframe src={kind(d) === "pdf" ? `${blobUrls[d.id]}#toolbar=0&navpanes=0&view=FitH` : blobUrls[d.id]} title={d.title} class="pointer-events-none h-full w-full bg-white" tabindex="-1" loading="lazy"></iframe>
+                            {#if hasPreview(d) && blobUrls[d.id]}
+                                <!-- Boîte 4/3 : à 90°/270°, l'élément prend 75 % × 133 % pour couvrir la carte une fois tourné. -->
+                                <div
+                                    class="absolute left-1/2 top-1/2 transition-transform"
+                                    style={`width: ${quarter(d) ? "75%" : "100%"}; height: ${quarter(d) ? "133.334%" : "100%"}; transform: translate(-50%, -50%) rotate(${d.rotation}deg);`}
+                                >
+                                    {#if kind(d) === "image"}
+                                        <img src={blobUrls[d.id]} alt={d.title} class="h-full w-full object-cover" />
+                                    {:else}
+                                        <iframe src={kind(d) === "pdf" ? `${blobUrls[d.id]}#toolbar=0&navpanes=0&view=FitH` : blobUrls[d.id]} title={d.title} class="pointer-events-none h-full w-full bg-white" tabindex="-1" loading="lazy"></iframe>
+                                    {/if}
+                                </div>
                             {:else}
                                 <span class="absolute inset-0 grid place-items-center">
                                     <span class="text-center">
@@ -322,8 +427,14 @@
                             <div class="min-w-0">
                                 <h3 class="text-xs font-black uppercase truncate" title={d.title}>{d.title}</h3>
                                 <p class="text-[10px] text-black/60 mt-0.5">{ext(d) || "FICHIER"} · {formatSize(d.size)} · {formatDate(d.created_at)}</p>
+                                {#if tab === "all" || tab === "unsorted"}
+                                    <span class="retro-badge {folderInfo(d.folder)?.tint ?? 'bg-[#FFC2D1]'} text-[9px] mt-1 inline-block">{folderInfo(d.folder)?.label ?? "Non classé"}</span>
+                                {/if}
                             </div>
                             <div class="flex gap-1 shrink-0">
+                                {#if hasPreview(d)}
+                                    <button class="material-symbols-outlined text-[18px]" title="Tourner de 90° vers la droite" onclick={() => rotate(d, 90)}>rotate_right</button>
+                                {/if}
                                 <button class="material-symbols-outlined text-[18px]" title="Télécharger" onclick={() => download(d)}>download</button>
                                 <button class="material-symbols-outlined text-[18px] text-red-700" title="Supprimer" disabled={isDeleting} onclick={() => remove(d)}>delete</button>
                             </div>
@@ -353,6 +464,26 @@
                         onkeydown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                         title="Renommer"
                     />
+                    <div class="flex" role="group" aria-label="Dossier">
+                        {#each FOLDERS as f (f.key)}
+                            <button
+                                class="retro-btn text-xs px-2 py-1 flex items-center gap-1 {openDoc.folder === f.key ? f.tint : 'bg-white'}"
+                                aria-pressed={openDoc.folder === f.key}
+                                title={`Classer dans ${f.label}`}
+                                onclick={() => openDoc && moveTo(openDoc, f.key)}
+                            >
+                                <span class="material-symbols-outlined text-[16px]">{f.icon}</span> {f.label}
+                            </button>
+                        {/each}
+                    </div>
+                    {#if hasPreview(openDoc)}
+                        <button class="retro-btn bg-white text-xs px-2 py-1" title="Tourner à gauche" onclick={() => openDoc && rotate(openDoc, -90)}>
+                            <span class="material-symbols-outlined text-[16px]">rotate_left</span>
+                        </button>
+                        <button class="retro-btn bg-white text-xs px-2 py-1" title="Tourner à droite" onclick={() => openDoc && rotate(openDoc, 90)}>
+                            <span class="material-symbols-outlined text-[16px]">rotate_right</span>
+                        </button>
+                    {/if}
                     <span class="text-[10px] font-bold">{openIndex + 1} / {filtered.length}</span>
                     <button class="retro-btn bg-white text-xs px-2 py-1" title="Précédent (←)" onclick={() => step(-1)}>
                         <span class="material-symbols-outlined text-[16px]">chevron_left</span>
@@ -368,7 +499,7 @@
                     </button>
                     <button onclick={() => (openId = null)} class="w-7 h-7 border-2 border-black bg-white text-xs font-bold" title="Fermer (Échap)">✕</button>
                 </div>
-                <div class="flex-1 min-h-0 bg-[#F6F4EE] grid place-items-center overflow-auto">
+                <div class="relative flex-1 min-h-0 bg-[#F6F4EE] grid place-items-center overflow-hidden" bind:clientWidth={stageW} bind:clientHeight={stageH}>
                     {#if !hasPreview(openDoc)}
                         <div class="text-center p-6 space-y-3">
                             <span class="material-symbols-outlined text-[64px] block">{icon(openDoc)}</span>
@@ -378,10 +509,18 @@
                         </div>
                     {:else if !blobUrls[openDoc.id]}
                         <p class="text-xs font-bold uppercase">Chargement...</p>
-                    {:else if kind(openDoc) === "image"}
-                        <img src={blobUrls[openDoc.id]} alt={openDoc.title} class="max-h-full max-w-full object-contain" />
                     {:else}
-                        <iframe src={blobUrls[openDoc.id]} title={openDoc.title} class="h-full w-full bg-white"></iframe>
+                        <!-- À 90°/270°, largeur et hauteur sont inversées pour remplir la zone une fois tourné. -->
+                        <div
+                            class="absolute left-1/2 top-1/2 transition-transform"
+                            style={`width: ${quarter(openDoc) ? stageH : stageW}px; height: ${quarter(openDoc) ? stageW : stageH}px; transform: translate(-50%, -50%) rotate(${openDoc.rotation}deg);`}
+                        >
+                            {#if kind(openDoc) === "image"}
+                                <img src={blobUrls[openDoc.id]} alt={openDoc.title} class="h-full w-full object-contain" />
+                            {:else}
+                                <iframe src={blobUrls[openDoc.id]} title={openDoc.title} class="h-full w-full bg-white"></iframe>
+                            {/if}
+                        </div>
                     {/if}
                 </div>
                 <div class="border-t-2 border-black px-3 py-1 text-[10px] text-black/60 flex justify-between gap-2">
