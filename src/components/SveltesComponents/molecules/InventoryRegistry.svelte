@@ -346,7 +346,13 @@
     }
 
     function editNumber(item: Item, field: "prix_achat" | "prix_vente", e: Event) {
-        const raw = (e.currentTarget as HTMLInputElement).value;
+        const input = e.currentTarget as HTMLInputElement;
+        const raw = input.value;
+        if (field === "prix_vente" && item.antiquite_id != null && raw === "") {
+            input.value = String(item.prix_vente ?? "");
+            error = "Le prix de vente d'un objet lié au site ne peut pas être vide.";
+            return;
+        }
         const value = raw === "" ? null : Number(raw);
         if (value !== item[field]) patch(item, { [field]: value });
     }
@@ -847,7 +853,7 @@
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
                                 <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
                                 <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
-                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.prix_vente ?? ""} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
+                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
                                         {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
@@ -862,9 +868,14 @@
                                         </span>
                                     {:else if item.document}
                                         <div class="flex items-center gap-1 min-w-0">
-                                            <span class="retro-badge bg-[#C9F2C7] text-[10px] min-w-0 flex-1 truncate" title={`${item.document.title} (${item.document.file_name})`}>
-                                                {item.document.title}
-                                            </span>
+                                            <a
+                                                href={`/documents?doc=${item.document.id}`}
+                                                class="retro-badge bg-[#C9F2C7] text-[10px] min-w-0 flex-1 truncate flex items-center gap-1 hover:bg-[#FFF394] hover:underline"
+                                                title={`Ouvrir « ${item.document.title} » (${item.document.file_name})`}
+                                            >
+                                                <span class="material-symbols-outlined text-[13px] shrink-0">description</span>
+                                                <span class="truncate">{item.document.title}</span>
+                                            </a>
                                             <button class="material-symbols-outlined text-[16px]" title="Relire le document avec Gemini" onclick={() => item.document_id && linkDocument(item, item.document_id)}>refresh</button>
                                             <button class="material-symbols-outlined text-[16px]" title="Changer de document" onclick={() => pickDocument(item)}>swap_horiz</button>
                                             <button class="material-symbols-outlined text-[16px]" title="Délier le document" onclick={() => unlinkDocument(item)}>link_off</button>

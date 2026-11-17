@@ -99,13 +99,33 @@
         }
     }
 
+    // Lien direct depuis un autre service (ex. Inventaire) : /documents?doc=<id> ouvre ce document.
+    const requestedDocId =
+        typeof window !== "undefined" ? Number(new URLSearchParams(window.location.search).get("doc")) || null : null;
+
+    $effect(() => {
+        if (openId !== null) return;
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("doc")) {
+            url.searchParams.delete("doc");
+            history.replaceState(history.state, "", url);
+        }
+    });
+
     async function load() {
         isLoading = true;
         try {
             const res = await apiFetch("/api/documents");
             if (res.ok) {
                 docs = await res.json();
-                if (docs.some((d) => d.folder !== "achats" && d.folder !== "ventes")) tab = "unsorted";
+                const requested = requestedDocId ? docs.find((d) => d.id === requestedDocId) : null;
+                if (requested) {
+                    tab = requested.folder === "achats" || requested.folder === "ventes" ? requested.folder : "unsorted";
+                    openDocument(requested);
+                } else {
+                    if (requestedDocId) error = "Ce document n'existe plus.";
+                    if (docs.some((d) => d.folder !== "achats" && d.folder !== "ventes")) tab = "unsorted";
+                }
             } else error = await readError(res, "Impossible de charger les documents.");
         } catch {
             error = "Erreur réseau.";
