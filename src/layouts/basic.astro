@@ -9,6 +9,7 @@ const userId = auth.userId;
 
 const pathname = Astro.url.pathname;
 const isDaisyBrocante = true;
+const { fullWidth = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -104,7 +105,7 @@ const isDaisyBrocante = true;
         <!-- Main Content Area -->
         <main class="flex-grow flex flex-col relative bg-[#F6F4EE]">
           <Show when="signed-in">
-            <div class="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <div class={fullWidth ? "p-1 w-full" : "p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto"}>
               <slot />
             </div>
           </Show>
@@ -152,7 +153,7 @@ const isDaisyBrocante = true;
                     <span class="material-symbols-outlined text-[16px]">inventory_2</span> Inventaire Site
                   </a>
                   <a href="/registre-inventaire" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFF394] {pathname.startsWith('/registre-inventaire') ? '!bg-[#FFF394]' : ''}">
-                    <span class="material-symbols-outlined text-[16px]">document_scanner</span> Registre Inventaire
+                    <span class="material-symbols-outlined text-[16px]">document_scanner</span> Inventaire
                   </a>
                   <a href="/subcategories" class="retro-btn justify-start text-xs bg-white hover:bg-[#FFD2A6] {pathname.startsWith('/subcategories') ? '!bg-[#FFD2A6]' : ''}">
                     <span class="material-symbols-outlined text-[16px]">label</span> Sous-catégories

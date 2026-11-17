@@ -52,6 +52,73 @@
     ];
     const PAGE_SIZE = 50;
 
+    // Largeurs (px) des colonnes de la table, modifiables à la souris et mémorisées dans le navigateur.
+    const TABLE_COLUMNS: { key: string; label: string; width: number }[] = [
+        { key: "select", label: "", width: 32 },
+        { key: "code", label: "Code", width: 64 },
+        { key: "nom", label: "Nom", width: 240 },
+        { key: "categorie", label: "Catégorie", width: 130 },
+        { key: "date_acquisition", label: "Date", width: 130 },
+        { key: "prix_achat", label: "Achat €", width: 90 },
+        { key: "prix_vente", label: "Vente €", width: 90 },
+        { key: "vendu", label: "Vendu", width: 72 },
+        { key: "photo", label: "Photo", width: 72 },
+        { key: "publie", label: "Publié", width: 72 },
+        { key: "provenance", label: "Provenance", width: 140 },
+        { key: "site", label: "Site", width: 240 },
+        { key: "actions", label: "", width: 48 },
+    ];
+    const DEFAULT_WIDTHS = Object.fromEntries(TABLE_COLUMNS.map((c) => [c.key, c.width]));
+    const WIDTHS_STORAGE_KEY = "registre-inventaire-col-widths";
+    const MIN_COL_WIDTH = 32;
+    let colWidths = $state<Record<string, number>>({ ...DEFAULT_WIDTHS });
+    const tableWidth = $derived(TABLE_COLUMNS.reduce((s, c) => s + colWidths[c.key], 0));
+
+    function loadColWidths() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(WIDTHS_STORAGE_KEY) || "{}");
+            for (const c of TABLE_COLUMNS) {
+                if (typeof saved[c.key] === "number" && saved[c.key] >= MIN_COL_WIDTH) colWidths[c.key] = saved[c.key];
+            }
+        } catch {
+            // Largeurs par défaut si la valeur mémorisée est illisible.
+        }
+    }
+
+    function saveColWidths() {
+        localStorage.setItem(WIDTHS_STORAGE_KEY, JSON.stringify(colWidths));
+    }
+
+    function resetColWidths() {
+        colWidths = { ...DEFAULT_WIDTHS };
+        localStorage.removeItem(WIDTHS_STORAGE_KEY);
+    }
+
+    function startResize(key: string, e: PointerEvent) {
+        e.preventDefault();
+        const handle = e.currentTarget as HTMLElement;
+        handle.setPointerCapture(e.pointerId);
+        const startX = e.clientX;
+        const startWidth = colWidths[key];
+        const onMove = (ev: PointerEvent) => {
+            colWidths[key] = Math.max(MIN_COL_WIDTH, Math.round(startWidth + ev.clientX - startX));
+        };
+        const onUp = () => {
+            handle.removeEventListener("pointermove", onMove);
+            handle.removeEventListener("pointerup", onUp);
+            handle.removeEventListener("pointercancel", onUp);
+            saveColWidths();
+        };
+        handle.addEventListener("pointermove", onMove);
+        handle.addEventListener("pointerup", onUp);
+        handle.addEventListener("pointercancel", onUp);
+    }
+
+    function resetColWidth(key: string) {
+        colWidths[key] = DEFAULT_WIDTHS[key];
+        saveColWidths();
+    }
+
     let items = $state<Item[]>([]);
     let isLoading = $state(true);
     let error = $state("");
@@ -159,7 +226,11 @@
         }
     }
 
-    onMount(load);
+    onMount(() => {
+        loadColWidths();
+        load();
+        loadSiteObjects();
+    });
 
     // ---------- Import via Gemini ----------
     function onFilesChosen(e: Event) {
@@ -311,6 +382,51 @@
     }
 
     // ---------- Liaison au site ----------
+    let siteObjects = $state<LinkedAntiquite[]>([]);
+    let siteObjectsLoading = $state(false);
+    const publishedSiteObjects = $derived(siteObjects.filter(isPublished).sort((a, b) => a.name.localeCompare(b.name, "fr")));
+    const otherSiteObjects = $derived(siteObjects.filter((a) => !isPublished(a)).sort((a, b) => a.name.localeCompare(b.name, "fr")));
+    const linkedCodeBySite = $derived(
+        new Map(items.filter((i) => i.antiquite_id != null).map((i) => [i.antiquite_id as number, i.code]))
+    );
+
+    async function loadSiteObjects() {
+        siteObjectsLoading = true;
+        try {
+            const all: LinkedAntiquite[] = [];
+            for (let p = 1, pages = 1; p <= pages; p++) {
+                const res = await apiFetch(`/api/antiquites?limit=200&page=${p}`);
+                if (!res.ok) break;
+                const r = await res.json();
+                all.push(...(Array.isArray(r) ? r : r.data || []).map((a: LinkedAntiquite) => ({
+                    id: a.id,
+                    name: a.name,
+                    status: a.status,
+                    approval_status: a.approval_status,
+                })));
+                pages = r.pagination?.total_pages ?? 1;
+            }
+            siteObjects = all;
+        } catch {
+            error = "Impossible de charger les objets du site.";
+        } finally {
+            siteObjectsLoading = false;
+        }
+    }
+
+    function siteOptionLabel(a: LinkedAntiquite) {
+        const code = linkedCodeBySite.get(a.id);
+        return `#${a.id} · ${a.name}${code ? ` (déjà lié à ${code})` : ""}`;
+    }
+
+    async function linkFromSelect(item: Item, e: Event) {
+        const select = e.currentTarget as HTMLSelectElement;
+        const a = siteObjects.find((o) => o.id === Number(select.value));
+        select.value = "";
+        if (!a) return;
+        await patch(item, { antiquite_id: a.id, publie: isPublished(a) ? true : item.publie });
+    }
+
     function openLink(item: Item) {
         linkingItem = item;
         siteSearch = item.nom;
@@ -404,10 +520,10 @@
     }
 </script>
 
-<div class="space-y-6 font-mono">
-    <div class="retro-card-yellow p-6">
-        <span class="retro-badge bg-black text-white text-[10px] font-black uppercase">REGISTRE</span>
-        <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">Registre d'inventaire</h1>
+<div class="space-y-2 font-mono">
+    <div class="retro-card-yellow px-3 py-2">
+        <span class="retro-badge bg-black text-white text-[10px] font-black uppercase">INVENTAIRE</span>
+        <h1 class="text-xl sm:text-2xl font-black uppercase tracking-tight text-black mt-1">Inventaire</h1>
         <p class="text-xs text-black/80 mt-1">
             {stats.total} objet(s) · {stats.vendus} vendu(s) · Achats : {euro(stats.achats)} · Ventes : {euro(stats.ventes)}
         </p>
@@ -427,7 +543,7 @@
     {/if}
 
     <!-- Import depuis une photo -->
-    <div class="retro-card p-4 space-y-3">
+    <div class="retro-card p-2 space-y-2">
         <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-sm font-black uppercase flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">document_scanner</span> Importer une photo d'inventaire
@@ -546,8 +662,8 @@
     </div>
 
     <!-- Table de l'inventaire -->
-    <div class="retro-card p-4 space-y-3">
-        <div class="flex flex-wrap items-center gap-3">
+    <div class="retro-card p-1 space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
             <div class="relative flex-1 min-w-56">
                 <span class="material-symbols-outlined text-[16px] absolute left-2 top-1/2 -translate-y-1/2 text-black/50">search</span>
                 <input class="retro-input text-xs w-full !pl-8" bind:value={search} placeholder="Rechercher par code (ex : D0012 ou 12)" />
@@ -556,6 +672,9 @@
             {#if selected.size > 0}
                 <button class="text-[11px] underline" onclick={() => (selected = new Set())}>Vider la sélection</button>
             {/if}
+            <button class="retro-btn text-xs py-2 px-3 bg-white flex items-center gap-1" onclick={resetColWidths} title="Rétablir les largeurs de colonnes par défaut">
+                <span class="material-symbols-outlined text-[16px]">width</span> Largeurs par défaut
+            </button>
             <button class="retro-btn-accent text-xs py-2 px-4 font-black flex items-center gap-1.5" disabled={items.length === 0} onclick={openExport}>
                 <span class="material-symbols-outlined text-[16px]">download</span> Exporter Excel
             </button>
@@ -567,50 +686,82 @@
             <p class="text-xs font-bold uppercase text-black/60">{items.length === 0 ? "L'inventaire est vide." : "Aucun objet ne correspond à ce code."}</p>
         {:else}
             <div class="overflow-x-auto border-2 border-black">
-                <table class="w-full text-[11px]">
+                <table class="table-fixed text-[11px]" style={`width: ${tableWidth}px; min-width: 100%;`}>
+                    <colgroup>
+                        {#each TABLE_COLUMNS as c (c.key)}<col style={`width: ${colWidths[c.key]}px`} />{/each}
+                    </colgroup>
                     <thead class="bg-[#FFE600] text-left uppercase border-b-2 border-black">
                         <tr>
-                            <th class="p-2"><input type="checkbox" class="checkbox checkbox-xs" checked={allFilteredSelected} onchange={toggleAllFiltered} title="Tout sélectionner" /></th>
-                            <th class="p-2">Code</th><th class="p-2">Nom</th><th class="p-2">Catégorie</th><th class="p-2">Date</th>
-                            <th class="p-2">Achat €</th><th class="p-2">Vente €</th>
-                            {#each BOOL_FIELDS as f (f.key)}<th class="p-2">{f.label}</th>{/each}
-                            <th class="p-2">Provenance</th><th class="p-2">Site</th><th></th>
+                            {#each TABLE_COLUMNS as c (c.key)}
+                                <th class="relative p-1 truncate select-none" title={c.label}>
+                                    {#if c.key === "select"}
+                                        <input type="checkbox" class="checkbox checkbox-xs" checked={allFilteredSelected} onchange={toggleAllFiltered} title="Tout sélectionner" />
+                                    {:else}
+                                        {c.label}
+                                    {/if}
+                                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                    <span
+                                        class="absolute top-0 right-0 h-full w-2 cursor-col-resize touch-none border-r-2 border-black/20 hover:border-black"
+                                        title="Glisser pour redimensionner (double-clic : largeur par défaut)"
+                                        onpointerdown={(e) => startResize(c.key, e)}
+                                        ondblclick={() => resetColWidth(c.key)}
+                                    ></span>
+                                </th>
+                            {/each}
                         </tr>
                     </thead>
                     <tbody>
                         {#each pageItems as item (item.id)}
                             <tr class="border-t border-black/10 {selected.has(item.id) ? 'bg-[#FFF394]/40' : ''} {item.vendu ? 'text-black/60' : ''}">
-                                <td class="p-1 text-center"><input type="checkbox" class="checkbox checkbox-xs" checked={selected.has(item.id)} onchange={() => toggle(item.id)} /></td>
-                                <td class="p-1 font-black whitespace-nowrap">{item.code}</td>
-                                <td class="p-1"><input class="retro-input text-[11px] w-52" value={item.nom} onchange={(e) => editText(item, "nom", e)} /></td>
-                                <td class="p-1"><input class="retro-input text-[11px] w-28" value={item.categorie} onchange={(e) => editText(item, "categorie", e)} /></td>
-                                <td class="p-1"><input type="date" class="retro-input text-[11px] w-32" value={item.date_acquisition ?? ""} onchange={(e) => editDate(item, e)} /></td>
-                                <td class="p-1"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-20" value={item.prix_achat ?? ""} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
-                                <td class="p-1"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-20" value={item.prix_vente ?? ""} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
+                                <td class="p-0.5 text-center"><input type="checkbox" class="checkbox checkbox-xs" checked={selected.has(item.id)} onchange={() => toggle(item.id)} /></td>
+                                <td class="p-0.5 font-black truncate" title={item.code}>{item.code}</td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.nom} title={item.nom} onchange={(e) => editText(item, "nom", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.categorie} onchange={(e) => editText(item, "categorie", e)} /></td>
+                                <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0" value={item.date_acquisition ?? ""} onchange={(e) => editDate(item, e)} /></td>
+                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.prix_achat ?? ""} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
+                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.prix_vente ?? ""} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 {#each BOOL_FIELDS as f (f.key)}
-                                    <td class="p-1">
-                                        <select class="retro-select text-[11px] {item[f.key] ? '!bg-[#99E7DC]' : ''}" value={boolToSelect(item[f.key])} onchange={(e) => editBool(item, f.key, e)}>
+                                    <td class="p-0.5">
+                                        <select class="retro-select text-[11px] w-full min-w-0 {item[f.key] ? '!bg-[#99E7DC]' : ''}" value={boolToSelect(item[f.key])} onchange={(e) => editBool(item, f.key, e)}>
                                             <option value="">—</option><option value="true">Oui</option><option value="false">Non</option>
                                         </select>
                                     </td>
                                 {/each}
-                                <td class="p-1"><input class="retro-input text-[11px] w-28" value={item.provenance ?? ""} onchange={(e) => editText(item, "provenance", e)} /></td>
-                                <td class="p-1">
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0" value={item.provenance ?? ""} onchange={(e) => editText(item, "provenance", e)} /></td>
+                                <td class="p-0.5 overflow-hidden">
                                     {#if item.antiquite}
-                                        <div class="flex items-center gap-1">
-                                            <a href={siteItemUrl(item.antiquite)} target="_blank" rel="noreferrer" class="retro-badge bg-[#99E7DC] text-[10px] max-w-36 truncate" title="Voir sur le site">
+                                        <div class="flex items-center gap-1 min-w-0">
+                                            <a href={siteItemUrl(item.antiquite)} target="_blank" rel="noreferrer" class="retro-badge bg-[#99E7DC] text-[10px] min-w-0 flex-1 truncate" title="Voir sur le site">
                                                 {item.antiquite.name}
                                             </a>
                                             <a href={`/antiquites/${item.antiquite.id}`} class="material-symbols-outlined text-[16px]" title="Éditer l'objet du site">edit</a>
                                             <button class="material-symbols-outlined text-[16px]" title="Délier" onclick={() => patch(item, { antiquite_id: null })}>link_off</button>
                                         </div>
                                     {:else}
-                                        <button class="retro-btn text-[10px] px-2 py-1 bg-white flex items-center gap-1 whitespace-nowrap" onclick={() => openLink(item)}>
-                                            <span class="material-symbols-outlined text-[14px]">link</span> Lier
-                                        </button>
+                                        <div class="flex items-center gap-1 min-w-0">
+                                            <select
+                                                class="retro-select text-[11px] w-full min-w-0 flex-1"
+                                                disabled={siteObjectsLoading}
+                                                onchange={(e) => linkFromSelect(item, e)}
+                                                title="Lier à un objet du site"
+                                            >
+                                                <option value="">{siteObjectsLoading ? "Chargement..." : "Lier à un objet…"}</option>
+                                                {#if publishedSiteObjects.length}
+                                                    <optgroup label="Publiés sur le site">
+                                                        {#each publishedSiteObjects as a (a.id)}<option value={a.id}>{siteOptionLabel(a)}</option>{/each}
+                                                    </optgroup>
+                                                {/if}
+                                                {#if otherSiteObjects.length}
+                                                    <optgroup label="Non publiés">
+                                                        {#each otherSiteObjects as a (a.id)}<option value={a.id}>{siteOptionLabel(a)}</option>{/each}
+                                                    </optgroup>
+                                                {/if}
+                                            </select>
+                                            <button class="material-symbols-outlined text-[16px] shrink-0" title="Rechercher un objet du site" onclick={() => openLink(item)}>search</button>
+                                        </div>
                                     {/if}
                                 </td>
-                                <td class="p-1">
+                                <td class="p-0.5">
                                     <button class="retro-btn-error text-xs px-2 py-1" onclick={() => remove(item)} title="Supprimer">
                                         <span class="material-symbols-outlined text-[14px]">delete</span>
                                     </button>
