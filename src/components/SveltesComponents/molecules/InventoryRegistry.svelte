@@ -183,11 +183,37 @@
     };
 
     const sorted = $derived([...items].sort(byDate));
+    // Filtres : nom, provenance (NO_PROVENANCE = sans provenance) et état « Publié ».
+    const NO_PROVENANCE = "\u0000";
+    let nameSearch = $state("");
+    let provenanceFilter = $state<string | null>(null);
+    let publishedFilter = $state<"all" | "yes" | "no">("all");
+    const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const provenances = $derived(
+        [...new Set(items.map((i) => i.provenance?.trim()).filter((p): p is string => !!p))].sort((a, b) => a.localeCompare(b, "fr")),
+    );
+    const hasFilters = $derived(!!search.trim() || !!nameSearch.trim() || provenanceFilter !== null || publishedFilter !== "all");
+
+    function resetFilters() {
+        search = "";
+        nameSearch = "";
+        provenanceFilter = null;
+        publishedFilter = "all";
+    }
+
     const filtered = $derived.by(() => {
+        const name = normalize(nameSearch);
+        let list = sorted.filter(
+            (i) =>
+                (!name || normalize(i.nom).includes(name)) &&
+                (provenanceFilter === null ||
+                    (provenanceFilter === NO_PROVENANCE ? !i.provenance?.trim() : i.provenance?.trim() === provenanceFilter)) &&
+                (publishedFilter === "all" || (publishedFilter === "yes") === (i.publie === true)),
+        );
         const q = search.trim().toUpperCase().replace(/\s+/g, "");
-        if (!q) return sorted;
+        if (!q) return list;
         const exact = /^\d+$/.test(q) ? `D${q.padStart(4, "0")}` : q;
-        const matches = sorted.filter((i) => i.code.toUpperCase().includes(q));
+        const matches = list.filter((i) => i.code.toUpperCase().includes(q));
         // Correspondance exacte (ex : "12" → D0012) en premier.
         return [...matches.filter((i) => i.code === exact), ...matches.filter((i) => i.code !== exact)];
     });
@@ -203,6 +229,9 @@
 
     $effect(() => {
         search;
+        nameSearch;
+        provenanceFilter;
+        publishedFilter;
         page = 1;
     });
     $effect(() => {
@@ -353,7 +382,8 @@
             error = "Le prix de vente d'un objet lié au site ne peut pas être vide.";
             return;
         }
-        const value = raw === "" ? null : Number(raw);
+        const value = raw === "" ? null : Math.round(Number(raw));
+        input.value = value === null ? "" : String(value);
         if (value !== item[field]) patch(item, { [field]: value });
     }
 
@@ -455,9 +485,11 @@
     let readingIds = $state<Set<number>>(new Set());
 
     const fromDoc = (item: Item, field: string) => item.document_id != null && (item.doc_fields ?? []).includes(field);
-    const docClass = (item: Item, field: string) => (fromDoc(item, field) ? "!bg-[#C9F2C7] !border-[#1F7A3A]" : "");
+    const docClass = (item: Item, field: string) => (fromDoc(item, field) ? "!bg-[#C9F2C7] !border-[#1F7A3A] cursor-not-allowed" : "");
     const docTitle = (item: Item, field: string) =>
-        fromDoc(item, field) ? `Valeur issue du document « ${item.document?.title ?? ""} »` : undefined;
+        fromDoc(item, field)
+            ? `🔒 Valeur issue du document « ${item.document?.title ?? ""} » : relisez ou déliez le document pour la modifier`
+            : undefined;
 
     async function loadPurchaseDocs() {
         try {
@@ -565,6 +597,24 @@
             hint: code ? `Déjà lié à ${code}` : undefined,
             badge: isPublished(a) ? { text: "Publié", cls: "bg-[#99E7DC]" } : { text: "Non publié", cls: "bg-[#EDE9DF]" },
         };
+    }
+
+    function pickProvenance() {
+        openPicker({
+            title: "Filtrer par provenance",
+            options: [
+                { value: "__all__", label: "Toutes les provenances" },
+                { value: NO_PROVENANCE, label: "Sans provenance", hint: `${items.filter((i) => !i.provenance?.trim()).length} objet(s)` },
+                ...provenances.map((p) => ({
+                    value: p,
+                    label: p,
+                    hint: `${items.filter((i) => i.provenance?.trim() === p).length} objet(s)`,
+                })),
+            ],
+            current: provenanceFilter ?? "__all__",
+            searchable: true,
+            onPick: (v) => (provenanceFilter = v === "__all__" ? null : v),
+        });
     }
 
     function pickSite(item: Item) {
@@ -734,10 +784,10 @@
                     <input class="retro-input text-xs w-full" bind:value={manual.provenance} />
                 </label>
                 <label class="text-[10px] font-bold uppercase">Prix d'achat
-                    <input type="number" step="0.01" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_achat} />
+                    <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_achat} />
                 </label>
                 <label class="text-[10px] font-bold uppercase">Prix de vente
-                    <input type="number" step="0.01" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_vente} />
+                    <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_vente} />
                 </label>
                 {#each BOOL_FIELDS as f (f.key)}
                     <div class="text-[10px] font-bold uppercase">{f.label}
@@ -776,8 +826,8 @@
                                     <td class="p-1"><input class="retro-input text-[11px] !w-48 {d.nom.trim() ? '' : '!bg-[#FFC2D1]'}" bind:value={d.nom} /></td>
                                     <td class="p-1"><input class="retro-input text-[11px] !w-28" bind:value={d.categorie} /></td>
                                     <td class="p-1"><input type="date" class="retro-input text-[11px] !w-32" bind:value={d.date_acquisition} /></td>
-                                    <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
-                                    <td class="p-1"><input type="number" step="0.01" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
+                                    <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
+                                    <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
                                     {#each BOOL_FIELDS as f (f.key)}
                                         <td class="p-1 min-w-20">
                                             {@render pickerButton(boolLabel(d[f.key]), d[f.key] === true, () =>
@@ -806,6 +856,31 @@
                 <span class="material-symbols-outlined text-[16px] absolute left-2 top-1/2 -translate-y-1/2 text-black/50">search</span>
                 <input class="retro-input text-xs w-full !pl-8" bind:value={search} placeholder="Rechercher par code (ex : D0012 ou 12)" />
             </div>
+            <div class="relative flex-1 min-w-56">
+                <span class="material-symbols-outlined text-[16px] absolute left-2 top-1/2 -translate-y-1/2 text-black/50">match_case</span>
+                <input class="retro-input text-xs w-full !pl-8" bind:value={nameSearch} placeholder="Rechercher par nom" />
+            </div>
+            <div class="w-52">
+                {@render pickerButton(
+                    provenanceFilter === null ? "Provenance : toutes" : provenanceFilter === NO_PROVENANCE ? "Provenance : aucune" : `Provenance : ${provenanceFilter}`,
+                    provenanceFilter !== null,
+                    pickProvenance,
+                    "Filtrer par provenance",
+                )}
+            </div>
+            <div class="flex" role="group" aria-label="Filtrer par état Publié">
+                {#each [["all", "Tous"], ["yes", "Publiés"], ["no", "Non publiés"]] as [value, label] (value)}
+                    <button
+                        class="retro-btn text-xs py-2 px-3 {publishedFilter === value ? 'bg-[#99E7DC]' : 'bg-white'}"
+                        aria-pressed={publishedFilter === value}
+                        onclick={() => (publishedFilter = value as "all" | "yes" | "no")}
+                    >{label}</button>
+                {/each}
+            </div>
+            {#if hasFilters}
+                <button class="text-[11px] underline" onclick={resetFilters}>Effacer les filtres</button>
+                <span class="text-[11px] font-bold">{filtered.length} / {items.length} objet(s)</span>
+            {/if}
             <span class="text-[11px] font-bold">{selected.size} sélectionné(s)</span>
             {#if selected.size > 0}
                 <button class="text-[11px] underline" onclick={() => (selected = new Set())}>Vider la sélection</button>
@@ -821,7 +896,7 @@
         {#if isLoading}
             <div role="status" class="daisy-loading-state gap-2 py-6"><span class="daisy-loader" aria-hidden="true"></span><p class="text-xs font-bold uppercase">Chargement de l'inventaire...</p></div>
         {:else if filtered.length === 0}
-            <p class="text-xs font-bold uppercase text-black/60">{items.length === 0 ? "L'inventaire est vide." : "Aucun objet ne correspond à ce code."}</p>
+            <p class="text-xs font-bold uppercase text-black/60">{items.length === 0 ? "L'inventaire est vide." : "Aucun objet ne correspond à ces filtres."}</p>
         {:else}
             <div class="overflow-x-auto border-2 border-black">
                 <table class="table-fixed text-[11px]" style={`width: ${tableWidth}px; min-width: 100%;`}>
@@ -853,18 +928,18 @@
                             <tr class="border-t border-black/10 {selected.has(item.id) ? 'bg-[#FFF394]/40' : ''} {item.vendu ? 'text-black/60' : ''}">
                                 <td class="p-0.5 text-center"><input type="checkbox" class="checkbox checkbox-xs" checked={selected.has(item.id)} onchange={() => toggle(item.id)} /></td>
                                 <td class="p-0.5 font-black truncate" title={item.code}>{item.code}</td>
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'nom')}" value={item.nom} title={docTitle(item, "nom") ?? item.nom} onchange={(e) => editText(item, "nom", e)} /></td>
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
-                                <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
-                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
-                                <td class="p-0.5"><input type="number" step="0.01" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'nom')}" value={item.nom} title={docTitle(item, "nom") ?? item.nom} readonly={fromDoc(item, "nom")} onchange={(e) => editText(item, "nom", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} readonly={fromDoc(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
+                                <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} readonly={fromDoc(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
+                                <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} readonly={fromDoc(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
+                                <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
                                         {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
                                             pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })))}
                                     </td>
                                 {/each}
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
+                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} readonly={fromDoc(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
                                 <td class="p-0.5 overflow-hidden">
                                     {#if readingIds.has(item.id)}
                                         <span role="status" class="retro-input text-[11px] w-full flex items-center gap-1 !bg-[#FFF394]">
