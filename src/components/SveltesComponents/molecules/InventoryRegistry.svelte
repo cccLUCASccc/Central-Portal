@@ -165,9 +165,9 @@
             date_acquisition: null,
             prix_achat: null,
             prix_vente: null,
-            vendu: null,
-            photo: null,
-            publie: null,
+            vendu: false,
+            photo: false,
+            publie: false,
             provenance: null,
         };
     }
@@ -393,11 +393,10 @@
     const BOOL_OPTIONS: PickerOption[] = [
         { value: "true", label: "Oui" },
         { value: "false", label: "Non" },
-        { value: "", label: "Non renseigné" },
     ];
-    const boolKey = (v: boolean | null | undefined) => (v === null || v === undefined ? "" : String(v));
-    const keyToBool = (v: string) => (v === "" ? null : v === "true");
-    const boolLabel = (v: boolean | null | undefined) => (v === true ? "Oui" : v === false ? "Non" : "—");
+    const boolKey = (v: boolean | null | undefined) => String(v === true);
+    const keyToBool = (v: string) => v === "true";
+    const boolLabel = (v: boolean | null | undefined) => (v === true ? "Oui" : "Non");
 
     function pickBool(title: string, current: boolean | null, onPick: (v: boolean | null) => void) {
         openPicker({ title, options: BOOL_OPTIONS, current: boolKey(current), searchable: false, onPick: (v) => onPick(keyToBool(v)) });
@@ -570,7 +569,8 @@
             searchable: true,
             onPick: (v) => {
                 const a = siteObjects.find((o) => o.id === Number(v));
-                if (a) patch(item, { antiquite_id: a.id, publie: isPublished(a) ? true : item.publie });
+                // L'API passe aussi Photo et Publié à Oui.
+                if (a) patch(item, { antiquite_id: a.id });
             },
         });
     }
