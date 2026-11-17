@@ -103,8 +103,10 @@
         isLoading = true;
         try {
             const res = await apiFetch("/api/documents");
-            if (res.ok) docs = await res.json();
-            else error = await readError(res, "Impossible de charger les documents.");
+            if (res.ok) {
+                docs = await res.json();
+                if (docs.some((d) => d.folder !== "achats" && d.folder !== "ventes")) tab = "unsorted";
+            } else error = await readError(res, "Impossible de charger les documents.");
         } catch {
             error = "Erreur réseau.";
         } finally {
@@ -226,8 +228,14 @@
 
     async function moveTo(d: Doc, folder: Folder) {
         if (d.folder === folder) return;
-        const keepOpen = openId === d.id;
-        if ((await update(d, { folder }, "Déplacement impossible.")) && keepOpen && tab !== "all") tab = folder;
+        // Tri à la chaîne : si le document quitte l'onglet affiché, la popup passe directement au suivant.
+        if (openId === d.id && tab !== "all" && tab !== folder) {
+            const i = filtered.findIndex((x) => x.id === d.id);
+            const next = filtered[i + 1] ?? filtered[i - 1] ?? null;
+            if (next) openDocument(next);
+            else openId = null;
+        }
+        await update(d, { folder }, "Déplacement impossible.");
     }
 
     const quarter = (d: Doc) => d.rotation === 90 || d.rotation === 270;
@@ -427,9 +435,6 @@
                             <div class="min-w-0">
                                 <h3 class="text-xs font-black uppercase truncate" title={d.title}>{d.title}</h3>
                                 <p class="text-[10px] text-black/60 mt-0.5">{ext(d) || "FICHIER"} · {formatSize(d.size)} · {formatDate(d.created_at)}</p>
-                                {#if tab === "all" || tab === "unsorted"}
-                                    <span class="retro-badge {folderInfo(d.folder)?.tint ?? 'bg-[#FFC2D1]'} text-[9px] mt-1 inline-block">{folderInfo(d.folder)?.label ?? "Non classé"}</span>
-                                {/if}
                             </div>
                             <div class="flex gap-1 shrink-0">
                                 {#if hasPreview(d)}
@@ -438,6 +443,18 @@
                                 <button class="material-symbols-outlined text-[18px]" title="Télécharger" onclick={() => download(d)}>download</button>
                                 <button class="material-symbols-outlined text-[18px] text-red-700" title="Supprimer" disabled={isDeleting} onclick={() => remove(d)}>delete</button>
                             </div>
+                        </div>
+                        <div class="grid grid-cols-2 border-t-2 border-black" role="group" aria-label={`Dossier de ${d.title}`}>
+                            {#each FOLDERS as f, i (f.key)}
+                                <button
+                                    class="text-[11px] font-black uppercase py-1.5 flex items-center justify-center gap-1 transition-colors {i ? 'border-l-2 border-black' : ''} {d.folder === f.key ? f.tint : 'bg-white hover:bg-[#FFF394]'}"
+                                    aria-pressed={d.folder === f.key}
+                                    title={d.folder === f.key ? `Classé dans ${f.label}` : `Classer dans ${f.label}`}
+                                    onclick={() => moveTo(d, f.key)}
+                                >
+                                    <span class="material-symbols-outlined text-[15px]">{d.folder === f.key ? "check" : f.icon}</span> {f.label}
+                                </button>
+                            {/each}
                         </div>
                     </div>
                 {/each}
