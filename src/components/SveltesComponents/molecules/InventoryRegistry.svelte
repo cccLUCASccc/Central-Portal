@@ -743,10 +743,10 @@
 </script>
 
 <div class="space-y-2 font-mono">
-    {#snippet pickerButton(text: string, active: boolean, onclick: () => void, title = "", activeClass = "!bg-[#99E7DC]")}
+    {#snippet pickerButton(text: string, active: boolean, onclick: () => void, title = "", activeClass = "!bg-[#99E7DC]", inactiveClass = "")}
         <button
             type="button"
-            class="retro-input text-[11px] w-full min-w-0 flex items-center justify-between gap-1 text-left cursor-pointer hover:bg-[#FFF394] {active ? activeClass : ''}"
+            class="retro-input text-[11px] w-full min-w-0 flex items-center justify-between gap-1 text-left cursor-pointer hover:bg-[#FFF394] {active ? activeClass : inactiveClass}"
             {title}
             {onclick}
         >
@@ -996,7 +996,8 @@
                                         {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
                                             pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })),
                                             "",
-                                            f.key === "etiquette_imprimee" ? "!bg-[#FFE600]" : "!bg-[#99E7DC]")}
+                                            f.key === "etiquette_imprimee" ? "!bg-[#FFE600]" : "!bg-[#99E7DC]",
+                                            f.key === "publie" ? "!bg-[#FFC2D1]" : "")}
                                     </td>
                                 {/each}
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 uppercase {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} readonly={fromDoc(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
