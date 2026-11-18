@@ -18,9 +18,11 @@
         date_acquisition: string | null;
         prix_achat: number | null;
         prix_vente: number | null;
+        quantite: number | null;
         vendu: boolean | null;
         photo: boolean | null;
         publie: boolean | null;
+        etiquette_imprimee: boolean | null;
         provenance: string | null;
     }
     interface Item extends Entry {
@@ -32,7 +34,7 @@
         document?: PurchaseDoc | null;
         doc_fields: string[] | null;
     }
-    type BoolField = "vendu" | "photo" | "publie";
+    type BoolField = "vendu" | "photo" | "publie" | "etiquette_imprimee";
     interface PurchaseDoc {
         id: number;
         title: string;
@@ -49,9 +51,11 @@
         { key: "date_acquisition", label: "Date d'acquisition", width: 16 },
         { key: "prix_achat", label: "Prix d'achat (€)", width: 14 },
         { key: "prix_vente", label: "Prix de vente (€)", width: 14 },
+        { key: "quantite", label: "Quantité", width: 10 },
         { key: "vendu", label: "Vendu", width: 8 },
         { key: "photo", label: "Photo", width: 8 },
         { key: "publie", label: "Publié", width: 8 },
+        { key: "etiquette_imprimee", label: "Étiquette imprimée", width: 16 },
         { key: "provenance", label: "Provenance", width: 22 },
         { key: "lien_site", label: "Lien site", width: 50 },
         { key: "document", label: "Document d'achat", width: 30 },
@@ -60,6 +64,7 @@
         { key: "vendu", label: "Vendu" },
         { key: "photo", label: "Photo" },
         { key: "publie", label: "Publié" },
+        { key: "etiquette_imprimee", label: "Étiquette imprimée" },
     ];
     const PAGE_SIZE = 50;
 
@@ -72,9 +77,11 @@
         { key: "date_acquisition", label: "Date", width: 130 },
         { key: "prix_achat", label: "Achat €", width: 90 },
         { key: "prix_vente", label: "Vente €", width: 90 },
+        { key: "quantite", label: "Qté", width: 64 },
         { key: "vendu", label: "Vendu", width: 72 },
         { key: "photo", label: "Photo", width: 72 },
         { key: "publie", label: "Publié", width: 72 },
+        { key: "etiquette_imprimee", label: "Étiquette", width: 92 },
         { key: "provenance", label: "Provenance", width: 140 },
         { key: "document", label: "Document", width: 200 },
         { key: "site", label: "Site", width: 240 },
@@ -165,9 +172,11 @@
             date_acquisition: null,
             prix_achat: null,
             prix_vente: null,
+            quantite: 1,
             vendu: false,
             photo: false,
             publie: false,
+            etiquette_imprimee: false,
             provenance: null,
         };
     }
@@ -390,12 +399,17 @@
             patch(item, { [field]: field === "provenance" && !value ? null : value });
     }
 
-    function editNumber(item: Item, field: "prix_achat" | "prix_vente", e: Event) {
+    function editNumber(item: Item, field: "prix_achat" | "prix_vente" | "quantite", e: Event) {
         const input = e.currentTarget as HTMLInputElement;
         const raw = input.value;
         if (field === "prix_vente" && item.antiquite_id != null && raw === "") {
             input.value = String(item.prix_vente ?? "");
             error = "Le prix de vente d'un objet lié au site ne peut pas être vide.";
+            return;
+        }
+        if (field === "quantite" && raw === "") {
+            input.value = String(item.quantite ?? 1);
+            error = "La quantité ne peut pas être vide.";
             return;
         }
         const value = raw === "" ? null : Math.round(Number(raw));
@@ -677,9 +691,12 @@
             case "prix_achat":
             case "prix_vente":
                 return item[key] === null ? null : { value: item[key] as number, format: "#,##0.00" };
+            case "quantite":
+                return item.quantite === null ? 1 : item.quantite;
             case "vendu":
             case "photo":
             case "publie":
+            case "etiquette_imprimee":
                 return item[key] === null ? null : item[key] ? "Oui" : "Non";
             case "document":
                 return item.document?.title ?? null;
@@ -805,6 +822,9 @@
                 <label class="text-[10px] font-bold uppercase">Prix de vente
                     <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_vente} />
                 </label>
+                <label class="text-[10px] font-bold uppercase">Quantité
+                    <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.quantite} required />
+                </label>
                 {#each BOOL_FIELDS as f (f.key)}
                     <div class="text-[10px] font-bold uppercase">{f.label}
                         {@render pickerButton(boolLabel(manual[f.key]), manual[f.key] === true, () =>
@@ -832,6 +852,7 @@
                             <tr>
                                 <th class="p-1">Nom</th><th class="p-1">Catégorie</th><th class="p-1">Date</th>
                                 <th class="p-1">Achat</th><th class="p-1">Vente</th>
+                                <th class="p-1">Quantité</th>
                                 {#each BOOL_FIELDS as f (f.key)}<th class="p-1">{f.label}</th>{/each}
                                 <th class="p-1">Provenance</th><th></th>
                             </tr>
@@ -844,6 +865,7 @@
                                     <td class="p-1"><input type="date" class="retro-input text-[11px] !w-32" bind:value={d.date_acquisition} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
+                                    <td class="p-1"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] !w-20" bind:value={d.quantite} required /></td>
                                     {#each BOOL_FIELDS as f (f.key)}
                                         <td class="p-1 min-w-20">
                                             {@render pickerButton(boolLabel(d[f.key]), d[f.key] === true, () =>
@@ -949,6 +971,7 @@
                                 <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} readonly={fromDoc(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} readonly={fromDoc(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
+                                <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.quantite ?? 1} onchange={(e) => editNumber(item, "quantite", e)} /></td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
                                         {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
