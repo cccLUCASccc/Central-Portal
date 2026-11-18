@@ -192,24 +192,32 @@
     };
 
     const sorted = $derived([...items].sort(byDate));
-    // Filtres : nom, provenance (NO_PROVENANCE = sans provenance) et état « Publié ».
+    // Filtres : nom, provenance (NO_PROVENANCE = sans provenance) et états « Publié » / « Étiquette ».
     const NO_PROVENANCE = "\u0000";
     let nameSearch = $state("");
     let provenanceFilter = $state<string | null>(null);
     let publishedFilter = $state<"all" | "yes" | "no">("all");
+    let labelFilter = $state<"all" | "yes" | "no">("all");
     const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     // Clé de regroupement : majuscules et espaces réduits (« Brocante » = « BROCANTE »), comme l'API.
     const provKey = (p: string | null | undefined) => (p ?? "").trim().replace(/\s+/g, " ").toUpperCase();
     const provenances = $derived(
         [...new Set(items.map((i) => provKey(i.provenance)).filter((p) => !!p))].sort((a, b) => a.localeCompare(b, "fr")),
     );
-    const hasFilters = $derived(!!search.trim() || !!nameSearch.trim() || provenanceFilter !== null || publishedFilter !== "all");
+    const hasFilters = $derived(
+        !!search.trim() ||
+            !!nameSearch.trim() ||
+            provenanceFilter !== null ||
+            publishedFilter !== "all" ||
+            labelFilter !== "all",
+    );
 
     function resetFilters() {
         search = "";
         nameSearch = "";
         provenanceFilter = null;
         publishedFilter = "all";
+        labelFilter = "all";
     }
 
     const filtered = $derived.by(() => {
@@ -219,7 +227,8 @@
                 (!name || normalize(i.nom).includes(name)) &&
                 (provenanceFilter === null ||
                     (provenanceFilter === NO_PROVENANCE ? !provKey(i.provenance) : provKey(i.provenance) === provenanceFilter)) &&
-                (publishedFilter === "all" || (publishedFilter === "yes") === (i.publie === true)),
+                (publishedFilter === "all" || (publishedFilter === "yes") === (i.publie === true)) &&
+                (labelFilter === "all" || (labelFilter === "yes") === (i.etiquette_imprimee === true)),
         );
         const q = search.trim().toUpperCase().replace(/\s+/g, "");
         if (!q) return list;
@@ -256,6 +265,7 @@
         nameSearch;
         provenanceFilter;
         publishedFilter;
+        labelFilter;
         page = 1;
     });
     $effect(() => {
@@ -733,10 +743,10 @@
 </script>
 
 <div class="space-y-2 font-mono">
-    {#snippet pickerButton(text: string, active: boolean, onclick: () => void, title = "")}
+    {#snippet pickerButton(text: string, active: boolean, onclick: () => void, title = "", activeClass = "!bg-[#99E7DC]")}
         <button
             type="button"
-            class="retro-input text-[11px] w-full min-w-0 flex items-center justify-between gap-1 text-left cursor-pointer hover:bg-[#FFF394] {active ? '!bg-[#99E7DC]' : ''}"
+            class="retro-input text-[11px] w-full min-w-0 flex items-center justify-between gap-1 text-left cursor-pointer hover:bg-[#FFF394] {active ? activeClass : ''}"
             {title}
             {onclick}
         >
@@ -915,6 +925,15 @@
                     >{label}</button>
                 {/each}
             </div>
+            <div class="flex" role="group" aria-label="Filtrer par état Étiquette imprimée">
+                {#each [["all", "Étiquettes : toutes"], ["yes", "Imprimées"], ["no", "Non imprimées"]] as [value, label] (value)}
+                    <button
+                        class="retro-btn text-xs py-2 px-3 {labelFilter === value ? 'bg-[#FFE600]' : 'bg-white'}"
+                        aria-pressed={labelFilter === value}
+                        onclick={() => (labelFilter = value as "all" | "yes" | "no")}
+                    >{label}</button>
+                {/each}
+            </div>
             {#if hasFilters}
                 <button class="text-[11px] underline" onclick={resetFilters}>Effacer les filtres</button>
                 <span class="text-[11px] font-bold">{filtered.length} / {items.length} objet(s)</span>
@@ -975,7 +994,9 @@
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
                                         {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
-                                            pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })))}
+                                            pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })),
+                                            "",
+                                            f.key === "etiquette_imprimee" ? "!bg-[#FFE600]" : "!bg-[#99E7DC]")}
                                     </td>
                                 {/each}
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 uppercase {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} readonly={fromDoc(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
