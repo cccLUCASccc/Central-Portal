@@ -39,6 +39,8 @@
         id: number;
         title: string;
         file_name: string;
+        folder: string;
+        subfolder: string;
         content_type: string;
         created_at: string;
     }
@@ -534,9 +536,14 @@
     async function loadPurchaseDocs() {
         try {
             const res = await apiFetch("/api/documents?folder=achats");
-            if (res.ok) purchaseDocs = await res.json();
+            if (!res.ok) {
+                error = await readError(res, "Impossible de charger les factures de marchandise.");
+                return;
+            }
+            const docs: PurchaseDoc[] = await res.json();
+            purchaseDocs = docs.filter((d) => d.folder === "achats" && d.subfolder === "marchandise");
         } catch {
-            // La colonne Document affichera une liste vide.
+            error = "Impossible de charger les factures de marchandise.";
         }
     }
 
@@ -548,7 +555,7 @@
 
     function pickDocument(item: Item) {
         openPicker({
-            title: `Lier ${item.code} « ${item.nom} » à un document d'achat`,
+            title: `Lier ${item.code} « ${item.nom} » à une facture de marchandise`,
             options: purchaseDocs.map((d) => {
                 const codes = items.filter((i) => i.document_id === d.id && i.id !== item.id).map((i) => i.code);
                 return {
@@ -560,7 +567,7 @@
             }),
             current: item.document_id != null ? String(item.document_id) : "",
             searchable: true,
-            empty: "Aucun document dans le dossier Achats. Ajoutez-en depuis le service Documents.",
+            empty: "Aucune facture dans Achats → Marchandise. Classez-y vos factures depuis Documents.",
             onPick: (v) => linkDocument(item, Number(v)),
         });
     }
@@ -1021,7 +1028,7 @@
                                             <button class="material-symbols-outlined text-[16px]" title="Délier le document" onclick={() => unlinkDocument(item)}>link_off</button>
                                         </div>
                                     {:else}
-                                        {@render pickerButton("Lier un document…", false, () => pickDocument(item), "Lier à un document du dossier Achats")}
+                                        {@render pickerButton("Lier un document…", false, () => pickDocument(item), "Lier à une facture du dossier Achats → Marchandise")}
                                     {/if}
                                 </td>
                                 <td class="p-0.5 overflow-hidden">
