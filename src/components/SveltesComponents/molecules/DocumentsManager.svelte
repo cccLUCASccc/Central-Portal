@@ -10,6 +10,7 @@
         size: number;
         folder: Folder | "";
         subfolder: Subfolder | "";
+        sort_date: string;
         rotation: number;
         created_at: string;
     }
@@ -30,6 +31,14 @@
     const subfolderInfo = (f: string) => SUBFOLDERS.find((x) => x.key === f);
     const purchaseTab = (f: Subfolder): PurchaseTab =>
         f === "marchandise" ? "achats-marchandise" : "achats-materiel";
+    const classementDate = (d: Doc) => d.sort_date || d.created_at.slice(0, 10);
+    const sortDocuments = (items: Doc[]) =>
+        [...items].sort(
+            (a, b) =>
+                classementDate(b).localeCompare(classementDate(a)) ||
+                b.created_at.localeCompare(a.created_at) ||
+                b.id - a.id
+        );
 
     const MAX_FILES = 10;
     const MAX_BYTES = 25 * 1024 * 1024;
@@ -140,7 +149,7 @@
         try {
             const res = await apiFetch("/api/documents");
             if (res.ok) {
-                docs = await res.json();
+                docs = sortDocuments(await res.json());
                 const requested = requestedDocId ? docs.find((d) => d.id === requestedDocId) : null;
                 if (requested) {
                     tab =
@@ -216,7 +225,7 @@
             const res = await apiFetch("/api/documents", { method: "POST", body: form });
             const body = await res.json().catch(() => ({}));
             const created: Doc[] = Array.isArray(body) ? body : body.created || [];
-            docs = [...created, ...docs];
+            docs = sortDocuments([...created, ...docs]);
             if (res.ok) {
                 notice = `${created.length} document(s) ajouté(s) dans ${folderInfo(uploadFolder)?.label}${uploadFolder === "achats" ? ` · ${subfolderInfo(selectedSubfolder)?.label}` : ""}.`;
                 tab = uploadFolder === "achats" && selectedSubfolder ? purchaseTab(selectedSubfolder) : uploadFolder;
@@ -252,13 +261,13 @@
         else if (e.key === "ArrowLeft") step(-1);
     }
 
-    async function update(d: Doc, body: Partial<Pick<Doc, "title" | "folder" | "rotation">>, fallback: string) {
+    async function update(d: Doc, body: Partial<Pick<Doc, "title" | "folder" | "subfolder" | "sort_date" | "rotation">>, fallback: string) {
         const previous = d;
         docs = docs.map((x) => (x.id === d.id ? { ...x, ...body } : x));
         const res = await apiFetch(`/api/documents/${d.id}`, { method: "PATCH", body: JSON.stringify(body) });
         if (res.ok) {
             const updated: Doc = await res.json();
-            docs = docs.map((x) => (x.id === d.id ? updated : x));
+            docs = sortDocuments(docs.map((x) => (x.id === d.id ? updated : x)));
             return true;
         }
         error = await readError(res, fallback);
@@ -497,7 +506,7 @@
         {:else}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {#each filtered as d (d.id)}
-                    <div class="group flex flex-col border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000]">
+                    <div class="group relative flex flex-col border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000]">
                         <button class="relative aspect-[4/3] border-b-2 border-black bg-[#F6F4EE] overflow-hidden cursor-zoom-in" title="Agrandir" onclick={() => openDocument(d)}>
                             {#if hasPreview(d) && blobUrls[d.id]}
                                 <!-- Boîte 4/3 : à 90°/270°, l'élément prend 75 % × 133 % pour couvrir la carte une fois tourné. -->
@@ -523,10 +532,20 @@
                                     {/if}
                                 </span>
                             {/if}
-                            <span class="absolute top-2 right-2 retro-badge bg-white text-[9px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            <span class="absolute bottom-2 right-2 retro-badge bg-white text-[9px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                 <span class="material-symbols-outlined text-[12px]">open_in_full</span> Agrandir
                             </span>
                         </button>
+                        <label class="absolute top-2 right-2 z-10 flex items-center gap-1 border-2 border-black bg-[#E7D7FF] px-2 py-1 text-[10px] font-black shadow-[2px_2px_0px_0px_#000]" title="Date de classement utilisée pour trier les documents">
+                            <span class="material-symbols-outlined text-[14px]" aria-hidden="true">event</span>
+                            <input
+                                type="date"
+                                class="w-[110px] bg-transparent text-[10px] font-bold focus:outline-none"
+                                aria-label={`Date de classement de ${d.title}`}
+                                value={classementDate(d)}
+                                onchange={(e) => update(d, { sort_date: e.currentTarget.value }, "Modification de date impossible.")}
+                            />
+                        </label>
                         <div class="p-3 flex items-start justify-between gap-2">
                             <div class="min-w-0">
                                 <h3 class="text-xs font-black uppercase truncate" title={d.title}>{d.title}</h3>
