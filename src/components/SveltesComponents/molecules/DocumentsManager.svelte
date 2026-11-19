@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
     import { apiFetch } from "../../../lib/api";
+    import { documentDownloadName, documentSortDate, documentTitle, hasAutomaticTitle } from "../../../lib/document-names";
 
     interface Doc {
         id: number;
@@ -32,12 +33,10 @@
     const subfolderInfo = (f: string) => SUBFOLDERS.find((x) => x.key === f);
     const purchaseTab = (f: Subfolder): PurchaseTab =>
         f === "marchandise" ? "achats-marchandise" : "achats-materiel";
-    const classementDate = (d: Doc) => d.sort_date || d.created_at.slice(0, 10);
-    const hasAutomaticTitle = (d: Doc) => d.folder === "achats" && d.subfolder === "marchandise";
     const sortDocuments = (items: Doc[]) =>
         [...items].sort(
             (a, b) =>
-                classementDate(b).localeCompare(classementDate(a)) ||
+                documentSortDate(b).localeCompare(documentSortDate(a)) ||
                 b.created_at.localeCompare(a.created_at) ||
                 b.id - a.id
         );
@@ -88,7 +87,7 @@
                           : tab === "achats-materiel"
                             ? d.folder === "achats" && d.subfolder === "materiel"
                             : d.folder === tab)) &&
-                (!q || `${d.title} ${d.file_name}`.toLowerCase().includes(q))
+                (!q || `${documentTitle(d)} ${d.file_name}`.toLowerCase().includes(q))
         );
     });
     $effect(() => {
@@ -268,13 +267,17 @@
     async function update(d: Doc, body: Partial<Pick<Doc, "title" | "folder" | "subfolder" | "sort_date" | "rotation">>, fallback: string) {
         const previous = d;
         docs = docs.map((x) => (x.id === d.id ? { ...x, ...body } : x));
-        const res = await apiFetch(`/api/documents/${d.id}`, { method: "PATCH", body: JSON.stringify(body) });
-        if (res.ok) {
-            const updated: Doc = await res.json();
-            docs = sortDocuments(docs.map((x) => (x.id === d.id ? updated : x)));
-            return true;
+        try {
+            const res = await apiFetch(`/api/documents/${d.id}`, { method: "PATCH", body: JSON.stringify(body) });
+            if (res.ok) {
+                const updated: Doc = await res.json();
+                docs = sortDocuments(docs.map((x) => (x.id === d.id ? updated : x)));
+                return true;
+            }
+            error = await readError(res, fallback);
+        } catch {
+            error = fallback;
         }
-        error = await readError(res, fallback);
         docs = docs.map((x) => (x.id === d.id ? previous : x));
         return false;
     }
@@ -321,12 +324,12 @@
         }
         const a = document.createElement("a");
         a.href = url;
-        a.download = d.download_name ?? d.file_name;
+        a.download = documentDownloadName(d);
         a.click();
     }
 
     async function remove(d: Doc) {
-        if (!confirm(`Supprimer définitivement « ${d.title} » ?`)) return;
+        if (!confirm(`Supprimer définitivement « ${documentTitle(d)} » ?`)) return;
         isDeleting = true;
         try {
             const res = await apiFetch(`/api/documents/${d.id}`, { method: "DELETE" });
@@ -514,6 +517,7 @@
         {:else}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {#each filtered as d (d.id)}
+                    {@const title = documentTitle(d)}
                     <div class="group relative flex flex-col border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000]">
                         <button class="relative aspect-[4/3] border-b-2 border-black bg-[#F6F4EE] overflow-hidden cursor-zoom-in" title="Agrandir" onclick={() => openDocument(d)}>
                             {#if hasPreview(d) && blobUrls[d.id]}
@@ -523,9 +527,9 @@
                                     style={`width: ${quarter(d) ? "75%" : "100%"}; height: ${quarter(d) ? "133.334%" : "100%"}; transform: translate(-50%, -50%) rotate(${d.rotation}deg);`}
                                 >
                                     {#if kind(d) === "image"}
-                                        <img src={blobUrls[d.id]} alt={d.title} class="h-full w-full object-cover" />
+                                        <img src={blobUrls[d.id]} alt={title} class="h-full w-full object-cover" />
                                     {:else}
-                                        <iframe src={kind(d) === "pdf" ? `${blobUrls[d.id]}#toolbar=0&navpanes=0&view=FitH` : blobUrls[d.id]} title={d.title} class="pointer-events-none h-full w-full bg-white" tabindex="-1" loading="lazy"></iframe>
+                                        <iframe src={kind(d) === "pdf" ? `${blobUrls[d.id]}#toolbar=0&navpanes=0&view=FitH` : blobUrls[d.id]} {title} class="pointer-events-none h-full w-full bg-white" tabindex="-1" loading="lazy"></iframe>
                                     {/if}
                                 </div>
                             {:else}
@@ -549,14 +553,14 @@
                             <input
                                 type="date"
                                 class="w-[110px] bg-transparent text-[10px] font-bold focus:outline-none"
-                                aria-label={`Date de classement de ${d.title}`}
-                                value={classementDate(d)}
+                                aria-label={`Date de classement de ${title}`}
+                                value={documentSortDate(d)}
                                 onchange={(e) => update(d, { sort_date: e.currentTarget.value }, "Modification de date impossible.")}
                             />
                         </label>
                         <div class="p-3 flex items-start justify-between gap-2">
                             <div class="min-w-0">
-                                <h3 class="text-xs font-black uppercase truncate" title={d.title}>{d.title}</h3>
+                                <h3 class="text-xs font-black uppercase truncate" {title}>{title}</h3>
                                 <p class="text-[10px] text-black/60 mt-0.5">{ext(d) || "FICHIER"} · {formatSize(d.size)} · {formatDate(d.created_at)}</p>
                             </div>
                             <div class="flex gap-1 shrink-0">
@@ -567,7 +571,7 @@
                                 <button class="material-symbols-outlined text-[18px] text-red-700" title="Supprimer" disabled={isDeleting} onclick={() => remove(d)}>delete</button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 border-t-2 border-black" role="group" aria-label={`Dossier de ${d.title}`}>
+                        <div class="grid grid-cols-2 border-t-2 border-black" role="group" aria-label={`Dossier de ${title}`}>
                             <button
                                 class="text-[11px] font-black uppercase py-1.5 flex items-center justify-center gap-1 transition-colors {d.folder === 'achats' && !d.subfolder ? 'bg-[#FFD2A6]' : 'bg-white hover:bg-[#FFF394]'}"
                                 aria-pressed={d.folder === "achats" && !d.subfolder}
@@ -602,19 +606,21 @@
     </div>
 
     {#if openDoc}
+        {@const title = documentTitle(openDoc)}
+        {@const fileName = documentDownloadName(openDoc)}
         <div class="fixed inset-0 z-[10000] bg-black/70 flex items-center justify-center p-2 sm:p-6" role="presentation" onclick={() => (openId = null)}>
             <div
                 class="bg-white border-3 border-black shadow-[8px_8px_0px_0px_#000] w-full max-w-6xl h-full max-h-[92vh] flex flex-col"
                 role="dialog"
                 aria-modal="true"
-                aria-label={openDoc.title}
+                aria-label={title}
                 tabindex="-1"
                 onclick={(e) => e.stopPropagation()}
                 onkeydown={() => {}}
             >
                 <div class="bg-[#FFE600] border-b-2 border-black px-3 py-2 flex flex-wrap items-center gap-2">
                     {#if hasAutomaticTitle(openDoc)}
-                        <span class="text-xs font-black flex-1 min-w-40" title="Titre automatique basé sur la date de classement">{openDoc.title}</span>
+                        <span class="text-xs font-black flex-1 min-w-40" title="Titre automatique basé sur la date de classement">{title}</span>
                     {:else}
                         <input
                             class="retro-input text-xs font-black uppercase flex-1 min-w-40"
@@ -679,7 +685,7 @@
                     {#if !hasPreview(openDoc)}
                         <div class="text-center p-6 space-y-3">
                             <span class="material-symbols-outlined text-[64px] block">{icon(openDoc)}</span>
-                            <p class="text-xs font-bold">{openDoc.file_name}</p>
+                            <p class="text-xs font-bold">{fileName}</p>
                             <p class="text-[11px] text-black/60">Aperçu indisponible pour ce type de fichier.</p>
                             <button class="retro-btn-primary text-xs py-2 px-4 font-black" onclick={() => openDoc && download(openDoc)}>Télécharger</button>
                         </div>
@@ -692,15 +698,15 @@
                             style={`width: ${quarter(openDoc) ? stageH : stageW}px; height: ${quarter(openDoc) ? stageW : stageH}px; transform: translate(-50%, -50%) rotate(${openDoc.rotation}deg);`}
                         >
                             {#if kind(openDoc) === "image"}
-                                <img src={blobUrls[openDoc.id]} alt={openDoc.title} class="h-full w-full object-contain" />
+                                <img src={blobUrls[openDoc.id]} alt={title} class="h-full w-full object-contain" />
                             {:else}
-                                <iframe src={blobUrls[openDoc.id]} title={openDoc.title} class="h-full w-full bg-white"></iframe>
+                                <iframe src={blobUrls[openDoc.id]} {title} class="h-full w-full bg-white"></iframe>
                             {/if}
                         </div>
                     {/if}
                 </div>
                 <div class="border-t-2 border-black px-3 py-1 text-[10px] text-black/60 flex justify-between gap-2">
-                    <span class="truncate">{openDoc.file_name}</span>
+                    <span class="truncate">{fileName}</span>
                     <span class="shrink-0">{formatSize(openDoc.size)} · ajouté le {formatDate(openDoc.created_at)}</span>
                 </div>
             </div>

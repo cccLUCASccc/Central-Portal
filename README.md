@@ -95,6 +95,13 @@ les règles d'accès administrateur.
 
 Tests : `bun test src/lib/users.test.ts`.
 
+## Documents
+
+Dans **Achats → Marchandise**, le portail génère le titre `FACTURE-ACHAT-MAR-AAAA-MM-JJ`
+à partir de la date du badge (ou de la date de création si elle n'a pas été renseignée).
+Ce titre s'affiche même si l'API renvoie encore le titre d'origine. Le téléchargement
+utilise le même nom et conserve l'extension du fichier.
+
 ## Rédaction de mail
 
 La carte « Rédaction de mail » et le menu ouvrent `/mails`, pour écrire un
