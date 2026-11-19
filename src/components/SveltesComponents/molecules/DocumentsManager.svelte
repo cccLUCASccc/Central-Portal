@@ -9,17 +9,27 @@
         content_type: string;
         size: number;
         folder: Folder | "";
+        subfolder: Subfolder | "";
         rotation: number;
         created_at: string;
     }
     type Folder = "achats" | "ventes";
-    type Tab = Folder | "all" | "unsorted";
+    type Subfolder = "marchandise" | "materiel";
+    type PurchaseTab = "achats-marchandise" | "achats-materiel";
+    type Tab = Folder | PurchaseTab | "all" | "unsorted";
 
     const FOLDERS: { key: Folder; label: string; icon: string; tint: string }[] = [
         { key: "achats", label: "Achats", icon: "shopping_cart", tint: "bg-[#FFD2A6]" },
         { key: "ventes", label: "Ventes", icon: "sell", tint: "bg-[#99E7DC]" },
     ];
+    const SUBFOLDERS: { key: Subfolder; label: string; tint: string }[] = [
+        { key: "marchandise", label: "Marchandise", tint: "bg-[#FFE0BD]" },
+        { key: "materiel", label: "Matériel", tint: "bg-[#E7D7FF]" },
+    ];
     const folderInfo = (f: string) => FOLDERS.find((x) => x.key === f);
+    const subfolderInfo = (f: string) => SUBFOLDERS.find((x) => x.key === f);
+    const purchaseTab = (f: Subfolder): PurchaseTab =>
+        f === "marchandise" ? "achats-marchandise" : "achats-materiel";
 
     const MAX_FILES = 10;
     const MAX_BYTES = 25 * 1024 * 1024;
@@ -31,6 +41,7 @@
     let search = $state("");
     let tab = $state<Tab>("achats");
     let uploadFolder = $state<Folder>("achats");
+    let uploadSubfolder = $state<Subfolder | "">("");
 
     let files = $state<File[]>([]);
     let uploadTitle = $state("");
@@ -49,6 +60,8 @@
     const counts = $derived({
         all: docs.length,
         achats: docs.filter((d) => d.folder === "achats").length,
+        marchandise: docs.filter((d) => d.folder === "achats" && d.subfolder === "marchandise").length,
+        materiel: docs.filter((d) => d.folder === "achats" && d.subfolder === "materiel").length,
         ventes: docs.filter((d) => d.folder === "ventes").length,
         unsorted: docs.filter((d) => d.folder !== "achats" && d.folder !== "ventes").length,
     });
@@ -57,12 +70,22 @@
         return docs.filter(
             (d) =>
                 (tab === "all" ||
-                    (tab === "unsorted" ? d.folder !== "achats" && d.folder !== "ventes" : d.folder === tab)) &&
+                    (tab === "unsorted"
+                        ? d.folder !== "achats" && d.folder !== "ventes"
+                        : tab === "achats-marchandise"
+                          ? d.folder === "achats" && d.subfolder === "marchandise"
+                          : tab === "achats-materiel"
+                            ? d.folder === "achats" && d.subfolder === "materiel"
+                            : d.folder === tab)) &&
                 (!q || `${d.title} ${d.file_name}`.toLowerCase().includes(q))
         );
     });
     $effect(() => {
         if (tab === "achats" || tab === "ventes") uploadFolder = tab;
+        if (tab === "achats-marchandise" || tab === "achats-materiel") {
+            uploadFolder = "achats";
+            uploadSubfolder = tab === "achats-marchandise" ? "marchandise" : "materiel";
+        }
     });
     $effect(() => {
         if (tab === "unsorted" && counts.unsorted === 0) tab = "achats";
@@ -120,7 +143,12 @@
                 docs = await res.json();
                 const requested = requestedDocId ? docs.find((d) => d.id === requestedDocId) : null;
                 if (requested) {
-                    tab = requested.folder === "achats" || requested.folder === "ventes" ? requested.folder : "unsorted";
+                    tab =
+                        requested.folder === "achats" && (requested.subfolder === "marchandise" || requested.subfolder === "materiel")
+                            ? purchaseTab(requested.subfolder)
+                            : requested.folder === "achats" || requested.folder === "ventes"
+                              ? requested.folder
+                              : "unsorted";
                     openDocument(requested);
                 } else {
                     if (requestedDocId) error = "Ce document n'existe plus.";
@@ -172,11 +200,17 @@
 
     async function upload() {
         if (!files.length) return;
+        const selectedSubfolder = uploadSubfolder;
+        if (uploadFolder === "achats" && !selectedSubfolder) {
+            error = "Choisissez un sous-dossier pour les achats.";
+            return;
+        }
         isUploading = true;
         error = "";
         try {
             const form = new FormData();
             form.append("folder", uploadFolder);
+            if (uploadFolder === "achats" && selectedSubfolder) form.append("subfolder", selectedSubfolder);
             files.forEach((f) => form.append("files", f));
             if (files.length === 1 && uploadTitle.trim()) form.append("title", uploadTitle.trim());
             const res = await apiFetch("/api/documents", { method: "POST", body: form });
@@ -184,8 +218,8 @@
             const created: Doc[] = Array.isArray(body) ? body : body.created || [];
             docs = [...created, ...docs];
             if (res.ok) {
-                notice = `${created.length} document(s) ajouté(s) dans ${folderInfo(uploadFolder)?.label}.`;
-                tab = uploadFolder;
+                notice = `${created.length} document(s) ajouté(s) dans ${folderInfo(uploadFolder)?.label}${uploadFolder === "achats" ? ` · ${subfolderInfo(selectedSubfolder)?.label}` : ""}.`;
+                tab = uploadFolder === "achats" && selectedSubfolder ? purchaseTab(selectedSubfolder) : uploadFolder;
                 files = [];
                 uploadTitle = "";
             } else {
@@ -246,16 +280,17 @@
         update(d, { rotation: (((d.rotation + delta) % 360) + 360) % 360 }, "Rotation impossible.");
     }
 
-    async function moveTo(d: Doc, folder: Folder) {
-        if (d.folder === folder) return;
+    async function moveTo(d: Doc, folder: Folder, subfolder: Subfolder | "" = "") {
+        if (d.folder === folder && d.subfolder === subfolder) return;
+        const destinationTab = folder === "achats" && subfolder ? purchaseTab(subfolder) : folder;
         // Tri à la chaîne : si le document quitte l'onglet affiché, la popup passe directement au suivant.
-        if (openId === d.id && tab !== "all" && tab !== folder) {
+        if (openId === d.id && tab !== "all" && tab !== destinationTab) {
             const i = filtered.findIndex((x) => x.id === d.id);
             const next = filtered[i + 1] ?? filtered[i - 1] ?? null;
             if (next) openDocument(next);
             else openId = null;
         }
-        await update(d, { folder }, "Déplacement impossible.");
+        await update(d, { folder, subfolder }, "Déplacement impossible.");
     }
 
     const quarter = (d: Doc) => d.rotation === 90 || d.rotation === 270;
@@ -367,12 +402,29 @@
                         {/each}
                     </div>
                 </div>
+                {#if uploadFolder === "achats"}
+                    <div class="text-[10px] font-bold uppercase">Sous-dossier
+                        <div class="flex gap-1 mt-0.5">
+                            {#each SUBFOLDERS as f (f.key)}
+                                <button
+                                    type="button"
+                                    class="retro-btn text-xs py-1.5 px-3 flex items-center gap-1 {uploadSubfolder === f.key ? f.tint : 'bg-white'}"
+                                    aria-pressed={uploadSubfolder === f.key}
+                                    onclick={() => (uploadSubfolder = f.key)}
+                                >
+                                    {f.label}
+                                </button>
+                            {/each}
+                        </div>
+                        {#if !uploadSubfolder}<span class="block text-[10px] normal-case text-red-700 mt-1">Choisissez une catégorie pour continuer.</span>{/if}
+                    </div>
+                {/if}
                 {#if files.length === 1}
                     <label class="flex-1 min-w-56 text-[10px] font-bold uppercase">Titre (facultatif)
                         <input class="retro-input text-xs w-full" bind:value={uploadTitle} placeholder={files[0].name.replace(/\.[^.]+$/, "")} />
                     </label>
                 {/if}
-                <button class="retro-btn-primary text-xs py-2 px-4 font-black flex items-center gap-1.5" disabled={isUploading} onclick={upload}>
+                <button class="retro-btn-primary text-xs py-2 px-4 font-black flex items-center gap-1.5" disabled={isUploading || (uploadFolder === "achats" && !uploadSubfolder)} onclick={upload}>
                     {#if isUploading}
                         <span class="daisy-loader daisy-loader-xs" aria-hidden="true"></span>
                     {:else}
@@ -417,6 +469,22 @@
                 <span class="material-symbols-outlined text-[18px]">folder_copy</span> Tous ({counts.all})
             </button>
         </div>
+        {#if tab === "achats" || tab === "achats-marchandise" || tab === "achats-materiel"}
+            <div class="flex flex-wrap gap-2" role="tablist" aria-label="Sous-dossiers des achats">
+                {#each SUBFOLDERS as f (f.key)}
+                    {@const subTab = purchaseTab(f.key)}
+                    <button
+                        role="tab"
+                        aria-selected={tab === subTab}
+                        class="retro-btn text-xs py-1.5 px-3 font-bold flex items-center gap-1 {tab === subTab ? f.tint : 'bg-white'}"
+                        onclick={() => (tab = subTab)}
+                    >
+                        <span class="material-symbols-outlined text-[16px]">folder</span>
+                        {f.label} ({counts[f.key]})
+                    </button>
+                {/each}
+            </div>
+        {/if}
         <div class="relative">
             <span class="material-symbols-outlined text-[16px] absolute left-2 top-1/2 -translate-y-1/2 text-black/50">search</span>
             <input class="retro-input text-xs w-full !pl-8" bind:value={search} placeholder="Rechercher un document..." />
@@ -473,16 +541,32 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-2 border-t-2 border-black" role="group" aria-label={`Dossier de ${d.title}`}>
-                            {#each FOLDERS as f, i (f.key)}
+                            <button
+                                class="text-[11px] font-black uppercase py-1.5 flex items-center justify-center gap-1 transition-colors {d.folder === 'achats' && !d.subfolder ? 'bg-[#FFD2A6]' : 'bg-white hover:bg-[#FFF394]'}"
+                                aria-pressed={d.folder === "achats" && !d.subfolder}
+                                title="Classer dans Achats sans sous-dossier"
+                                onclick={() => moveTo(d, "achats")}
+                            >
+                                <span class="material-symbols-outlined text-[15px]">{d.folder === "achats" && !d.subfolder ? "check" : "shopping_cart"}</span> Achats
+                            </button>
+                            {#each SUBFOLDERS as f (f.key)}
                                 <button
-                                    class="text-[11px] font-black uppercase py-1.5 flex items-center justify-center gap-1 transition-colors {i ? 'border-l-2 border-black' : ''} {d.folder === f.key ? f.tint : 'bg-white hover:bg-[#FFF394]'}"
-                                    aria-pressed={d.folder === f.key}
-                                    title={d.folder === f.key ? `Classé dans ${f.label}` : `Classer dans ${f.label}`}
-                                    onclick={() => moveTo(d, f.key)}
+                                    class="text-[11px] font-black uppercase py-1.5 flex items-center justify-center gap-1 transition-colors {d.folder === 'achats' && d.subfolder === f.key ? f.tint : 'bg-white hover:bg-[#FFF394]'}"
+                                    aria-pressed={d.folder === "achats" && d.subfolder === f.key}
+                                    title={`Classer dans Achats / ${f.label}`}
+                                    onclick={() => moveTo(d, "achats", f.key)}
                                 >
-                                    <span class="material-symbols-outlined text-[15px]">{d.folder === f.key ? "check" : f.icon}</span> {f.label}
+                                    <span class="material-symbols-outlined text-[15px]">{d.folder === "achats" && d.subfolder === f.key ? "check" : "folder"}</span> {f.label}
                                 </button>
                             {/each}
+                            <button
+                                class="text-[11px] font-black uppercase py-1.5 flex items-center justify-center gap-1 transition-colors {d.folder === 'ventes' ? 'bg-[#99E7DC]' : 'bg-white hover:bg-[#FFF394]'}"
+                                aria-pressed={d.folder === "ventes"}
+                                title="Classer dans Ventes"
+                                onclick={() => moveTo(d, "ventes")}
+                            >
+                                <span class="material-symbols-outlined text-[15px]">{d.folder === "ventes" ? "check" : "sell"}</span> Ventes
+                            </button>
                         </div>
                     </div>
                 {/each}
@@ -509,17 +593,33 @@
                         onkeydown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                         title="Renommer"
                     />
-                    <div class="flex" role="group" aria-label="Dossier">
-                        {#each FOLDERS as f (f.key)}
+                    <div class="flex flex-wrap gap-1" role="group" aria-label="Dossier">
+                        <button
+                            class="retro-btn text-xs px-2 py-1 flex items-center gap-1 {openDoc.folder === 'achats' && !openDoc.subfolder ? 'bg-[#FFD2A6]' : 'bg-white'}"
+                            aria-pressed={openDoc.folder === "achats" && !openDoc.subfolder}
+                            title="Classer dans Achats sans sous-dossier"
+                            onclick={() => openDoc && moveTo(openDoc, "achats")}
+                        >
+                            <span class="material-symbols-outlined text-[16px]">shopping_cart</span> Achats
+                        </button>
+                        {#each SUBFOLDERS as f (f.key)}
                             <button
-                                class="retro-btn text-xs px-2 py-1 flex items-center gap-1 {openDoc.folder === f.key ? f.tint : 'bg-white'}"
-                                aria-pressed={openDoc.folder === f.key}
-                                title={`Classer dans ${f.label}`}
-                                onclick={() => openDoc && moveTo(openDoc, f.key)}
+                                class="retro-btn text-xs px-2 py-1 flex items-center gap-1 {openDoc.folder === 'achats' && openDoc.subfolder === f.key ? f.tint : 'bg-white'}"
+                                aria-pressed={openDoc.folder === "achats" && openDoc.subfolder === f.key}
+                                title={`Classer dans Achats / ${f.label}`}
+                                onclick={() => openDoc && moveTo(openDoc, "achats", f.key)}
                             >
-                                <span class="material-symbols-outlined text-[16px]">{f.icon}</span> {f.label}
+                                <span class="material-symbols-outlined text-[16px]">folder</span> {f.label}
                             </button>
                         {/each}
+                        <button
+                            class="retro-btn text-xs px-2 py-1 flex items-center gap-1 {openDoc.folder === 'ventes' ? 'bg-[#99E7DC]' : 'bg-white'}"
+                            aria-pressed={openDoc.folder === "ventes"}
+                            title="Classer dans Ventes"
+                            onclick={() => openDoc && moveTo(openDoc, "ventes")}
+                        >
+                            <span class="material-symbols-outlined text-[16px]">sell</span> Ventes
+                        </button>
                     </div>
                     {#if hasPreview(openDoc)}
                         <button class="retro-btn bg-white text-xs px-2 py-1" title="Tourner à gauche" onclick={() => openDoc && rotate(openDoc, -90)}>
