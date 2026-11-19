@@ -6,6 +6,7 @@
         id: number;
         title: string;
         file_name: string;
+        download_name?: string;
         content_type: string;
         size: number;
         folder: Folder | "";
@@ -32,6 +33,7 @@
     const purchaseTab = (f: Subfolder): PurchaseTab =>
         f === "marchandise" ? "achats-marchandise" : "achats-materiel";
     const classementDate = (d: Doc) => d.sort_date || d.created_at.slice(0, 10);
+    const hasAutomaticTitle = (d: Doc) => d.folder === "achats" && d.subfolder === "marchandise";
     const sortDocuments = (items: Doc[]) =>
         [...items].sort(
             (a, b) =>
@@ -221,7 +223,9 @@
             form.append("folder", uploadFolder);
             if (uploadFolder === "achats" && selectedSubfolder) form.append("subfolder", selectedSubfolder);
             files.forEach((f) => form.append("files", f));
-            if (files.length === 1 && uploadTitle.trim()) form.append("title", uploadTitle.trim());
+            if (files.length === 1 && !(uploadFolder === "achats" && selectedSubfolder === "marchandise") && uploadTitle.trim()) {
+                form.append("title", uploadTitle.trim());
+            }
             const res = await apiFetch("/api/documents", { method: "POST", body: form });
             const body = await res.json().catch(() => ({}));
             const created: Doc[] = Array.isArray(body) ? body : body.created || [];
@@ -299,7 +303,9 @@
             if (next) openDocument(next);
             else openId = null;
         }
-        await update(d, { folder, subfolder }, "Déplacement impossible.");
+        if (await update(d, { folder, subfolder }, "Déplacement impossible.")) {
+            if (openDoc?.id === d.id) editingTitle = openDoc.title;
+        }
     }
 
     const quarter = (d: Doc) => d.rotation === 90 || d.rotation === 270;
@@ -315,7 +321,7 @@
         }
         const a = document.createElement("a");
         a.href = url;
-        a.download = d.file_name;
+        a.download = d.download_name ?? d.file_name;
         a.click();
     }
 
@@ -428,7 +434,9 @@
                         {#if !uploadSubfolder}<span class="block text-[10px] normal-case text-red-700 mt-1">Choisissez une catégorie pour continuer.</span>{/if}
                     </div>
                 {/if}
-                {#if files.length === 1}
+                {#if uploadFolder === "achats" && uploadSubfolder === "marchandise"}
+                    <p class="text-[10px] text-black/70">Le titre est généré à partir de la date du badge.</p>
+                {:else if files.length === 1}
                     <label class="flex-1 min-w-56 text-[10px] font-bold uppercase">Titre (facultatif)
                         <input class="retro-input text-xs w-full" bind:value={uploadTitle} placeholder={files[0].name.replace(/\.[^.]+$/, "")} />
                     </label>
@@ -605,13 +613,17 @@
                 onkeydown={() => {}}
             >
                 <div class="bg-[#FFE600] border-b-2 border-black px-3 py-2 flex flex-wrap items-center gap-2">
-                    <input
-                        class="retro-input text-xs font-black uppercase flex-1 min-w-40"
-                        bind:value={editingTitle}
-                        onchange={rename}
-                        onkeydown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                        title="Renommer"
-                    />
+                    {#if hasAutomaticTitle(openDoc)}
+                        <span class="text-xs font-black flex-1 min-w-40" title="Titre automatique basé sur la date de classement">{openDoc.title}</span>
+                    {:else}
+                        <input
+                            class="retro-input text-xs font-black uppercase flex-1 min-w-40"
+                            bind:value={editingTitle}
+                            onchange={rename}
+                            onkeydown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                            title="Renommer"
+                        />
+                    {/if}
                     <div class="flex flex-wrap gap-1" role="group" aria-label="Dossier">
                         <button
                             class="retro-btn text-xs px-2 py-1 flex items-center gap-1 {openDoc.folder === 'achats' && !openDoc.subfolder ? 'bg-[#FFD2A6]' : 'bg-white'}"
