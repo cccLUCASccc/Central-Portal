@@ -602,16 +602,21 @@
                 error = await readError(res, "Lecture du document impossible.");
                 return;
             }
-            const body: { item: Item; found: boolean; changes: { field: string }[] } = await res.json();
+            const body: { item: Item; found: boolean; changes: { field: string }[]; price_status?: "manual" | "allocated" | "document" } = await res.json();
             items = items.map((i) => (i.id === item.id ? body.item : i));
             const title = body.item.document?.title ?? "le document";
             if (!body.found) {
                 notice = `${item.code} lié à « ${title} », mais Gemini n'y a pas trouvé cet objet : aucun champ modifié.`;
             } else if (body.changes.length === 0) {
-                notice = `${item.code} lié à « ${title} » : les informations du document confirment la fiche.`;
+                notice = `${item.code} lié à « ${title} » : aucun champ modifié.`;
             } else {
                 const labels = body.changes.map((c) => DOC_FIELD_LABELS[c.field] ?? c.field).join(", ");
                 notice = `${item.code} lié à « ${title} » : ${body.changes.length} champ(s) rempli(s) ou corrigé(s) (${labels}).`;
+            }
+            if (body.found && body.price_status === "manual") {
+                notice += " Prix unitaire indéterminé : vérifiez ou saisissez manuellement le prix d'achat.";
+            } else if (body.found && body.price_status === "allocated") {
+                notice += " Prix d'achat unitaire calculé en répartissant le prix du lot à parts égales, puis arrondi à l'euro.";
             }
         } catch {
             error = "Erreur réseau pendant la lecture du document.";
