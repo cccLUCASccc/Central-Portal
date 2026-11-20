@@ -43,6 +43,15 @@ All commands are run from the root of the project, from a terminal:
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
 # Central-Portal
 
+## Inventaire
+
+L'emplacement est facultatif : `sallon`, `garage` ou `salle_à_manger`.
+Les objets existants restent sans emplacement jusqu'à leur modification.
+L'export Excel crée une ligne par unité, avec une quantité de 1 ; une quantité
+de 0 ne produit aucune ligne. Les autres valeurs, notamment les prix, sont
+répétées sans division. Déployer Central-API avant le portail pour ajouter la
+colonne en base.
+
 ## Livraison automatique
 
 Dans Logistique, renseigner pour chaque transporteur ses pays desservis et son

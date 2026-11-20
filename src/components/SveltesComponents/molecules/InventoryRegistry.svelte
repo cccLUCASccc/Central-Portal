@@ -3,6 +3,7 @@
     import writeExcelFile from "write-excel-file/browser";
     import { apiFetch } from "../../../lib/api";
     import { compressImageFile } from "../../../lib/imageCompressor";
+    import { expandInventoryUnits } from "../../../lib/inventory-export";
     import { isPublished, siteItemUrl } from "../../../lib/siteLink";
     import PaginationBar from "../atoms/Pagination.svelte";
 
@@ -19,6 +20,7 @@
         prix_achat: number | null;
         prix_vente: number | null;
         quantite: number | null;
+        emplacement: string | null;
         vendu: boolean | null;
         photo: boolean | null;
         publie: boolean | null;
@@ -54,6 +56,7 @@
         { key: "prix_achat", label: "Prix d'achat (€)", width: 14 },
         { key: "prix_vente", label: "Prix de vente (€)", width: 14 },
         { key: "quantite", label: "Quantité", width: 10 },
+        { key: "emplacement", label: "Emplacement", width: 20 },
         { key: "vendu", label: "Vendu", width: 8 },
         { key: "photo", label: "Photo", width: 8 },
         { key: "publie", label: "Publié", width: 8 },
@@ -80,6 +83,7 @@
         { key: "prix_achat", label: "Achat €", width: 90 },
         { key: "prix_vente", label: "Vente €", width: 90 },
         { key: "quantite", label: "Qté", width: 64 },
+        { key: "emplacement", label: "Emplacement", width: 140 },
         { key: "vendu", label: "Vendu", width: 72 },
         { key: "photo", label: "Photo", width: 72 },
         { key: "publie", label: "Publié", width: 72 },
@@ -175,6 +179,7 @@
             prix_achat: null,
             prix_vente: null,
             quantite: 1,
+            emplacement: null,
             vendu: false,
             photo: false,
             publie: false,
@@ -480,6 +485,19 @@
         openPicker({ title, options: BOOL_OPTIONS, current: boolKey(current), searchable: false, onPick: (v) => onPick(keyToBool(v)) });
     }
 
+    const EMPLACEMENT_OPTIONS: PickerOption[] = [
+        { value: "", label: "Non renseigné" },
+        { value: "sallon", label: "Sallon" },
+        { value: "garage", label: "Garage" },
+        { value: "salle_à_manger", label: "Salle à manger" },
+    ];
+    const emplacementLabel = (value: string | null) =>
+        EMPLACEMENT_OPTIONS.find((option) => option.value === (value ?? ""))?.label ?? value ?? "Non renseigné";
+
+    function pickEmplacement(title: string, current: string | null, onPick: (value: string | null) => void) {
+        openPicker({ title, options: EMPLACEMENT_OPTIONS, current: current ?? "", searchable: false, onPick: (value) => onPick(value || null) });
+    }
+
     async function remove(item: Item) {
         if (!confirm(`Supprimer ${item.code} « ${item.nom} » ?`)) return;
         const res = await apiFetch(`/api/inventaire/${item.id}`, { method: "DELETE" });
@@ -697,6 +715,7 @@
               ? filtered
               : sorted,
     );
+    const exportUnitCount = $derived(exportRows.reduce((total, item) => total + (item.quantite ?? 1), 0));
 
     function cellFor(item: Item, key: ColumnKey) {
         switch (key) {
@@ -728,11 +747,11 @@
 
     async function exportExcel() {
         const cols = COLUMNS.filter((c) => exportColumns.has(c.key));
-        if (cols.length === 0 || exportRows.length === 0) return;
+        if (cols.length === 0 || exportUnitCount === 0) return;
         isExporting = true;
         try {
             const header = cols.map((c) => ({ value: c.label, fontWeight: "bold" as const, backgroundColor: "#FFE600" }));
-            const rows = exportRows.map((item) => cols.map((c) => cellFor(item, c.key)));
+            const rows = expandInventoryUnits(exportRows).map((item) => cols.map((c) => cellFor(item, c.key)));
             const name = (exportFileName.trim() || "inventaire").replace(/\.xlsx$/i, "");
             await writeExcelFile([header, ...rows] as any, {
                 sheet: "Inventaire",
@@ -842,6 +861,10 @@
                 <label class="text-[10px] font-bold uppercase">Quantité
                     <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.quantite} required />
                 </label>
+                <div class="text-[10px] font-bold uppercase">Emplacement
+                    {@render pickerButton(emplacementLabel(manual.emplacement), !!manual.emplacement, () =>
+                        pickEmplacement("Emplacement — nouvel objet", manual.emplacement, (v) => (manual.emplacement = v)))}
+                </div>
                 {#each BOOL_FIELDS as f (f.key)}
                     <div class="text-[10px] font-bold uppercase">{f.label}
                         {@render pickerButton(boolLabel(manual[f.key]), manual[f.key] === true, () =>
@@ -870,6 +893,7 @@
                                 <th class="p-1">Nom</th><th class="p-1">Catégorie</th><th class="p-1">Date</th>
                                 <th class="p-1">Achat</th><th class="p-1">Vente</th>
                                 <th class="p-1">Quantité</th>
+                                <th class="p-1">Emplacement</th>
                                 {#each BOOL_FIELDS as f (f.key)}<th class="p-1">{f.label}</th>{/each}
                                 <th class="p-1">Provenance</th><th></th>
                             </tr>
@@ -883,6 +907,10 @@
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] !w-20" bind:value={d.quantite} required /></td>
+                                    <td class="p-1 min-w-32">
+                                        {@render pickerButton(emplacementLabel(d.emplacement), !!d.emplacement, () =>
+                                            pickEmplacement(`Emplacement — ${d.nom || "objet détecté"}`, d.emplacement, (v) => (d.emplacement = v)))}
+                                    </td>
                                     {#each BOOL_FIELDS as f (f.key)}
                                         <td class="p-1 min-w-20">
                                             {@render pickerButton(boolLabel(d[f.key]), d[f.key] === true, () =>
@@ -998,6 +1026,10 @@
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} readonly={fromDoc(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.quantite ?? 1} onchange={(e) => editNumber(item, "quantite", e)} /></td>
+                                <td class="p-0.5">
+                                    {@render pickerButton(emplacementLabel(item.emplacement), !!item.emplacement, () =>
+                                        pickEmplacement(`Emplacement — ${item.code} « ${item.nom} »`, item.emplacement, (v) => patch(item, { emplacement: v })))}
+                                </td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
                                         {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
@@ -1120,6 +1152,7 @@
                 <div class="p-4 space-y-4 text-xs">
                     <fieldset class="space-y-1">
                         <legend class="font-black uppercase mb-1">Objets à exporter</legend>
+                        <p class="mb-1">Une ligne par unité ; les objets de quantité zéro ne sont pas exportés. Les autres valeurs, y compris les prix, sont répétées.</p>
                         <label class="flex items-center gap-2">
                             <input type="radio" class="radio radio-xs" bind:group={exportScope} value="selection" disabled={selected.size === 0} />
                             Sélection ({selected.size})
@@ -1159,11 +1192,11 @@
 
                     <button
                         class="retro-btn-primary w-full text-xs py-2 font-black flex items-center justify-center gap-1.5"
-                        disabled={isExporting || exportColumns.size === 0 || exportRows.length === 0}
+                        disabled={isExporting || exportColumns.size === 0 || exportUnitCount === 0}
                         onclick={exportExcel}
                     >
                         <span class="material-symbols-outlined text-[16px]">download</span>
-                        {isExporting ? "Export..." : `Exporter ${exportRows.length} objet(s) · ${exportColumns.size} colonne(s)`}
+                        {isExporting ? "Export..." : `Exporter ${exportUnitCount} ligne(s) · ${exportColumns.size} colonne(s)`}
                     </button>
                 </div>
             </div>
