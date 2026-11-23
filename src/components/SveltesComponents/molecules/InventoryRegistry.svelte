@@ -252,9 +252,10 @@
         // Correspondance exacte (ex : "12" → D0012) en premier.
         return [...matches.filter((i) => i.code === exact), ...matches.filter((i) => i.code !== exact)];
     });
-    const purchaseTotal = $derived({
-        amount: filtered.reduce((s, i) => s + (i.prix_achat ?? 0), 0),
-        missing: filtered.filter((i) => i.prix_achat == null).length,
+    const totalPriceField = $derived(soldFilter === "yes" ? "prix_vente" : "prix_achat");
+    const filteredTotal = $derived({
+        amount: filtered.reduce((s, i) => s + (i[totalPriceField] ?? 0), 0),
+        missing: filtered.filter((i) => i[totalPriceField] == null).length,
     });
     const totalLabel = $derived(
         provenanceFilter === NO_PROVENANCE
@@ -1170,10 +1171,10 @@
                 </table>
             </div>
             <div class="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-1 border-2 border-black bg-[#FFF394] px-3 py-2 text-xs" role="status">
-                <span class="font-black uppercase">Total d'achat — {totalLabel}</span>
-                <span class="text-base font-black">{euro(purchaseTotal.amount)}</span>
+                <span class="font-black uppercase">Total {soldFilter === "yes" ? "des ventes" : "d'achat"} — {totalLabel}</span>
+                <span class="text-base font-black">{euro(filteredTotal.amount)}</span>
                 <span class="text-black/70">
-                    {filtered.length} objet(s){purchaseTotal.missing ? ` · ${purchaseTotal.missing} sans prix d'achat` : ""}
+                    {filtered.length} objet(s){filteredTotal.missing ? ` · ${filteredTotal.missing} sans prix ${soldFilter === "yes" ? "de vente" : "d'achat"}` : ""}
                 </span>
             </div>
             {#if totalPages > 1}

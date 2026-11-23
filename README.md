@@ -50,6 +50,8 @@ Les objets existants restent sans emplacement jusqu'à leur modification.
 Le filtre « Vendu » s'applique à la ligne du lot entière. Pour une quantité
 supérieure à un, le bouton « + » à côté du code affiche un nom facultatif par
 exemplaire ; les autres champs, dont l'état vendu, restent communs au lot.
+Lorsque le filtre « Vendus » est actif, le total sous le tableau additionne
+les prix de vente des lignes filtrées ; sinon, il additionne les prix d'achat.
 Les noms sont conservés si la quantité est diminuée, et réapparaissent si elle
 augmente de nouveau.
 L'export Excel crée une ligne par unité, avec une quantité de 1 ; une quantité
