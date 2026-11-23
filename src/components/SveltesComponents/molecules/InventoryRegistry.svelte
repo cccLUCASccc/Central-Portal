@@ -4,6 +4,7 @@
     import { apiFetch } from "../../../lib/api";
     import { compressImageFile } from "../../../lib/imageCompressor";
     import { expandInventoryUnits } from "../../../lib/inventory-export";
+    import { CATEGORY_GROUPS, categoryGroup, inventoryUnits, matchesSaleFilter, summarizeUnits, type CategoryGroup, type Classification, type SaleFilter, type UnitSale } from "../../../lib/inventory-units";
     import { isPublished, siteItemUrl } from "../../../lib/siteLink";
     import PaginationBar from "../atoms/Pagination.svelte";
 
@@ -16,6 +17,7 @@
     interface Entry {
         nom: string;
         categorie: string;
+        classement: Classification | null;
         date_acquisition: string | null;
         prix_achat: number | null;
         prix_vente: number | null;
@@ -40,6 +42,7 @@
         document_capacite: number | null;
         doc_fields: string[] | null;
         noms_exemplaires: string[] | null;
+        ventes_exemplaires: UnitSale[] | null;
     }
     type BoolField = "vendu" | "photo" | "publie" | "etiquette_imprimee";
     interface PurchaseDoc {
@@ -51,12 +54,13 @@
         content_type: string;
         created_at: string;
     }
-    type ColumnKey = keyof Entry | "code" | "lien_site" | "document";
+    type ColumnKey = keyof Entry | "code" | "lien_site" | "document" | "categorie_origine";
 
     const COLUMNS: { key: ColumnKey; label: string; width: number }[] = [
         { key: "code", label: "Code", width: 10 },
         { key: "nom", label: "Nom", width: 34 },
         { key: "categorie", label: "Catégorie", width: 18 },
+        { key: "categorie_origine", label: "Catégorie d'origine", width: 22 },
         { key: "date_acquisition", label: "Date d'acquisition", width: 16 },
         { key: "prix_achat", label: "Prix d'achat (€)", width: 14 },
         { key: "prix_vente", label: "Prix de vente (€)", width: 14 },
@@ -158,6 +162,7 @@
     let selected = $state<Set<number>>(new Set());
     let expanded = $state<Set<number>>(new Set());
     let savingUnitNames = $state<Set<number>>(new Set());
+    let savingUnitSales = $state<Set<number>>(new Set());
 
     // Import Gemini
     let files = $state<File[]>([]);
@@ -182,6 +187,7 @@
         return {
             nom: "",
             categorie: "",
+            classement: null,
             date_acquisition: null,
             prix_achat: null,
             prix_vente: null,
@@ -205,14 +211,16 @@
         return a.code.localeCompare(b.code);
     };
 
-    const sorted = $derived([...items].sort(byDate));
+    const sorted = $derived([...items].sort((a, b) =>
+        CATEGORY_GROUPS.indexOf(categoryGroup(a)) - CATEGORY_GROUPS.indexOf(categoryGroup(b)) || byDate(a, b)));
     // NO_PROVENANCE désigne les objets sans provenance.
     const NO_PROVENANCE = "\u0000";
     let nameSearch = $state("");
     let provenanceFilter = $state<string | null>(null);
+    let categoryFilter = $state<CategoryGroup | null>(null);
     let publishedFilter = $state<"all" | "yes" | "no">("all");
     let labelFilter = $state<"all" | "yes" | "no">("all");
-    let soldFilter = $state<"all" | "yes" | "no">("all");
+    let soldFilter = $state<SaleFilter>("all");
     const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     // Clé de regroupement : majuscules et espaces réduits (« Brocante » = « BROCANTE »), comme l'API.
     const provKey = (p: string | null | undefined) => (p ?? "").trim().replace(/\s+/g, " ").toUpperCase();
@@ -222,6 +230,7 @@
     const hasFilters = $derived(
         !!search.trim() ||
             !!nameSearch.trim() ||
+            categoryFilter !== null ||
             provenanceFilter !== null ||
             publishedFilter !== "all" ||
             labelFilter !== "all" ||
@@ -231,6 +240,7 @@
     function resetFilters() {
         search = "";
         nameSearch = "";
+        categoryFilter = null;
         provenanceFilter = null;
         publishedFilter = "all";
         labelFilter = "all";
@@ -243,26 +253,37 @@
             (i) =>
                 (!name || normalize(i.nom).includes(name) ||
                     (i.noms_exemplaires ?? []).slice(0, i.quantite ?? 1).some((n) => normalize(n).includes(name))) &&
+                (categoryFilter === null || categoryGroup(i) === categoryFilter) &&
                 (provenanceFilter === null ||
                     (provenanceFilter === NO_PROVENANCE ? !provKey(i.provenance) : provKey(i.provenance) === provenanceFilter)) &&
                 (publishedFilter === "all" || (publishedFilter === "yes") === (i.publie === true)) &&
-                (soldFilter === "all" || (soldFilter === "yes") === (i.vendu === true)) &&
+                (soldFilter === "all" || summarizeUnits(i, soldFilter).count > 0) &&
                 (labelFilter === "all" || (labelFilter === "yes") === (i.etiquette_imprimee === true)),
         );
         const q = search.trim().toUpperCase().replace(/\s+/g, "");
         if (!q) return list;
         const exact = /^\d+$/.test(q) ? `D${q.padStart(4, "0")}` : q;
         const matches = list.filter((i) => i.code.toUpperCase().includes(q));
-        // Correspondance exacte (ex : "12" → D0012) en premier.
-        return [...matches.filter((i) => i.code === exact), ...matches.filter((i) => i.code !== exact)];
+        const exactItem = matches.find((i) => i.code === exact);
+        if (!exactItem) return matches;
+        const priority = categoryGroup(exactItem);
+        return matches.sort((a, b) => {
+            const aPriority = categoryGroup(a) === priority;
+            const bPriority = categoryGroup(b) === priority;
+            return Number(bPriority) - Number(aPriority) ||
+                CATEGORY_GROUPS.indexOf(categoryGroup(a)) - CATEGORY_GROUPS.indexOf(categoryGroup(b)) ||
+                Number(b.code === exact) - Number(a.code === exact) || byDate(a, b);
+        });
     });
+    const filteredSummaries = $derived(filtered.map((item) => ({ item, summary: summarizeUnits(item, soldFilter) })));
+    const filteredUnitCount = $derived(filteredSummaries.reduce((sum, { summary }) => sum + summary.count, 0));
     const purchaseTotal = $derived({
-        amount: filtered.reduce((s, i) => s + (i.prix_achat ?? 0), 0),
-        missing: filtered.filter((i) => i.prix_achat == null).length,
+        amount: filteredSummaries.reduce((sum, { item, summary }) => sum + (item.prix_achat ?? 0) * summary.count, 0),
+        missing: filteredSummaries.reduce((sum, { item, summary }) => sum + (item.prix_achat == null ? summary.count : 0), 0),
     });
     const salesTotal = $derived({
-        amount: filtered.reduce((s, i) => s + (i.prix_vente ?? 0), 0),
-        missing: filtered.filter((i) => i.prix_vente == null).length,
+        amount: filteredSummaries.reduce((sum, { summary }) => sum + summary.sales, 0),
+        missing: filteredSummaries.reduce((sum, { summary }) => sum + summary.missing, 0),
     });
     const totalLabel = $derived(
         provenanceFilter === NO_PROVENANCE
@@ -277,15 +298,16 @@
     const pageItems = $derived(filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
     const allFilteredSelected = $derived(filtered.length > 0 && filtered.every((i) => selected.has(i.id)));
     const stats = $derived({
-        total: items.length,
-        vendus: items.filter((i) => i.vendu).length,
-        achats: items.reduce((s, i) => s + (i.prix_achat ?? 0), 0),
-        ventes: items.reduce((s, i) => s + (i.vendu ? i.prix_vente ?? 0 : 0), 0),
+        total: items.reduce((sum, item) => sum + (item.quantite ?? 1), 0),
+        vendus: items.reduce((sum, item) => sum + summarizeUnits(item, "yes").count, 0),
+        achats: items.reduce((sum, item) => sum + (item.prix_achat ?? 0) * (item.quantite ?? 1), 0),
+        ventes: items.reduce((sum, item) => sum + summarizeUnits(item, "yes").sales, 0),
     });
 
     $effect(() => {
         search;
         nameSearch;
+        categoryFilter;
         provenanceFilter;
         publishedFilter;
         labelFilter;
@@ -408,18 +430,23 @@
     }
 
     // ---------- Édition ----------
-    async function patch(item: Item, body: Record<string, unknown>) {
-        const res = await apiFetch(`/api/inventaire/${item.id}`, {
-            method: "PATCH",
-            body: JSON.stringify(body),
-        });
-        if (res.ok) {
-            const updated: Item = await res.json();
-            items = items.map((i) => (i.id === item.id ? { ...updated, noms_exemplaires: i.noms_exemplaires } : i));
-        } else {
+    async function patch(item: Item, body: Record<string, unknown>): Promise<boolean> {
+        try {
+            const res = await apiFetch(`/api/inventaire/${item.id}`, {
+                method: "PATCH",
+                body: JSON.stringify(body),
+            });
+            if (res.ok) {
+                const updated: Item = await res.json();
+                items = items.map((i) => (i.id === item.id ? { ...updated, noms_exemplaires: i.noms_exemplaires } : i));
+                return true;
+            }
             error = await readError(res, "Mise à jour impossible.");
-            items = [...items]; // Réaffiche la valeur enregistrée.
+        } catch {
+            error = "Erreur réseau pendant la mise à jour.";
         }
+        items = [...items];
+        return false;
     }
 
     function toggleUnits(id: number) {
@@ -460,18 +487,67 @@
         }
     }
 
-    function editText(item: Item, field: "nom" | "categorie" | "provenance", e: Event) {
+    async function updateUnitSale(item: Item, index: number, body: { vendu?: boolean; prix_vente?: number | null }): Promise<boolean> {
+        if (savingUnitSales.has(item.id)) return false;
+        savingUnitSales = new Set(savingUnitSales).add(item.id);
+        try {
+            const res = await apiFetch(`/api/inventaire/${item.id}/exemplaires/${index + 1}/vente`, {
+                method: "PATCH",
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+                error = await readError(res, "Mise à jour de la vente impossible.");
+                return false;
+            }
+            const updated: Item = await res.json();
+            items = items.map((i) => i.id === item.id ? { ...updated, noms_exemplaires: i.noms_exemplaires } : i);
+            return true;
+        } catch {
+            error = "Erreur réseau pendant la mise à jour de la vente.";
+            return false;
+        } finally {
+            const next = new Set(savingUnitSales);
+            next.delete(item.id);
+            savingUnitSales = next;
+        }
+    }
+
+    async function editUnitSalePrice(item: Item, index: number, e: Event) {
+        const input = e.currentTarget as HTMLInputElement;
+        const previous = inventoryUnits(item)[index].prix_vente;
+        const raw = input.value === "" ? null : Number(input.value);
+        if (input.validity.badInput || (raw !== null && (!Number.isFinite(raw) || raw < 0))) {
+            input.value = previous === null ? "" : String(previous);
+            error = "Le prix de vente doit être positif ou nul.";
+            return;
+        }
+        const value = raw === null ? null : Math.round(raw);
+        input.value = value === null ? "" : String(value);
+        if (value !== previous && !(await updateUnitSale(item, index, { prix_vente: value }))) {
+            input.value = previous === null ? "" : String(previous);
+        }
+    }
+
+    async function editText(item: Item, field: "nom" | "categorie" | "provenance", e: Event) {
         const input = e.currentTarget as HTMLInputElement;
         const value = input.value.trim();
         if (field === "nom" && !value) {
             input.value = item.nom;
             return;
         }
-        if (field === "provenance" ? provKey(value) !== provKey(item.provenance) : value !== (item[field] ?? ""))
-            patch(item, { [field]: field === "provenance" && !value ? null : value });
+        if (field === "provenance") {
+            const key = provKey(value);
+            const normalized = key === "CADEAU" || key === "BROCANTE" ? "PARTICULIER" : key;
+            input.value = normalized;
+            if (normalized !== provKey(item.provenance) && !(await patch(item, { provenance: normalized || null }))) {
+                input.value = item.provenance ?? "";
+            }
+        } else if (value !== (item[field] ?? "") && !(await patch(item, { [field]: value }))) {
+            input.value = item[field] ?? "";
+        }
     }
 
-    function editNumber(item: Item, field: "prix_achat" | "prix_vente" | "quantite", e: Event) {
+    async function editNumber(item: Item, field: "prix_achat" | "prix_vente" | "quantite", e: Event) {
         const input = e.currentTarget as HTMLInputElement;
         const raw = input.value;
         if (field === "prix_vente" && item.antiquite_id != null && raw === "") {
@@ -491,7 +567,9 @@
         }
         const value = raw === "" ? null : field === "prix_achat" ? Number(raw) : Math.round(Number(raw));
         input.value = value === null ? "" : String(value);
-        if (value !== item[field]) patch(item, { [field]: value });
+        if (value !== item[field] && !(await patch(item, { [field]: value }))) {
+            input.value = String(item[field] ?? (field === "quantite" ? 1 : ""));
+        }
     }
 
     function editDate(item: Item, e: Event) {
@@ -540,6 +618,30 @@
     const boolKey = (v: boolean | null | undefined) => String(v === true);
     const keyToBool = (v: string) => v === "true";
     const boolLabel = (v: boolean | null | undefined) => (v === true ? "Oui" : "Non");
+    const soldCount = (item: Item) => summarizeUnits(item, "yes").count;
+
+    const categoryLabel = (group: CategoryGroup) => group === "A_CLASSER" ? "À classer" : group;
+    const categoryOptions: PickerOption[] = CATEGORY_GROUPS.map((group) => ({ value: group, label: categoryLabel(group) }));
+
+    function pickCategory(title: string, entry: Entry, onPick: (value: Classification) => void) {
+        openPicker({
+            title,
+            options: categoryOptions,
+            current: categoryGroup(entry),
+            searchable: false,
+            onPick: (value) => onPick(value as Classification),
+        });
+    }
+
+    function pickCategoryFilter() {
+        openPicker({
+            title: "Filtrer par catégorie",
+            options: [{ value: "__all__", label: "Toutes les catégories" }, ...categoryOptions],
+            current: categoryFilter ?? "__all__",
+            searchable: false,
+            onPick: (value) => (categoryFilter = value === "__all__" ? null : value as CategoryGroup),
+        });
+    }
 
     function pickBool(title: string, current: boolean | null, onPick: (v: boolean | null) => void) {
         openPicker({ title, options: BOOL_OPTIONS, current: boolKey(current), searchable: false, onPick: (v) => onPick(keyToBool(v)) });
@@ -854,10 +956,15 @@
               ? filtered
               : sorted,
     );
-    const exportUnitCount = $derived(exportRows.reduce((total, item) => total + (item.quantite ?? 1), 0));
+    const exportUnits = $derived(expandInventoryUnits(exportRows, exportScope === "filtered" ? soldFilter : "all"));
+    const exportUnitCount = $derived(exportUnits.length);
 
     function cellFor(item: Item, key: ColumnKey) {
         switch (key) {
+            case "categorie":
+                return categoryLabel(categoryGroup(item));
+            case "categorie_origine":
+                return item.categorie || null;
             case "date_acquisition": {
                 if (!item.date_acquisition) return null;
                 const [y, m, d] = item.date_acquisition.split("-").map(Number);
@@ -890,7 +997,7 @@
         isExporting = true;
         try {
             const header = cols.map((c) => ({ value: c.label, fontWeight: "bold" as const, backgroundColor: "#FFE600" }));
-            const rows = expandInventoryUnits(exportRows).map((item) => cols.map((c) => cellFor(item, c.key)));
+            const rows = exportUnits.map((item) => cols.map((c) => cellFor(item, c.key)));
             const name = (exportFileName.trim() || "inventaire").replace(/\.xlsx$/i, "");
             await writeExcelFile([header, ...rows] as any, {
                 sheet: "Inventaire",
@@ -982,9 +1089,10 @@
                 <label class="text-[10px] font-bold uppercase col-span-2">Nom
                     <input class="retro-input text-xs w-full" bind:value={manual.nom} required />
                 </label>
-                <label class="text-[10px] font-bold uppercase">Catégorie
-                    <input class="retro-input text-xs w-full" bind:value={manual.categorie} />
-                </label>
+                <div class="text-[10px] font-bold uppercase">Catégorie
+                    {@render pickerButton(categoryLabel(categoryGroup(manual)), categoryGroup(manual) !== "A_CLASSER", () =>
+                        pickCategory("Catégorie — nouvel objet", manual, (value) => (manual.classement = value)))}
+                </div>
                 <label class="text-[10px] font-bold uppercase">Date d'acquisition
                     <input type="date" class="retro-input text-xs w-full" bind:value={manual.date_acquisition} />
                 </label>
@@ -1041,7 +1149,12 @@
                             {#each drafts as d, i (i)}
                                 <tr class="border-t border-black/10">
                                     <td class="p-1"><input class="retro-input text-[11px] !w-48 {d.nom.trim() ? '' : '!bg-[#FFC2D1]'}" bind:value={d.nom} /></td>
-                                    <td class="p-1"><input class="retro-input text-[11px] !w-28" bind:value={d.categorie} /></td>
+                                    <td class="p-1 min-w-32">
+                                        {@render pickerButton(categoryLabel(categoryGroup(d)), categoryGroup(d) !== "A_CLASSER", () =>
+                                            pickCategory(`Catégorie — ${d.nom || "objet détecté"}`, d, (value) => (d.classement = value)),
+                                            d.categorie ? `Catégorie lue : ${d.categorie}` : "")}
+                                        {#if d.categorie}<span class="text-[10px] text-black/60">Lue : {d.categorie}</span>{/if}
+                                    </td>
                                     <td class="p-1"><input type="date" class="retro-input text-[11px] !w-32" bind:value={d.date_acquisition} /></td>
                                     <td class="p-1"><input type="number" step="0.01" inputmode="decimal" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
@@ -1081,6 +1194,14 @@
             <div class="relative flex-1 min-w-56">
                 <span class="material-symbols-outlined text-[16px] absolute left-2 top-1/2 -translate-y-1/2 text-black/50">match_case</span>
                 <input class="retro-input text-xs w-full !pl-8" bind:value={nameSearch} placeholder="Rechercher par nom" />
+            </div>
+            <div class="w-52">
+                {@render pickerButton(
+                    categoryFilter === null ? "Catégorie : toutes" : `Catégorie : ${categoryLabel(categoryFilter)}`,
+                    categoryFilter !== null,
+                    pickCategoryFilter,
+                    "Filtrer par catégorie",
+                )}
             </div>
             <div class="w-52">
                 {@render pickerButton(
@@ -1164,17 +1285,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each pageItems as item (item.id)}
+                        {#each pageItems as item, rowIndex (item.id)}
+                            {#if rowIndex === 0 || categoryGroup(pageItems[rowIndex - 1]) !== categoryGroup(item)}
+                                <tr class="bg-[#BFD7FE] border-t-2 border-black">
+                                    <th colspan={TABLE_COLUMNS.length} class="p-1 text-left uppercase">
+                                        {categoryLabel(categoryGroup(item))} · {filteredSummaries.filter(({ item: entry }) => categoryGroup(entry) === categoryGroup(item)).reduce((sum, { summary }) => sum + summary.count, 0)} exemplaire(s)
+                                    </th>
+                                </tr>
+                            {/if}
                             <tr class="border-t border-black/10 {selected.has(item.id) ? 'bg-[#FFF394]/40' : ''} {item.vendu ? 'text-black/60' : ''}">
                                 <td class="p-0.5 text-center"><input type="checkbox" class="checkbox checkbox-xs" checked={selected.has(item.id)} onchange={() => toggle(item.id)} /></td>
                                 <td class="p-0.5 font-black" title={item.code}>
                                     {item.code}
-                                    {#if (item.quantite ?? 1) > 1 || ((item.quantite ?? 1) > 0 && (item.noms_exemplaires?.length ?? 0) > 0)}
+                                    {#if (item.quantite ?? 1) > 1 || ((item.quantite ?? 1) > 0 && ((item.noms_exemplaires?.length ?? 0) > 0 || (item.ventes_exemplaires?.length ?? 0) > 0))}
                                         <button type="button" class="underline" aria-expanded={expanded.has(item.id)} aria-label={`${expanded.has(item.id) ? "Masquer" : "Afficher"} les exemplaires de ${item.code}`} onclick={() => toggleUnits(item.id)}>{expanded.has(item.id) ? "−" : "+"}</button>
                                     {/if}
                                 </td>
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'nom')}" value={item.nom} title={docTitle(item, "nom") ?? item.nom} readonly={fromDoc(item, "nom")} onchange={(e) => editText(item, "nom", e)} /></td>
-                                <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} readonly={fromDoc(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
+                                <td class="p-0.5">
+                                    {@render pickerButton(categoryLabel(categoryGroup(item)), categoryGroup(item) !== "A_CLASSER", () =>
+                                        pickCategory(`Catégorie — ${item.code} « ${item.nom} »`, item, (value) => patch(item, { classement: value })),
+                                        item.categorie ? `Catégorie d'origine conservée : ${item.categorie}` : "Choisir une catégorie")}
+                                    {#if item.categorie && categoryGroup(item) === "A_CLASSER"}
+                                        <span class="text-[10px] text-black/60" title={item.categorie}>{item.categorie}</span>
+                                    {/if}
+                                </td>
                                 <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} readonly={fromDoc(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
                                 <td class="p-0.5"><input type="number" step="0.01" inputmode="decimal" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} readonly={fromDoc(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
@@ -1185,11 +1320,17 @@
                                 </td>
                                 {#each BOOL_FIELDS as f (f.key)}
                                     <td class="p-0.5">
-                                        {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
-                                            pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })),
-                                            "",
-                                            f.key === "etiquette_imprimee" ? "!bg-[#FFE600]" : "!bg-[#99E7DC]",
-                                            f.key === "publie" ? "!bg-[#FFC2D1]" : "")}
+                                        {#if f.key === "vendu" && (item.quantite ?? 1) > 1}
+                                            {@render pickerButton(`${soldCount(item)}/${item.quantite ?? 1}`, soldCount(item) > 0, () =>
+                                                pickBool(`Marquer tous les exemplaires vendus — ${item.code}`, item.vendu, (v) => patch(item, { vendu: v })),
+                                                "Nombre d'exemplaires vendus ; modifier pour appliquer à tout le lot")}
+                                        {:else}
+                                            {@render pickerButton(boolLabel(item[f.key]), item[f.key] === true, () =>
+                                                pickBool(`${f.label} — ${item.code} « ${item.nom} »`, item[f.key], (v) => patch(item, { [f.key]: v })),
+                                                "",
+                                                f.key === "etiquette_imprimee" ? "!bg-[#FFE600]" : "!bg-[#99E7DC]",
+                                                f.key === "publie" ? "!bg-[#FFC2D1]" : "")}
+                                        {/if}
                                     </td>
                                 {/each}
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 uppercase {docClass(item, 'provenance')}" value={item.provenance ?? ""} title={docTitle(item, "provenance")} readonly={fromDoc(item, "provenance")} onchange={(e) => editText(item, "provenance", e)} /></td>
@@ -1247,7 +1388,8 @@
                                 </td>
                             </tr>
                             {#if expanded.has(item.id) && (item.quantite ?? 1) > 0}
-                                {#each Array.from({ length: item.quantite ?? 1 }) as _, index (index)}
+                                {#each inventoryUnits(item).filter((unit) => matchesSaleFilter(unit.vendu, soldFilter)) as unit (unit.index)}
+                                    {@const index = unit.index}
                                     <tr class="border-t border-black/10 bg-[#f7f7f7]">
                                         <td></td>
                                         <td class="p-1 text-black/60">↳ {index + 1}</td>
@@ -1259,7 +1401,24 @@
                                                 disabled={savingUnitNames.has(item.id)}
                                                 onchange={(e) => editUnitName(item, index, e)} />
                                         </td>
-                                        <td colspan={TABLE_COLUMNS.length - 3} class="p-1 text-black/60">Nom facultatif · les autres champs restent communs au lot</td>
+                                        <td colspan="3" class="p-1 text-black/60">Exemplaire {index + 1}</td>
+                                        <td class="p-0.5">
+                                            <input type="number" step="1" min="0" inputmode="numeric" class="retro-input text-[11px] w-full min-w-0"
+                                                aria-label={`Prix de vente de l'exemplaire ${index + 1} de ${item.code}`}
+                                                value={unit.prix_vente ?? ""}
+                                                disabled={savingUnitSales.has(item.id)}
+                                                onchange={(e) => editUnitSalePrice(item, index, e)} />
+                                        </td>
+                                        <td></td><td></td>
+                                        <td class="p-0.5">
+                                            <button type="button" class="retro-input text-[11px] w-full cursor-pointer {unit.vendu ? '!bg-[#99E7DC]' : ''}"
+                                                aria-label={`État de vente de l'exemplaire ${index + 1} de ${item.code}`}
+                                                disabled={savingUnitSales.has(item.id)}
+                                                onclick={() => updateUnitSale(item, index, { vendu: !unit.vendu })}>
+                                                {unit.vendu ? "Vendu" : "Non"}
+                                            </button>
+                                        </td>
+                                        <td colspan={TABLE_COLUMNS.length - 10} class="p-1 text-black/60">Prix et vente propres à l'exemplaire</td>
                                     </tr>
                                 {/each}
                             {/if}
@@ -1268,7 +1427,7 @@
                 </table>
             </div>
             <div class="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-1 border-2 border-black bg-[#FFF394] px-3 py-2 text-xs" role="status">
-                <span class="font-black uppercase">{totalLabel} · {filtered.length} objet(s)</span>
+                <span class="font-black uppercase">{totalLabel} · {filteredUnitCount} exemplaire(s)</span>
                 {#if soldFilter === "yes"}
                     <span>
                         <span class="font-black uppercase">Total des ventes</span>
@@ -1383,7 +1542,7 @@
                 <div class="p-4 space-y-4 text-xs">
                     <fieldset class="space-y-1">
                         <legend class="font-black uppercase mb-1">Objets à exporter</legend>
-                        <p class="mb-1">Une ligne par unité ; les objets de quantité zéro ne sont pas exportés. Les autres valeurs, y compris les prix, sont répétées.</p>
+                        <p class="mb-1">Une ligne par unité ; les objets de quantité zéro ne sont pas exportés. Le prix de vente et l'état vendu sont propres à chaque exemplaire.</p>
                         <label class="flex items-center gap-2">
                             <input type="radio" class="radio radio-xs" bind:group={exportScope} value="selection" disabled={selected.size === 0} />
                             Sélection ({selected.size})

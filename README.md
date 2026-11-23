@@ -50,9 +50,21 @@ Les objets existants restent sans emplacement jusqu'à leur modification.
 Le prix d'achat accepte les centimes ; le prix de vente reste arrondi à l'euro.
 Pour un lot, le prix d'achat unitaire calculé est arrondi au centime.
 Les centimes déjà perdus lors d'un ancien arrondi ne sont pas récupérés.
-Le filtre « Vendu » s'applique à la ligne du lot entière. Pour une quantité
-supérieure à un, le bouton « + » à côté du code affiche un nom facultatif par
-exemplaire ; les autres champs, dont l'état vendu, restent communs au lot.
+Les objets sont regroupés et filtrables par catégorie : DECO, MOBILIER, BIJOUX,
+AUTRE ou « À classer ». Les anciennes catégories restent conservées : celles
+qui correspondent exactement à ces catégories sont reconnues, les autres
+peuvent être classées manuellement sans effacer la catégorie d'origine.
+Les provenances exactement égales à CADEAU ou BROCANTE sont remplacées par
+PARTICULIER ; les provenances détaillées restent inchangées.
+Pour une quantité supérieure à un, le bouton « + » affiche chaque exemplaire :
+son nom est facultatif et son état vendu et son prix de vente sont individuels.
+Le prix commun reste le prix par défaut et celui synchronisé avec le site ; au
+moment de la vente, le prix de l'exemplaire est conservé indépendamment.
+Le bouton Vendu de la ligne entière applique son choix à tous les exemplaires.
+Une ligne partiellement vendue apparaît dans les deux filtres, mais les
+totaux et l'export filtré ne comptent que les exemplaires correspondants.
+La quantité désigne le nombre total d'exemplaires, vendus ou non. Une réduction
+ne peut pas masquer un exemplaire vendu.
 Lorsque le filtre « Vendus » est actif, le total sous le tableau additionne
 les prix de vente et les prix d'achat des lignes filtrées et affiche leur
 différence comme bénéfice. Si un prix manque, les totaux sont partiels et le
@@ -72,8 +84,8 @@ inconnu n'est pas déduite de la saisie. Une page ou ligne déjà indiquée peut
 être corrigée ; en cas de changement, les anciennes valeurs sont conservées
 mais déverrouillées jusqu'à leur relecture.
 L'export Excel crée une ligne par unité, avec une quantité de 1 ; une quantité
-de 0 ne produit aucune ligne. Les autres valeurs, notamment les prix, sont
-répétées sans division. Le nom de l'exemplaire remplace celui du lot lorsqu'il
+de 0 ne produit aucune ligne. Le prix d'achat est répété sans division ; la
+vente et son prix sont propres à chaque exemplaire. Le nom de l'exemplaire remplace celui du lot lorsqu'il
 est renseigné. Déployer Central-API avant le portail pour ajouter les colonnes
 en base et activer l'enregistrement des noms.
 
