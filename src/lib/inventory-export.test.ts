@@ -16,3 +16,9 @@ test("exporte une ligne par unité en conservant les autres données", () => {
     ]);
     assert.equal(items[0].quantite, 3);
 });
+
+test("utilise le nom facultatif de chaque exemplaire, sinon celui du lot", () => {
+    const items = [{ nom: "Vase", quantite: 3, noms_exemplaires: ["Vase bleu", "", "Vase vert", "Masqué"] }];
+    assert.deepEqual(expandInventoryUnits(items).map((item) => item.nom), ["Vase bleu", "Vase", "Vase vert"]);
+    assert.equal(items[0].nom, "Vase");
+});

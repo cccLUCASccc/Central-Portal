@@ -35,6 +35,7 @@
         document_id: number | null;
         document?: PurchaseDoc | null;
         doc_fields: string[] | null;
+        noms_exemplaires: string[] | null;
     }
     type BoolField = "vendu" | "photo" | "publie" | "etiquette_imprimee";
     interface PurchaseDoc {
@@ -151,6 +152,8 @@
     let search = $state("");
     let page = $state(1);
     let selected = $state<Set<number>>(new Set());
+    let expanded = $state<Set<number>>(new Set());
+    let savingUnitNames = $state<Set<number>>(new Set());
 
     // Import Gemini
     let files = $state<File[]>([]);
@@ -199,12 +202,13 @@
     };
 
     const sorted = $derived([...items].sort(byDate));
-    // Filtres : nom, provenance (NO_PROVENANCE = sans provenance) et états « Publié » / « Étiquette ».
+    // NO_PROVENANCE désigne les objets sans provenance.
     const NO_PROVENANCE = "\u0000";
     let nameSearch = $state("");
     let provenanceFilter = $state<string | null>(null);
     let publishedFilter = $state<"all" | "yes" | "no">("all");
     let labelFilter = $state<"all" | "yes" | "no">("all");
+    let soldFilter = $state<"all" | "yes" | "no">("all");
     const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     // Clé de regroupement : majuscules et espaces réduits (« Brocante » = « BROCANTE »), comme l'API.
     const provKey = (p: string | null | undefined) => (p ?? "").trim().replace(/\s+/g, " ").toUpperCase();
@@ -216,7 +220,8 @@
             !!nameSearch.trim() ||
             provenanceFilter !== null ||
             publishedFilter !== "all" ||
-            labelFilter !== "all",
+            labelFilter !== "all" ||
+            soldFilter !== "all",
     );
 
     function resetFilters() {
@@ -225,16 +230,19 @@
         provenanceFilter = null;
         publishedFilter = "all";
         labelFilter = "all";
+        soldFilter = "all";
     }
 
     const filtered = $derived.by(() => {
         const name = normalize(nameSearch);
         let list = sorted.filter(
             (i) =>
-                (!name || normalize(i.nom).includes(name)) &&
+                (!name || normalize(i.nom).includes(name) ||
+                    (i.noms_exemplaires ?? []).slice(0, i.quantite ?? 1).some((n) => normalize(n).includes(name))) &&
                 (provenanceFilter === null ||
                     (provenanceFilter === NO_PROVENANCE ? !provKey(i.provenance) : provKey(i.provenance) === provenanceFilter)) &&
                 (publishedFilter === "all" || (publishedFilter === "yes") === (i.publie === true)) &&
+                (soldFilter === "all" || (soldFilter === "yes") === (i.vendu === true)) &&
                 (labelFilter === "all" || (labelFilter === "yes") === (i.etiquette_imprimee === true)),
         );
         const q = search.trim().toUpperCase().replace(/\s+/g, "");
@@ -273,6 +281,7 @@
         provenanceFilter;
         publishedFilter;
         labelFilter;
+        soldFilter;
         page = 1;
     });
     $effect(() => {
@@ -398,10 +407,48 @@
         });
         if (res.ok) {
             const updated: Item = await res.json();
-            items = items.map((i) => (i.id === item.id ? updated : i));
+            items = items.map((i) => (i.id === item.id ? { ...updated, noms_exemplaires: i.noms_exemplaires } : i));
         } else {
             error = await readError(res, "Mise à jour impossible.");
             items = [...items]; // Réaffiche la valeur enregistrée.
+        }
+    }
+
+    function toggleUnits(id: number) {
+        const next = new Set(expanded);
+        next.has(id) ? next.delete(id) : next.add(id);
+        expanded = next;
+    }
+
+    async function editUnitName(item: Item, index: number, e: Event) {
+        const input = e.currentTarget as HTMLInputElement;
+        const name = input.value.trim();
+        if (name === (item.noms_exemplaires?.[index] ?? "")) {
+            input.value = name;
+            return;
+        }
+        savingUnitNames = new Set(savingUnitNames).add(item.id);
+        error = "";
+        try {
+            const res = await apiFetch(`/api/inventaire/${item.id}/exemplaires/${index + 1}`, {
+                method: "PATCH",
+                body: JSON.stringify({ nom: name }),
+            });
+            if (!res.ok) {
+                error = await readError(res, "Mise à jour de l'exemplaire impossible.");
+                input.value = item.noms_exemplaires?.[index] ?? "";
+                return;
+            }
+            const body: { noms_exemplaires: string[] } = await res.json();
+            items = items.map((i) => i.id === item.id ? { ...i, noms_exemplaires: body.noms_exemplaires } : i);
+            input.value = name;
+        } catch {
+            input.value = item.noms_exemplaires?.[index] ?? "";
+            error = "Erreur réseau pendant la mise à jour de l'exemplaire.";
+        } finally {
+            const next = new Set(savingUnitNames);
+            next.delete(item.id);
+            savingUnitNames = next;
         }
     }
 
@@ -603,7 +650,7 @@
                 return;
             }
             const body: { item: Item; found: boolean; changes: { field: string }[]; price_status?: "manual" | "allocated" | "document" } = await res.json();
-            items = items.map((i) => (i.id === item.id ? body.item : i));
+            items = items.map((i) => (i.id === item.id ? { ...body.item, noms_exemplaires: i.noms_exemplaires } : i));
             const title = body.item.document?.title ?? "le document";
             if (!body.found) {
                 notice = `${item.code} lié à « ${title} », mais Gemini n'y a pas trouvé cet objet : aucun champ modifié.`;
@@ -629,7 +676,7 @@
         const res = await apiFetch(`/api/inventaire/${item.id}/document`, { method: "DELETE" });
         if (res.ok) {
             const updated: Item = await res.json();
-            items = items.map((i) => (i.id === item.id ? updated : i));
+            items = items.map((i) => (i.id === item.id ? { ...updated, noms_exemplaires: i.noms_exemplaires } : i));
         } else {
             error = await readError(res, "Impossible de délier le document.");
         }
@@ -965,6 +1012,15 @@
                     >{label}</button>
                 {/each}
             </div>
+            <div class="flex" role="group" aria-label="Filtrer par état Vendu">
+                {#each [["all", "Ventes : toutes"], ["yes", "Vendus"], ["no", "Non vendus"]] as [value, label] (value)}
+                    <button
+                        class="retro-btn text-xs py-2 px-3 {soldFilter === value ? 'bg-[#99E7DC]' : 'bg-white'}"
+                        aria-pressed={soldFilter === value}
+                        onclick={() => (soldFilter = value as "all" | "yes" | "no")}
+                    >{label}</button>
+                {/each}
+            </div>
             <div class="flex" role="group" aria-label="Filtrer par état Étiquette imprimée">
                 {#each [["all", "Étiquettes : toutes"], ["yes", "Imprimées"], ["no", "Non imprimées"]] as [value, label] (value)}
                     <button
@@ -1024,7 +1080,12 @@
                         {#each pageItems as item (item.id)}
                             <tr class="border-t border-black/10 {selected.has(item.id) ? 'bg-[#FFF394]/40' : ''} {item.vendu ? 'text-black/60' : ''}">
                                 <td class="p-0.5 text-center"><input type="checkbox" class="checkbox checkbox-xs" checked={selected.has(item.id)} onchange={() => toggle(item.id)} /></td>
-                                <td class="p-0.5 font-black truncate" title={item.code}>{item.code}</td>
+                                <td class="p-0.5 font-black" title={item.code}>
+                                    {item.code}
+                                    {#if (item.quantite ?? 1) > 1 || ((item.quantite ?? 1) > 0 && (item.noms_exemplaires?.length ?? 0) > 0)}
+                                        <button type="button" class="underline" aria-expanded={expanded.has(item.id)} aria-label={`${expanded.has(item.id) ? "Masquer" : "Afficher"} les exemplaires de ${item.code}`} onclick={() => toggleUnits(item.id)}>{expanded.has(item.id) ? "−" : "+"}</button>
+                                    {/if}
+                                </td>
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'nom')}" value={item.nom} title={docTitle(item, "nom") ?? item.nom} readonly={fromDoc(item, "nom")} onchange={(e) => editText(item, "nom", e)} /></td>
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} readonly={fromDoc(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
                                 <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} readonly={fromDoc(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
@@ -1087,6 +1148,23 @@
                                     </button>
                                 </td>
                             </tr>
+                            {#if expanded.has(item.id) && (item.quantite ?? 1) > 0}
+                                {#each Array.from({ length: item.quantite ?? 1 }) as _, index (index)}
+                                    <tr class="border-t border-black/10 bg-[#f7f7f7]">
+                                        <td></td>
+                                        <td class="p-1 text-black/60">↳ {index + 1}</td>
+                                        <td class="p-0.5">
+                                            <input class="retro-input text-[11px] w-full min-w-0" maxlength="255"
+                                                aria-label={`Nom facultatif de l'exemplaire ${index + 1} de ${item.code}`}
+                                                placeholder={item.nom}
+                                                value={item.noms_exemplaires?.[index] ?? ""}
+                                                disabled={savingUnitNames.has(item.id)}
+                                                onchange={(e) => editUnitName(item, index, e)} />
+                                        </td>
+                                        <td colspan={TABLE_COLUMNS.length - 3} class="p-1 text-black/60">Nom facultatif · les autres champs restent communs au lot</td>
+                                    </tr>
+                                {/each}
+                            {/if}
                         {/each}
                     </tbody>
                 </table>

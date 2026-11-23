@@ -47,10 +47,16 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 
 L'emplacement est facultatif : `sallon`, `garage` ou `salle_à_manger`.
 Les objets existants restent sans emplacement jusqu'à leur modification.
+Le filtre « Vendu » s'applique à la ligne du lot entière. Pour une quantité
+supérieure à un, le bouton « + » à côté du code affiche un nom facultatif par
+exemplaire ; les autres champs, dont l'état vendu, restent communs au lot.
+Les noms sont conservés si la quantité est diminuée, et réapparaissent si elle
+augmente de nouveau.
 L'export Excel crée une ligne par unité, avec une quantité de 1 ; une quantité
 de 0 ne produit aucune ligne. Les autres valeurs, notamment les prix, sont
-répétées sans division. Déployer Central-API avant le portail pour ajouter la
-colonne en base.
+répétées sans division. Le nom de l'exemplaire remplace celui du lot lorsqu'il
+est renseigné. Déployer Central-API avant le portail pour ajouter les colonnes
+en base et activer l'enregistrement des noms.
 
 ## Livraison automatique
 
