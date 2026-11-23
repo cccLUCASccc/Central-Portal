@@ -51,9 +51,16 @@ Le filtre « Vendu » s'applique à la ligne du lot entière. Pour une quantité
 supérieure à un, le bouton « + » à côté du code affiche un nom facultatif par
 exemplaire ; les autres champs, dont l'état vendu, restent communs au lot.
 Lorsque le filtre « Vendus » est actif, le total sous le tableau additionne
-les prix de vente des lignes filtrées ; sinon, il additionne les prix d'achat.
+les prix de vente et les prix d'achat des lignes filtrées et affiche leur
+différence comme bénéfice. Si un prix manque, les totaux sont partiels et le
+bénéfice est indéterminé. Sinon, seul le total d'achat est affiché.
 Les noms sont conservés si la quantité est diminuée, et réapparaissent si elle
 augmente de nouveau.
+Un même document d'achat peut être lié à plusieurs objets. Les anciennes
+correspondances sans numéro de ligne sont recherchées automatiquement ; si
+elles restent incertaines, la liaison est enregistrée sans modifier les champs
+et un message invite à vérifier le document. L'indication « Correspondance à
+vérifier » reste visible sur les liaisons dont la ligne est inconnue.
 L'export Excel crée une ligne par unité, avec une quantité de 1 ; une quantité
 de 0 ne produit aucune ligne. Les autres valeurs, notamment les prix, sont
 répétées sans division. Le nom de l'exemplaire remplace celui du lot lorsqu'il

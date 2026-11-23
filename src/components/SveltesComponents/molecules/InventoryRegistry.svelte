@@ -34,6 +34,10 @@
         antiquite?: LinkedAntiquite | null;
         document_id: number | null;
         document?: PurchaseDoc | null;
+        document_page: number | null;
+        document_ligne: number | null;
+        document_unites: number | null;
+        document_capacite: number | null;
         doc_fields: string[] | null;
         noms_exemplaires: string[] | null;
     }
@@ -252,10 +256,13 @@
         // Correspondance exacte (ex : "12" → D0012) en premier.
         return [...matches.filter((i) => i.code === exact), ...matches.filter((i) => i.code !== exact)];
     });
-    const totalPriceField = $derived(soldFilter === "yes" ? "prix_vente" : "prix_achat");
-    const filteredTotal = $derived({
-        amount: filtered.reduce((s, i) => s + (i[totalPriceField] ?? 0), 0),
-        missing: filtered.filter((i) => i[totalPriceField] == null).length,
+    const purchaseTotal = $derived({
+        amount: filtered.reduce((s, i) => s + (i.prix_achat ?? 0), 0),
+        missing: filtered.filter((i) => i.prix_achat == null).length,
+    });
+    const salesTotal = $derived({
+        amount: filtered.reduce((s, i) => s + (i.prix_vente ?? 0), 0),
+        missing: filtered.filter((i) => i.prix_vente == null).length,
     });
     const totalLabel = $derived(
         provenanceFilter === NO_PROVENANCE
@@ -593,6 +600,9 @@
     let readingIds = $state<Set<number>>(new Set());
 
     const fromDoc = (item: Item, field: string) => item.document_id != null && (item.doc_fields ?? []).includes(field);
+    const documentMatchKnown = (item: Item) =>
+        (item.document_page ?? 0) > 0 && (item.document_ligne ?? 0) > 0 &&
+        (item.document_unites ?? 0) > 0 && (item.document_capacite ?? 0) > 0;
     const docClass = (item: Item, field: string) => (fromDoc(item, field) ? "!bg-[#C9F2C7] !border-[#1F7A3A] cursor-not-allowed" : "");
     const docTitle = (item: Item, field: string) =>
         fromDoc(item, field)
@@ -650,10 +660,23 @@
                 error = await readError(res, "Lecture du document impossible.");
                 return;
             }
-            const body: { item: Item; found: boolean; changes: { field: string }[]; price_status?: "manual" | "allocated" | "document" } = await res.json();
-            items = items.map((i) => (i.id === item.id ? { ...body.item, noms_exemplaires: i.noms_exemplaires } : i));
+            const body: {
+                item: Item;
+                found: boolean;
+                changes: { field: string }[];
+                price_status?: "manual" | "allocated" | "document";
+                warning?: string;
+                recovered_references?: Pick<Item, "id" | "document_page" | "document_ligne" | "document_unites" | "document_capacite">[];
+            } = await res.json();
+            items = items.map((i) => {
+                if (i.id === item.id) return { ...body.item, noms_exemplaires: i.noms_exemplaires };
+                const recovered = body.recovered_references?.find((ref) => ref.id === i.id);
+                return recovered && i.document_id === documentId ? { ...i, ...recovered } : i;
+            });
             const title = body.item.document?.title ?? "le document";
-            if (!body.found) {
+            if (body.warning) {
+                notice = `${item.code} lié à « ${title} » sans modification des champs. ${body.warning} Vérifiez les correspondances dans le document puis relisez-le.`;
+            } else if (!body.found) {
                 notice = `${item.code} lié à « ${title} », mais Gemini n'y a pas trouvé cet objet : aucun champ modifié.`;
             } else if (body.changes.length === 0) {
                 notice = `${item.code} lié à « ${title} » : aucun champ modifié.`;
@@ -1126,6 +1149,9 @@
                                             <button class="material-symbols-outlined text-[16px]" title="Changer de document" onclick={() => pickDocument(item)}>swap_horiz</button>
                                             <button class="material-symbols-outlined text-[16px]" title="Délier le document" onclick={() => unlinkDocument(item)}>link_off</button>
                                         </div>
+                                        {#if !documentMatchKnown(item)}
+                                            <span class="text-[10px] font-bold text-red-700">Correspondance à vérifier</span>
+                                        {/if}
                                     {:else}
                                         {@render pickerButton("Lier un document…", false, () => pickDocument(item), "Lier à une facture du dossier Achats → Marchandise")}
                                     {/if}
@@ -1171,11 +1197,27 @@
                 </table>
             </div>
             <div class="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-1 border-2 border-black bg-[#FFF394] px-3 py-2 text-xs" role="status">
-                <span class="font-black uppercase">Total {soldFilter === "yes" ? "des ventes" : "d'achat"} — {totalLabel}</span>
-                <span class="text-base font-black">{euro(filteredTotal.amount)}</span>
-                <span class="text-black/70">
-                    {filtered.length} objet(s){filteredTotal.missing ? ` · ${filteredTotal.missing} sans prix ${soldFilter === "yes" ? "de vente" : "d'achat"}` : ""}
+                <span class="font-black uppercase">{totalLabel} · {filtered.length} objet(s)</span>
+                {#if soldFilter === "yes"}
+                    <span>
+                        <span class="font-black uppercase">Total des ventes</span>
+                        <span class="text-base font-black">{euro(salesTotal.amount)}</span>
+                        {#if salesTotal.missing}<span class="text-black/70">({salesTotal.missing} sans prix de vente)</span>{/if}
+                    </span>
+                {/if}
+                <span>
+                    <span class="font-black uppercase">Total d'achat</span>
+                    <span class="text-base font-black">{euro(purchaseTotal.amount)}</span>
+                    {#if purchaseTotal.missing}<span class="text-black/70">({purchaseTotal.missing} sans prix d'achat)</span>{/if}
                 </span>
+                {#if soldFilter === "yes"}
+                    <span>
+                        <span class="font-black uppercase">Bénéfice</span>
+                        <span class="text-base font-black">
+                            {purchaseTotal.missing || salesTotal.missing ? "Indéterminé (prix manquants)" : euro(salesTotal.amount - purchaseTotal.amount)}
+                        </span>
+                    </span>
+                {/if}
             </div>
             {#if totalPages > 1}
                 <PaginationBar
