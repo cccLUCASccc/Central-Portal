@@ -47,6 +47,9 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 
 L'emplacement est facultatif : `sallon`, `garage` ou `salle_à_manger`.
 Les objets existants restent sans emplacement jusqu'à leur modification.
+Le prix d'achat accepte les centimes ; le prix de vente reste arrondi à l'euro.
+Pour un lot, le prix d'achat unitaire calculé est arrondi au centime.
+Les centimes déjà perdus lors d'un ancien arrondi ne sont pas récupérés.
 Le filtre « Vendu » s'applique à la ligne du lot entière. Pour une quantité
 supérieure à un, le bouton « + » à côté du code affiche un nom facultatif par
 exemplaire ; les autres champs, dont l'état vendu, restent communs au lot.
@@ -60,7 +63,14 @@ Un même document d'achat peut être lié à plusieurs objets. Les anciennes
 correspondances sans numéro de ligne sont recherchées automatiquement ; si
 elles restent incertaines, la liaison est enregistrée sans modifier les champs
 et un message invite à vérifier le document. L'indication « Correspondance à
-vérifier » reste visible sur les liaisons dont la ligne est inconnue.
+vérifier » reste visible sur les liaisons dont la ligne est inconnue. Le bouton
+« Vérifier » permet d'indiquer manuellement la page et la ligne d'article
+(numérotée sur chaque page), puis lance Gemini sur cette ligne pour renseigner
+les champs. Si d'autres lignes sont encore inconnues, elles sont signalées :
+il faut les vérifier pour éviter une double attribution. La taille d'un lot
+inconnu n'est pas déduite de la saisie. Une page ou ligne déjà indiquée peut
+être corrigée ; en cas de changement, les anciennes valeurs sont conservées
+mais déverrouillées jusqu'à leur relecture.
 L'export Excel crée une ligne par unité, avec une quantité de 1 ; une quantité
 de 0 ne produit aucune ligne. Les autres valeurs, notamment les prix, sont
 répétées sans division. Le nom de l'exemplaire remplace celui du lot lorsqu'il

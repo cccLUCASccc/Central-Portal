@@ -484,7 +484,12 @@
             error = "La quantité ne peut pas être vide.";
             return;
         }
-        const value = raw === "" ? null : Math.round(Number(raw));
+        if (field === "prix_achat" && !input.validity.valid) {
+            input.value = String(item.prix_achat ?? "");
+            error = "Le prix d'achat doit être positif ou nul et comporter au maximum deux décimales.";
+            return;
+        }
+        const value = raw === "" ? null : field === "prix_achat" ? Number(raw) : Math.round(Number(raw));
         input.value = value === null ? "" : String(value);
         if (value !== item[field]) patch(item, { [field]: value });
     }
@@ -601,13 +606,66 @@
 
     const fromDoc = (item: Item, field: string) => item.document_id != null && (item.doc_fields ?? []).includes(field);
     const documentMatchKnown = (item: Item) =>
-        (item.document_page ?? 0) > 0 && (item.document_ligne ?? 0) > 0 &&
-        (item.document_unites ?? 0) > 0 && (item.document_capacite ?? 0) > 0;
+        (item.document_page ?? 0) > 0 && (item.document_ligne ?? 0) > 0 && (item.document_unites ?? 0) > 0 &&
+        (item.document_capacite == null || item.document_capacite > 0);
     const docClass = (item: Item, field: string) => (fromDoc(item, field) ? "!bg-[#C9F2C7] !border-[#1F7A3A] cursor-not-allowed" : "");
     const docTitle = (item: Item, field: string) =>
         fromDoc(item, field)
             ? `🔒 Valeur issue du document « ${item.document?.title ?? ""} » : relisez ou déliez le document pour la modifier`
             : undefined;
+    let verifyingItem = $state<Item | null>(null);
+    let verificationPage = $state<number | undefined>();
+    let verificationLine = $state<number | undefined>();
+    let verificationError = $state("");
+    let isVerifying = $state(false);
+    const otherUnverifiedCodes = $derived(
+        verifyingItem
+            ? items.filter((i) => i.id !== verifyingItem?.id && i.document_id === verifyingItem?.document_id && !documentMatchKnown(i)).map((i) => i.code)
+            : [],
+    );
+
+    function openVerification(item: Item) {
+        verifyingItem = item;
+        verificationPage = item.document_page && item.document_page > 0 ? item.document_page : undefined;
+        verificationLine = item.document_ligne && item.document_ligne > 0 ? item.document_ligne : undefined;
+        verificationError = "";
+    }
+
+    async function verifyDocumentMatch(e: Event) {
+        e.preventDefault();
+        const item = verifyingItem;
+        if (!item) return;
+        if (typeof verificationPage !== "number" || !Number.isSafeInteger(verificationPage) || verificationPage < 1 ||
+            typeof verificationLine !== "number" || !Number.isSafeInteger(verificationLine) || verificationLine < 1) {
+            verificationError = "Indiquez une page et une ligne entières et positives.";
+            return;
+        }
+        isVerifying = true;
+        verificationError = "";
+        try {
+            const res = await apiFetch(`/api/inventaire/${item.id}/document/correspondance`, {
+                method: "PUT",
+                body: JSON.stringify({ page: verificationPage, ligne: verificationLine }),
+            });
+            if (!res.ok) {
+                verificationError = await readError(res, "Enregistrement de la correspondance impossible.");
+                return;
+            }
+            const updated: Item = await res.json();
+            items = items.map((i) => i.id === item.id ? { ...updated, noms_exemplaires: i.noms_exemplaires } : i);
+            verifyingItem = null;
+            notice = `Correspondance de ${item.code} enregistrée : page ${verificationPage}, ligne ${verificationLine}.`;
+            if (updated.document_id == null) {
+                error = "Correspondance enregistrée, mais le document lié est introuvable pour la lecture Gemini.";
+                return;
+            }
+            await linkDocument(updated, updated.document_id, true);
+        } catch {
+            verificationError = "Erreur réseau pendant l'enregistrement de la correspondance.";
+        } finally {
+            isVerifying = false;
+        }
+    }
 
     async function loadPurchaseDocs() {
         try {
@@ -648,16 +706,17 @@
         });
     }
 
-    async function linkDocument(item: Item, documentId: number) {
+    async function linkDocument(item: Item, documentId: number, useConfirmedLine = false) {
         setReading(item.id, true);
         error = "";
         try {
             const res = await apiFetch(`/api/inventaire/${item.id}/document`, {
                 method: "PUT",
-                body: JSON.stringify({ document_id: documentId }),
+                body: JSON.stringify({ document_id: documentId, utiliser_ligne_confirmee: useConfirmedLine }),
             });
             if (!res.ok) {
-                error = await readError(res, "Lecture du document impossible.");
+                const message = await readError(res, "Lecture du document impossible.");
+                error = useConfirmedLine ? `Correspondance enregistrée, mais la lecture Gemini a échoué : ${message}` : message;
                 return;
             }
             const body: {
@@ -666,6 +725,7 @@
                 changes: { field: string }[];
                 price_status?: "manual" | "allocated" | "document";
                 warning?: string;
+                review_warning?: string;
                 recovered_references?: Pick<Item, "id" | "document_page" | "document_ligne" | "document_unites" | "document_capacite">[];
             } = await res.json();
             items = items.map((i) => {
@@ -675,7 +735,7 @@
             });
             const title = body.item.document?.title ?? "le document";
             if (body.warning) {
-                notice = `${item.code} lié à « ${title} » sans modification des champs. ${body.warning} Vérifiez les correspondances dans le document puis relisez-le.`;
+                notice = `${item.code} lié à « ${title} » sans modification des champs. ${body.warning} Consultez le document et utilisez « Vérifier » si la ligne n'est pas encore confirmée.`;
             } else if (!body.found) {
                 notice = `${item.code} lié à « ${title} », mais Gemini n'y a pas trouvé cet objet : aucun champ modifié.`;
             } else if (body.changes.length === 0) {
@@ -687,10 +747,13 @@
             if (body.found && body.price_status === "manual") {
                 notice += " Prix unitaire indéterminé : vérifiez ou saisissez manuellement le prix d'achat.";
             } else if (body.found && body.price_status === "allocated") {
-                notice += " Prix d'achat unitaire calculé en répartissant le prix du lot à parts égales, puis arrondi à l'euro.";
+                notice += " Prix d'achat unitaire calculé en répartissant le prix du lot à parts égales, puis arrondi au centime.";
             }
+            if (body.review_warning) notice += ` ${body.review_warning}`;
         } catch {
-            error = "Erreur réseau pendant la lecture du document.";
+            error = useConfirmedLine
+                ? "Correspondance enregistrée, mais erreur réseau pendant la lecture Gemini."
+                : "Erreur réseau pendant la lecture du document.";
         } finally {
             setReading(item.id, false);
         }
@@ -929,7 +992,7 @@
                     <input class="retro-input text-xs w-full uppercase" bind:value={manual.provenance} />
                 </label>
                 <label class="text-[10px] font-bold uppercase">Prix d'achat
-                    <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_achat} />
+                    <input type="number" step="0.01" inputmode="decimal" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_achat} />
                 </label>
                 <label class="text-[10px] font-bold uppercase">Prix de vente
                     <input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-xs w-full" bind:value={manual.prix_vente} />
@@ -980,7 +1043,7 @@
                                     <td class="p-1"><input class="retro-input text-[11px] !w-48 {d.nom.trim() ? '' : '!bg-[#FFC2D1]'}" bind:value={d.nom} /></td>
                                     <td class="p-1"><input class="retro-input text-[11px] !w-28" bind:value={d.categorie} /></td>
                                     <td class="p-1"><input type="date" class="retro-input text-[11px] !w-32" bind:value={d.date_acquisition} /></td>
-                                    <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
+                                    <td class="p-1"><input type="number" step="0.01" inputmode="decimal" class="retro-input text-[11px] !w-24" bind:value={d.prix_achat} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" class="retro-input text-[11px] !w-24" bind:value={d.prix_vente} /></td>
                                     <td class="p-1"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] !w-20" bind:value={d.quantite} required /></td>
                                     <td class="p-1 min-w-32">
@@ -1113,7 +1176,7 @@
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'nom')}" value={item.nom} title={docTitle(item, "nom") ?? item.nom} readonly={fromDoc(item, "nom")} onchange={(e) => editText(item, "nom", e)} /></td>
                                 <td class="p-0.5"><input class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'categorie')}" value={item.categorie} title={docTitle(item, "categorie")} readonly={fromDoc(item, "categorie")} onchange={(e) => editText(item, "categorie", e)} /></td>
                                 <td class="p-0.5"><input type="date" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'date_acquisition')}" value={item.date_acquisition ?? ""} title={docTitle(item, "date_acquisition")} readonly={fromDoc(item, "date_acquisition")} onchange={(e) => editDate(item, e)} /></td>
-                                <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} readonly={fromDoc(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
+                                <td class="p-0.5"><input type="number" step="0.01" inputmode="decimal" min="0" class="retro-input text-[11px] w-full min-w-0 {docClass(item, 'prix_achat')}" value={item.prix_achat ?? ""} title={docTitle(item, "prix_achat")} readonly={fromDoc(item, "prix_achat")} onchange={(e) => editNumber(item, "prix_achat", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0 {item.antiquite_id != null ? '!bg-[#E3EDFF]' : ''}" value={item.prix_vente ?? ""} title={item.antiquite ? `Prix synchronisé avec le site (« ${item.antiquite.name} »)` : undefined} onchange={(e) => editNumber(item, "prix_vente", e)} /></td>
                                 <td class="p-0.5"><input type="number" step="1" inputmode="numeric" min="0" class="retro-input text-[11px] w-full min-w-0" value={item.quantite ?? 1} onchange={(e) => editNumber(item, "quantite", e)} /></td>
                                 <td class="p-0.5">
@@ -1145,12 +1208,20 @@
                                                 <span class="material-symbols-outlined text-[13px] shrink-0">description</span>
                                                 <span class="truncate">{item.document.title}</span>
                                             </a>
-                                            <button class="material-symbols-outlined text-[16px]" title="Relire le document avec Gemini" onclick={() => item.document_id && linkDocument(item, item.document_id)}>refresh</button>
+                                            <button class="material-symbols-outlined text-[16px]" title="Relire le document avec Gemini" onclick={() => item.document_id && linkDocument(item, item.document_id, documentMatchKnown(item))}>refresh</button>
+                                            {#if documentMatchKnown(item)}
+                                                <button class="material-symbols-outlined text-[16px]" aria-label={`Modifier la page et la ligne de ${item.code}`} title="Modifier la page et la ligne" onclick={() => openVerification(item)}>edit_note</button>
+                                            {/if}
                                             <button class="material-symbols-outlined text-[16px]" title="Changer de document" onclick={() => pickDocument(item)}>swap_horiz</button>
                                             <button class="material-symbols-outlined text-[16px]" title="Délier le document" onclick={() => unlinkDocument(item)}>link_off</button>
                                         </div>
                                         {#if !documentMatchKnown(item)}
-                                            <span class="text-[10px] font-bold text-red-700">Correspondance à vérifier</span>
+                                            <div class="flex flex-wrap items-center gap-1">
+                                                <span class="text-[10px] font-bold text-red-700">Correspondance à vérifier</span>
+                                                <button type="button" class="retro-btn text-[10px] px-1 py-0.5"
+                                                    aria-label={`Vérifier la correspondance de ${item.code}`}
+                                                    onclick={() => openVerification(item)}>Vérifier</button>
+                                            </div>
                                         {/if}
                                     {:else}
                                         {@render pickerButton("Lier un document…", false, () => pickDocument(item), "Lier à une facture du dossier Achats → Marchandise")}
@@ -1227,6 +1298,40 @@
             {/if}
         {/if}
     </div>
+
+    {#if verifyingItem}
+        <div class="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4" role="presentation">
+            <div class="bg-white border-3 border-black shadow-[8px_8px_0px_0px_#000] max-w-md w-full"
+                role="dialog" aria-modal="true" aria-labelledby="verification-title" tabindex="-1"
+                onkeydown={(e) => { if (e.key === "Escape" && !isVerifying) verifyingItem = null; }}>
+                <div class="bg-[#FFE600] border-b-2 border-black px-4 py-2 flex justify-between items-center gap-2">
+                    <span id="verification-title" class="font-black text-xs uppercase">Vérifier {verifyingItem.code}</span>
+                    <button type="button" disabled={isVerifying} aria-label="Fermer" onclick={() => (verifyingItem = null)} class="w-6 h-6 border border-black bg-white text-xs font-bold">✕</button>
+                </div>
+                <form class="p-4 space-y-3 text-xs" onsubmit={verifyDocumentMatch}>
+                    <p>Ouvrez le document et indiquez la page et la ligne de cet objet. Comptez les lignes d'articles de haut en bas sur chaque page, sans les titres, descriptions, frais ou totaux.</p>
+                    <a href={`/documents?doc=${verifyingItem.document_id}`} target="_blank" rel="noreferrer" class="underline font-bold">Ouvrir le document</a>
+                    {#if otherUnverifiedCodes.length}
+                        <p class="font-bold text-red-700">Autres correspondances à vérifier dans ce document : {otherUnverifiedCodes.join(", ")}.</p>
+                    {/if}
+                    <div class="flex gap-3">
+                        <label class="font-bold flex-1">Page
+                            <input type="number" min="1" step="1" required class="retro-input w-full" bind:value={verificationPage} />
+                        </label>
+                        <label class="font-bold flex-1">Ligne
+                            <input type="number" min="1" step="1" required class="retro-input w-full" bind:value={verificationLine} />
+                        </label>
+                    </div>
+                    <p>Après enregistrement, Gemini relira cette ligne et pourra renseigner les champs de l'objet. Si la ligne change, les anciennes valeurs sont conservées et déverrouillées jusqu'à la relecture.</p>
+                    {#if verificationError}<p role="alert" class="font-bold text-red-700">{verificationError}</p>{/if}
+                    <div class="flex justify-end gap-2">
+                        <button type="button" class="retro-btn text-xs" disabled={isVerifying} onclick={() => (verifyingItem = null)}>Annuler</button>
+                        <button type="submit" class="retro-btn-primary text-xs" disabled={isVerifying}>{isVerifying ? "Enregistrement..." : "Enregistrer"}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {/if}
 
     {#if picker}
         <div class="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4" role="presentation" onclick={() => (picker = null)}>
